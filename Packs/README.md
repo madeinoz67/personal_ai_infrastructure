@@ -147,6 +147,7 @@ PAI System
 | [**kai-agents-skill**](kai-agents-skill/) | 1.0.0 | Delegation | Dynamic agent composition - create custom agents with unique personalities, voices, and trait combinations |
 | [**kai-prompting-skill**](kai-prompting-skill/) | 1.0.0 | Methodology | Meta-prompting system with Handlebars templates, Claude 4.x best practices, and the Ultimate Prompt Template |
 | [**kai-browser-skill**](kai-browser-skill/) | 1.0.0 | Automation | Code-first browser automation with Playwright - 99% token savings over MCP, screenshots, verification, web testing |
+| [**madeinoz67-knowledge-system**](madeinoz67-knowledge-system/) | 1.0.0 | Infrastructure | Persistent knowledge management with Graphiti + FalkorDB - automatic entity extraction, semantic search, relationship mapping |
 
 ---
 
