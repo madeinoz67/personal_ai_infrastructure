@@ -139,7 +139,7 @@ Based on the detection above, follow the appropriate path:
 |----------|---------------|--------|
 | **Clean Install** | No MCP server, ports available, no existing skill | Proceed normally with Step 1 |
 | **Server Running** | MCP server already running | Decide: keep existing (skip to Step 4) or stop/reinstall |
-| **Port Conflict** | Ports 8000 or 6379 in use | Stop conflicting services or change ports in run.sh |
+| **Port Conflict** | Ports 8000 or 6379 in use | Stop conflicting services or change ports in run.ts |
 | **Skill Exists** | Knowledge skill already installed | Backup old skill, compare versions, then replace |
 | **Missing Dependencies** | Podman or Bun not installed | Install dependencies first, then retry |
 
@@ -194,10 +194,10 @@ echo "Checking pack contents..."
 REQUIRED_FILES=(
     "README.md"
     "SKILL.md"
-    "src/server/run.sh"
+    "src/server/run.ts"
     "src/server/podman-compose.yml"
     "src/server/docker-compose.yml"
-    "src/config/.env.example"
+    "config/.env.example"
     "src/skills/workflows/CaptureEpisode.md"
     "src/skills/workflows/SearchKnowledge.md"
     "src/skills/workflows/SearchFacts.md"
@@ -370,15 +370,12 @@ else
     exit 1
 fi
 
-# Make run script executable
-chmod +x src/server/run.sh
-
 # Start the server
 echo ""
 echo "🚀 Starting MCP Server"
 echo "======================"
 echo ""
-bash src/server/run.sh
+bun run src/server/run.ts
 
 # Wait for server to initialize
 echo ""
@@ -391,7 +388,7 @@ if curl -s http://localhost:8000/health | grep -q "healthy"; then
     echo "✓ Server is running and healthy!"
 else
     echo "⚠️  Server health check failed"
-    echo "Check logs with: bash src/server/logs.sh"
+    echo "Check logs with: bun run src/server/logs.ts"
     echo "The server may still be starting up. Wait 30 seconds and try again."
 fi
 ```
@@ -408,12 +405,12 @@ If you prefer Docker Compose:
 docker compose -f src/server/docker-compose.yml up -d
 
 # Check status
-bash src/server/status.sh
+bun run src/server/status.ts
 ```
 
 **Troubleshooting:**
-- If server fails to start, check logs: `bash src/server/logs.sh`
-- If port is already in use, stop conflicting service or modify `src/server/run.sh` to use different ports
+- If server fails to start, check logs: `bun run src/server/logs.ts`
+- If port is already in use, stop conflicting service or modify `src/server/run.ts` to use different ports
 - If API key validation fails, verify your API key has available credits/quota
 
 ---
@@ -465,11 +462,12 @@ cp src/skills/workflows/*.md "$PAI_SKILLS_DIR/Knowledge/workflows/"
 echo "Installing tools..."
 cp src/skills/tools/*.md "$PAI_SKILLS_DIR/Knowledge/tools/"
 
-# Copy server scripts (flatten to server/, not src/server/)
+# Copy server scripts
 echo "Installing server scripts..."
-cp src/server/*.sh "$PAI_SKILLS_DIR/Knowledge/server/"
-cp src/server/*.yml "$PAI_SKILLS_DIR/Knowledge/server/"
-chmod +x "$PAI_SKILLS_DIR/Knowledge/server/"*.sh
+cp -r src/server/* "$PAI_SKILLS_DIR/Knowledge/server/"
+cp src/server/*.yml "$PAI_SKILLS_DIR/Knowledge/server/" 2>/dev/null || true
+
+# Note: TypeScript files don't need chmod +x
 
 # Copy config (flatten to config/, not src/config/)
 echo "Installing configuration..."
@@ -635,11 +633,11 @@ echo "============================"
 echo ""
 
 # Check 1: Container running
-if bash src/server/status.sh 2>/dev/null | grep -q "running"; then
+if bun run src/server/status.ts 2>/dev/null | grep -q "running"; then
     echo "✓ PAI Knowledge container is running"
 else
     echo "✗ Container may not be running"
-    echo "  Start with: bash src/server/start.sh"
+    echo "  Start with: bun run src/server/start.ts"
 fi
 
 # Check 2: Server responding
@@ -647,7 +645,7 @@ if curl -s http://localhost:8000/health | grep -q "healthy"; then
     echo "✓ MCP server is responding at http://localhost:8000"
 else
     echo "✗ MCP server health check failed"
-    echo "  Check logs: bash src/server/logs.sh"
+    echo "  Check logs: bun run src/server/logs.ts"
 fi
 
 # Check 3: FalkorDB accessible
@@ -764,10 +762,10 @@ if [[ "$ADD_TO_PROFILE" =~ ^[Yy]$ ]]; then
     echo "# PAI Knowledge System" >> "$PROFILE"
     echo "export PAI_DIR=\"\${PAI_DIR:-\$HOME/.claude}\"" >> "$PROFILE"
     echo "alias pai-status='curl -s http://localhost:8000/health'" >> "$PROFILE"
-    echo "alias pai-logs='bash src/server/logs.sh'" >> "$PROFILE"
-    echo "alias pai-start='bash src/server/start.sh'" >> "$PROFILE"
-    echo "alias pai-stop='bash src/server/stop.sh'" >> "$PROFILE"
-    echo "alias pai-restart='bash src/server/stop.sh && bash src/server/start.sh'" >> "$PROFILE"
+    echo "alias pai-logs='bun run src/server/logs.ts'" >> "$PROFILE"
+    echo "alias pai-start='bun run src/server/start.ts'" >> "$PROFILE"
+    echo "alias pai-stop='bun run src/server/stop.ts'" >> "$PROFILE"
+    echo "alias pai-restart='bun run src/server/stop.ts && bun run src/server/start.ts'" >> "$PROFILE"
     echo ""
     echo "✓ Added aliases to $PROFILE"
     echo "  Source with: source $PROFILE"
@@ -785,11 +783,11 @@ echo "Skill installed as: Knowledge"
 echo "  - Location: $PAI_SKILLS_DIR/Knowledge"
 echo ""
 echo "Management Commands:"
-echo "  - View logs: bash src/server/logs.sh"
-echo "  - Restart: bash src/server/stop.sh && bash src/server/start.sh"
-echo "  - Stop: bash src/server/stop.sh"
-echo "  - Start: bash src/server/start.sh"
-echo "  - Status: bash src/server/status.sh"
+echo "  - View logs: bun run src/server/logs.ts"
+echo "  - Restart: bun run src/server/stop.ts && bun run src/server/start.ts"
+echo "  - Stop: bun run src/server/stop.ts"
+echo "  - Start: bun run src/server/start.ts"
+echo "  - Status: bun run src/server/status.ts"
 ```
 
 ---
@@ -798,12 +796,12 @@ echo "  - Status: bash src/server/status.sh"
 
 ### Server Won't Start
 
-**Symptoms:** `bash src/server/run.sh` fails or container exits immediately
+**Symptoms:** `bun run src/server/run.ts` fails or container exits immediately
 
 **Diagnosis:**
 ```bash
 # Check container logs
-bash src/server/logs.sh
+bun run src/server/logs.ts
 
 # Check if ports are available
 lsof -i :8000
@@ -845,11 +843,11 @@ cat ~/.claude/skills/Knowledge/SKILL.md | head -20
 curl http://localhost:8000/health
 
 # Check server logs
-bash src/server/logs.sh | tail -50
+bun run src/server/logs.ts | tail -50
 ```
 
 **Solutions:**
-1. **Server not running:** Start with `bash src/server/start.sh`
+1. **Server not running:** Start with `bun run src/server/start.ts`
 2. **API quota exceeded:** Check OpenAI usage dashboard
 3. **Content too brief:** Add more context and detail
 4. **Network issue:** Verify MCP server endpoint is reachable
@@ -888,7 +886,7 @@ To completely remove the Knowledge skill:
 
 ```bash
 # 1. Stop and remove container
-bash src/server/stop.sh
+bun run src/server/stop.ts
 podman rm pai-knowledge-graph-mcp
 # or for Docker users:
 # docker rm pai-knowledge-graph-mcp
@@ -917,8 +915,8 @@ curl -X POST http://localhost:8000/mcp/ \
 
 If you encounter issues not covered here:
 
-1. **Check logs:** `bash src/server/logs.sh`
-2. **Check status:** `bash src/server/status.sh`
+1. **Check logs:** `bun run src/server/logs.ts`
+2. **Check status:** `bun run src/server/status.ts`
 3. **Review documentation:**
    - `README.md` - Complete pack documentation
    - `QUICKSTART.md` - Quick start guide
