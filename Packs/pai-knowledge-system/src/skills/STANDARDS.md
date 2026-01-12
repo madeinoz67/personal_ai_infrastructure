@@ -215,6 +215,9 @@ Group IDs partition your knowledge graph into isolated namespaces. Use them stra
 | `work` | Professional/work-related knowledge |
 | `project-{name}` | Project-specific knowledge (e.g., `project-pai`) |
 | `research-{topic}` | Research area isolation (e.g., `research-llm`) |
+| `osint-profiles` | OSINT reconnaissance data (usernames, people) |
+| `osint-domains` | Domain/infrastructure reconnaissance |
+| `osint-companies` | Corporate/business intelligence |
 | `archive` | Historical knowledge, less frequently accessed |
 
 ### Group ID Best Practices

@@ -5,6 +5,12 @@
 #   - neo4j: Graph database backend (Cypher queries, no RediSearch/Lucene escaping needed)
 #   - graphiti-mcp: MCP server (exposed to host)
 #
+# PAI PATCH APPLIED:
+#   This configuration mounts a patched graphiti_mcp_server.py that enables
+#   searching across ALL groups when no group_ids are specified. This ensures
+#   knowledge stored in different groups (e.g., osint-profiles, main) is
+#   discoverable without explicitly specifying group_ids in every search.
+#
 # Usage from pack directory:
 #   1. Copy config/.env.example to config/.env and configure your API keys
 #   2. Set PAI_KNOWLEDGE_DATABASE_TYPE=neo4j in your .env
@@ -42,6 +48,8 @@ services:
       - NEO4J_server_memory_heap_initial__size=512m
       - NEO4J_server_memory_heap_max__size=1G
       - NEO4J_server_memory_pagecache_size=512m
+      # Disable Neo4j telemetry/usage reporting
+      - NEO4J_dbms_usage__report_enabled=${PAI_KNOWLEDGE_NEO4J_TELEMETRY_ENABLED:-false}
     healthcheck:
       test: ["CMD", "wget", "-O", "/dev/null", "http://localhost:7474"]
       interval: 10s
@@ -60,35 +68,32 @@ services:
     ports:
       - "8000:8000"  # MCP HTTP endpoint
     environment:
-      # LLM Configuration
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
-
-      # Neo4j Database Configuration
+      # Neo4j Database Configuration (override container defaults)
       - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USER=${NEO4J_USER:-neo4j}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-paiknowledge}
-      - NEO4J_DATABASE=${NEO4J_DATABASE:-neo4j}
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=paiknowledge
+      - NEO4J_DATABASE=neo4j
 
       # Application Configuration
-      - GRAPHITI_GROUP_ID=${GROUP_ID:-main}
-      - SEMAPHORE_LIMIT=${SEMAPHORE_LIMIT:-10}
+      - GRAPHITI_GROUP_ID=main
+      - SEMAPHORE_LIMIT=10
       - CONFIG_PATH=/app/mcp/config/config.yaml
 
       # Telemetry
-      - GRAPHITI_TELEMETRY_ENABLED=${GRAPHITI_TELEMETRY_ENABLED:-false}
+      - GRAPHITI_TELEMETRY_ENABLED=false
 
-      # Model Configuration
-      - MODEL_NAME=${MODEL_NAME:-gpt-4o-mini}
-      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
-      - EMBEDDER_PROVIDER=${EMBEDDER_PROVIDER:-openai}
+      # PAI PATCH: Search all groups toggle (set in config/.env)
+      # When true, searches query ALL groups when no group_ids specified
+      - PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=${PAI_KNOWLEDGE_SEARCH_ALL_GROUPS:-true}
+      # Note: OPENAI_API_KEY, MODEL_NAME, LLM_PROVIDER, EMBEDDER_PROVIDER
+      # are loaded directly from env_file (config/.env)
     volumes:
       - ./config-neo4j.yaml:/app/mcp/config/config.yaml:ro
+      # PAI PATCH: Search ALL groups by default when no group_ids specified
+      - ./patches/graphiti_mcp_server.py:/app/mcp/src/graphiti_mcp_server.py:ro
     env_file:
-      - ${PAI_DIR:-${HOME}/.config/pai}/.env
+      # Uses config/.env relative to pack root - copy from config/.env.example
+      - ../../config/.env
     depends_on:
       neo4j:
         condition: service_healthy

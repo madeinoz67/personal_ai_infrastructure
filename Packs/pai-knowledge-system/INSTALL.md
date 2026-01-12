@@ -489,11 +489,35 @@ If you prefer Docker Compose, use the appropriate compose file for your backend:
 # For FalkorDB backend (default)
 docker compose -f src/server/docker-compose.yml up -d
 
-# For Neo4j backend
+# For Neo4j backend (RECOMMENDED - includes search-all-groups patch)
 docker compose -f src/server/docker-compose-neo4j.yml up -d
 
 # Check status
 bun run src/skills/tools/status.ts
+```
+
+**PAI Search Patch (Neo4j only):**
+The Neo4j docker-compose includes a patch that can search across ALL groups when no `group_ids` are specified. This ensures knowledge stored in different groups (e.g., `osint-profiles`, `main`, `research`) is discoverable without explicitly specifying groups in every search.
+
+**Configuration:**
+```bash
+# In config/.env - set to enable/disable the patch
+PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=true   # Enable (default)
+PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=false  # Disable (original behavior)
+```
+
+The patch:
+- Controlled by `PAI_KNOWLEDGE_SEARCH_ALL_GROUPS` environment variable
+- Dynamically queries all available group_ids at search time
+- Uses a 30-second cache to balance performance and freshness
+- Ensures new groups are searchable within 30 seconds of creation
+- Located at: `src/server/patches/graphiti_mcp_server.py`
+
+**Verify patch status:**
+```bash
+curl http://localhost:8000/health
+# Returns: {"status":"healthy","service":"graphiti-mcp","patch":"pai-all-groups-enabled"}
+# Or: {"status":"healthy","service":"graphiti-mcp","patch":"pai-all-groups-disabled"}
 ```
 
 **Neo4j Browser Access:**
