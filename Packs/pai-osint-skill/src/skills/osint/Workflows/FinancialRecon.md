@@ -116,9 +116,9 @@ Evaluate overall health:
 - Red flags (going concern, audit issues)
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the financial intelligence:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the financial intelligence:
 
 ```
 Store the following as structured episodes:

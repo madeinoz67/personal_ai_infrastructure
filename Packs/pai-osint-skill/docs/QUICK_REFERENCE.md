@@ -3,6 +3,12 @@
 ## Commands
 
 ```bash
+# Investigation Orchestrator (Iterative Pivot-Driven)
+/osint investigate <target>                    # Full investigation, auto-expand
+/osint deepdive <target>                       # Deep dive with pivots
+/osint investigate <target> --interactive      # Approve each pivot
+/osint resume <investigation-id>               # Resume previous investigation
+
 # Individual/Username
 /osint username <username>
 /osint social <@handle>
@@ -20,12 +26,29 @@
 /osint competitors <name>
 /osint risk <name>
 
+# Digital Artifacts
+/osint email <email>
+/osint phone <number>
+/osint image <path/url>
+
 # Analysis
 /osint link <entity1> <entity2>
 /osint report <investigation>
 ```
 
 ## Natural Language Examples
+
+### Investigation Orchestrator (Iterative Pivot-Driven)
+```
+Deep dive on username johndoe
+Investigate johndoe, follow the leads
+Full investigation on email john@example.com
+Pivot investigation on Acme Corp with wide scope
+Investigate johndoe with interactive approval
+Deep dive on johndoe max_depth 3 max_entities 100
+Resume investigation OSINT-INV-2026-001
+Pursue deferred leads from last investigation
+```
 
 ### Username/Person
 ```
@@ -50,13 +73,49 @@ Analyze competitors for Acme
 Run risk check on vendor ABC
 ```
 
+### Digital Artifacts
+```
+Email lookup john@example.com
+Check if email was in any breaches
+Phone lookup +1-555-123-4567
+Analyze this image for metadata
+Reverse image search
+```
+
 ### Analysis
 ```
 Link these accounts together
 Generate intelligence report
 ```
 
-## Scope Levels
+## Investigation Orchestrator Parameters
+
+| Parameter | Default | Options |
+|-----------|---------|---------|
+| `max_depth` | 2 | 1-5 (pivot hops) |
+| `max_entities` | 50 | 10-200 |
+| `scope` | standard | narrow, standard, wide |
+| `require_approval` | false | true = interactive mode |
+
+### Scope Levels (Pivot Investigation)
+
+| Scope | What Gets Pursued | Use Case |
+|-------|-------------------|----------|
+| narrow | HIGH priority only | Quick verification |
+| standard | HIGH + MEDIUM | General investigation |
+| wide | All priorities | Threat analysis |
+
+### Interactive Commands (During Investigation)
+
+| Command | Action |
+|---------|--------|
+| `pursue 1,2,4` | Investigate selected pivots |
+| `defer 3,5` | Save for later |
+| `pursue all` | Investigate everything |
+| `defer all` | Save all for later |
+| `done` | Skip to synthesis |
+
+## Scope Levels (Standard Workflows)
 
 Add scope to any request:
 
@@ -104,8 +163,25 @@ Show relationships for entity
 | 6-8 | High |
 | 9-10 | Critical |
 
+## Deferred Leads & Resume
+
+### Query Deferred Leads
+```
+What deferred leads do I have?
+Show deferred pivots from OSINT-INV-2026-001
+Search knowledge for deferred OSINT leads
+```
+
+### Resume Investigation
+```
+Resume investigation OSINT-INV-2026-001
+Pursue deferred leads from last investigation
+Investigate deferred pivot colleague@acme.com
+```
+
 ## Dependencies
 
+- **agents** skill - Agent delegation (required)
 - **browser** skill - Web scraping
 - **knowledge** skill - Data persistence
 
@@ -118,4 +194,5 @@ Reports saved as:
 Examples:
 company_acme_2026-01-10.md
 risk_vendor_2026-01-10.md
+investigation_johndoe_2026-01-12.md
 ```

@@ -1,4 +1,4 @@
-# PAI OSINT Skill v1.1.0 - Installation Guide
+# PAI OSINT Skill v1.3.0 - Installation Guide
 
 **This guide is designed for AI agents installing this pack into a user's infrastructure.**
 
@@ -17,7 +17,7 @@
 
 Before starting, greet the user:
 ```
-"I'm installing pai-osint-skill v1.1.0 - AI-powered OSINT collection and analysis.
+"I'm installing pai-osint-skill v1.3.0 - AI-powered OSINT collection and analysis with iterative pivot-driven investigations.
 
 Let me analyze your system and guide you through installation."
 ```
@@ -56,11 +56,22 @@ else
   echo "Knowledge skill: NOT INSTALLED (optional but recommended)"
 fi
 
-# Check for research directory
-if [ -d "$PAI_DIR/history/research/osint" ]; then
-  echo "Research directory: EXISTS"
+# Check for Agents skill (required dependency)
+if [ -d "$PAI_DIR/skills/Agents" ]; then
+  echo "Agents skill: INSTALLED (required)"
 else
-  echo "Research directory: WILL BE CREATED"
+  echo "Agents skill: NOT INSTALLED (required for agent delegation)"
+fi
+
+# Check for Bright Data MCP (recommended)
+if grep -q "brightdata" "$HOME/.claude.json" 2>/dev/null || grep -q "brightdata" "$HOME/.claude/settings.json" 2>/dev/null; then
+  echo "Bright Data MCP: CONFIGURED (recommended)"
+else
+  echo ""
+  echo "RECOMMENDATION: Bright Data MCP"
+  echo "  For enhanced web scraping and search capabilities, consider adding Bright Data MCP."
+  echo "  This enables advanced search and scraping through brightdata's web unlocker."
+  echo "  See: https://github.com/anthropics/claude-code-mcp-servers#bright-data"
 fi
 ```
 
@@ -71,8 +82,10 @@ Tell the user what you found:
 "Here's what I found on your system:
 - PAI_DIR: [path]
 - Existing osint skill: [Yes at path / No]
+- Agents skill: [Installed / Not installed] (required)
 - Browser skill: [Installed / Not installed]
-- Knowledge skill: [Installed / Not installed]"
+- Knowledge skill: [Installed / Not installed]
+- Bright Data MCP: [Configured / Not configured] (recommended for enhanced scraping)"
 ```
 
 ---
@@ -280,7 +293,7 @@ echo "Total workflows: $(ls -1 "$PACK_SOURCE/src/skills/osint/Workflows/"*.md | 
     {"content": "Create directory structure", "status": "pending", "activeForm": "Creating directory structure"},
     {"content": "Copy SKILL.md", "status": "pending", "activeForm": "Copying skill definition"},
     {"content": "Copy all 16 workflows", "status": "pending", "activeForm": "Copying workflow files"},
-    {"content": "Create research directory", "status": "pending", "activeForm": "Creating research directory"},
+    {"content": "Sync voice configuration", "status": "pending", "activeForm": "Syncing voice configuration"},
     {"content": "Run verification", "status": "pending", "activeForm": "Running verification checks"}
   ]
 }
@@ -315,9 +328,9 @@ grep "^name:" $PAI_DIR/skills/osint/SKILL.md
 
 **Mark todo as completed.**
 
-### 4.3 Copy All 16 Workflows
+### 4.3 Copy All 17 Workflows
 
-**Mark todo "Copy all 16 workflows" as in_progress.**
+**Mark todo "Copy all 17 workflows" as in_progress.**
 
 ```bash
 # Copy all workflow files using PACK_SOURCE variable
@@ -325,40 +338,67 @@ cp "$PACK_SOURCE/src/skills/osint/Workflows/"*.md $PAI_DIR/skills/osint/Workflow
 
 # Verify count
 ls $PAI_DIR/skills/osint/Workflows/*.md | wc -l
-# Should show: 16
+# Should show: 17
 ```
 
 **Expected workflows:**
-1. UsernameRecon.md
-2. DomainRecon.md
-3. SocialCapture.md
-4. InfraMapping.md
-5. EntityLinking.md
-6. TimelineAnalysis.md
-7. TargetProfile.md
-8. IntelReport.md
-9. CompanyProfile.md
-10. CorporateStructure.md
-11. FinancialRecon.md
-12. CompetitorAnalysis.md
-13. RiskAssessment.md
-14. EmailRecon.md
-15. PhoneRecon.md
-16. ImageRecon.md
+1. InvestigationOrchestrator.md (NEW - iterative pivot-driven investigations)
+2. UsernameRecon.md
+3. DomainRecon.md
+4. SocialCapture.md
+5. InfraMapping.md
+6. EntityLinking.md
+7. TimelineAnalysis.md
+8. TargetProfile.md
+9. IntelReport.md
+10. CompanyProfile.md
+11. CorporateStructure.md
+12. FinancialRecon.md
+13. CompetitorAnalysis.md
+14. RiskAssessment.md
+15. EmailRecon.md
+16. PhoneRecon.md
+17. ImageRecon.md
 
 **Mark todo as completed.**
 
-### 4.4 Create Research Directory
+### 4.4 Sync Voice Configuration
 
-**Mark todo "Create research directory" as in_progress.**
+**Mark todo "Sync voice configuration" as in_progress.**
+
+The OSINT pack includes pre-configured voices for each agent persona. This step syncs
+those voices to the VoiceServer so agents speak immediately after installation.
 
 ```bash
-# Create research output directory
-mkdir -p $PAI_DIR/history/research/osint
+# Navigate to pack source (use PACK_SOURCE set earlier)
+cd "$PACK_SOURCE"
 
-# Verify
-ls -la $PAI_DIR/history/research/
+# Run voice sync (dry-run first to preview changes)
+bun run src/tools/voice-sync.ts --dry-run --verbose
+
+# Apply changes
+bun run src/tools/voice-sync.ts --verbose
 ```
+
+**What this does:**
+- Reads voice configuration from `config/voices.json`
+- Compares against `$PAI_DIR/VoiceServer/voice-personalities.json`
+- Adds new OSINT agent voices (preserves existing voices)
+- Automatically restarts VoiceServer to load new voices
+- Idempotent - safe to run multiple times
+
+**Pre-configured voices (ElevenLabs public voices):**
+
+| Agent | Voice | Gender | Voice ID | Role |
+|-------|-------|--------|----------|------|
+| collector | Rachel | Female | `21m00Tcm4TlvDq8ikWAM` | Intelligence gatherer |
+| linker | Daniel | Male | `onwK4e9ZLuTAKqWW03F9` | Pattern recognition |
+| auditor | Sarah | Female | `EXAVITQu4vr4xnSDxMaL` | Due diligence |
+| shadow | Clyde | Male | `2EiwWnXFnvU5JabPnv8n` | Adversarial ops |
+| verifier | Adam | Male | `pNInz6obpgDQGcFmaJgB` | Source verification |
+
+Users can customize voices later by editing `$PAI_DIR/VoiceServer/voice-personalities.json`
+or the pack's `config/voices.json` and re-running the sync with `--force`.
 
 **Mark todo as completed.**
 
@@ -386,21 +426,32 @@ if [ -d "$PAI_DIR/skills/osint" ]; then echo "  osint directory"; ((PASS++)); el
 if [ -f "$PAI_DIR/skills/osint/SKILL.md" ]; then echo "  SKILL.md"; ((PASS++)); else echo "  SKILL.md"; ((FAIL++)); fi
 if grep -q "^name: osint$" "$PAI_DIR/skills/osint/SKILL.md" 2>/dev/null; then echo "  Skill name lowercase"; ((PASS++)); else echo "  Skill name not lowercase"; ((FAIL++)); fi
 if [ -d "$PAI_DIR/skills/osint/Workflows" ]; then echo "  Workflows directory"; ((PASS++)); else echo "  Workflows directory"; ((FAIL++)); fi
-if [ -d "$PAI_DIR/history/research/osint" ]; then echo "  Research directory"; ((PASS++)); else echo "  Research directory"; ((FAIL++)); fi
+if [ -d "$PAI_DIR/skills/Agents" ]; then echo "  Agents skill (required)"; ((PASS++)); else echo "  Agents skill (required)"; ((FAIL++)); fi
 
 # Workflows
 echo ""
-echo "Workflows (16 required):"
+echo "Workflows (17 required):"
 WF_COUNT=$(ls "$PAI_DIR/skills/osint/Workflows/"*.md 2>/dev/null | wc -l | xargs)
-echo "  Found: $WF_COUNT/16 workflows"
-if [ "$WF_COUNT" -eq 16 ]; then ((PASS++)); else ((FAIL++)); fi
+echo "  Found: $WF_COUNT/17 workflows"
+if [ "$WF_COUNT" -eq 17 ]; then ((PASS++)); else ((FAIL++)); fi
+
+# Check for Investigation Orchestrator
+echo ""
+echo "Investigation Orchestrator:"
+if [ -f "$PAI_DIR/skills/osint/Workflows/InvestigationOrchestrator.md" ]; then
+  echo "  InvestigationOrchestrator.md"
+  ((PASS++))
+else
+  echo "  InvestigationOrchestrator.md MISSING"
+  ((FAIL++))
+fi
 
 # Knowledge integration
 echo ""
 echo "Knowledge Integration:"
-KI_COUNT=$(grep -l 'Use the \*\*knowledge\*\* skill' "$PAI_DIR/skills/osint/Workflows/"*.md 2>/dev/null | wc -l | xargs)
-echo "  Found: $KI_COUNT/16 workflows with knowledge skill"
-if [ "$KI_COUNT" -eq 16 ]; then ((PASS++)); else ((FAIL++)); fi
+KI_COUNT=$(grep -l 'knowledge' "$PAI_DIR/skills/osint/Workflows/"*.md 2>/dev/null | wc -l | xargs)
+echo "  Found: $KI_COUNT/17 workflows with knowledge integration"
+if [ "$KI_COUNT" -ge 16 ]; then ((PASS++)); else ((FAIL++)); fi
 
 # Dependencies
 echo ""
@@ -430,25 +481,79 @@ fi
 
 ---
 
+## Phase 6: Voice Test
+
+**Test that OSINT agent voices are working correctly.**
+
+### 6.1 Quick Voice Test
+
+Run the voice test script to verify each OSINT agent voice:
+
+```bash
+cd "$PACK_SOURCE"
+bun run src/tools/voice-test.ts
+```
+
+This will:
+- Send a test phrase to VoiceServer for each OSINT agent
+- Verify audio is generated successfully
+- Report pass/fail for each voice
+
+### 6.2 Manual Voice Test (Optional)
+
+Test individual voices via curl:
+
+```bash
+# Test collector voice (Rachel)
+curl -X POST http://localhost:8888/notify \
+  -H "Content-Type: application/json" \
+  -d '{"title": "OSINT", "message": "Intelligence collection complete. Sources verified.", "voice_name": "collector"}'
+
+# Test shadow voice (Clyde)
+curl -X POST http://localhost:8888/notify \
+  -H "Content-Type: application/json" \
+  -d '{"title": "OSINT", "message": "Attack surface analysis reveals critical exposure.", "voice_name": "shadow"}'
+
+# Test auditor voice (Sarah)
+curl -X POST http://localhost:8888/notify \
+  -H "Content-Type: application/json" \
+  -d '{"title": "OSINT", "message": "Red flag identified. Recommend further investigation.", "voice_name": "auditor"}'
+```
+
+### 6.3 Expected Results
+
+| Agent | Voice | Should Sound |
+|-------|-------|--------------|
+| collector | Rachel | Calm, measured, academic |
+| linker | Daniel | Sophisticated, British accent |
+| auditor | Sarah | Authoritative, professional |
+| shadow | Clyde | Intense, gravelly |
+| verifier | Adam | Warm, careful |
+
+**Mark Phase 6 as completed when voices are verified.**
+
+---
+
 ## Success/Failure Messages
 
 ### On Success
 
 ```
-"PAI OSINT Skill v1.1.0 installed successfully!
+"PAI OSINT Skill v1.3.0 installed successfully!
 
 What's available:
-- 16 OSINT workflows for person, domain, company, and digital artifact investigation
+- 17 OSINT workflows for person, domain, company, and digital artifact investigation
+- Investigation Orchestrator with iterative pivot-driven investigations
+- Parallel agent spawning for faster intelligence gathering
 - Knowledge graph integration for persistent findings
 - Dual storage: knowledge graph + file reports
 
 Try it:
-- 'investigate username johndoe'
+- 'deep dive on username johndoe' (iterative pivot investigation)
+- 'investigate johndoe, follow the leads'
 - 'company profile Acme Corp'
 - 'risk assessment Vendor LLC'
 - 'email lookup john@example.com'
-- 'phone lookup +1-555-123-4567'
-- 'analyze this image'
 
 See docs/QUICK_REFERENCE.md for all commands."
 ```
@@ -527,6 +632,7 @@ done
 | File | Purpose |
 |------|---------|
 | `src/skills/osint/SKILL.md` | Skill definition with intent routing |
+| `src/skills/osint/Workflows/InvestigationOrchestrator.md` | **Iterative pivot-driven investigations with parallel agents** |
 | `src/skills/osint/Workflows/UsernameRecon.md` | Username enumeration across 400+ platforms |
 | `src/skills/osint/Workflows/DomainRecon.md` | DNS, WHOIS, CT logs, subdomains |
 | `src/skills/osint/Workflows/SocialCapture.md` | Social media profile capture |

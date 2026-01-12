@@ -81,9 +81,9 @@ Detect:
 - WAF presence
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the infrastructure data:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the infrastructure data:
 
 ```
 Store the following as structured episodes:

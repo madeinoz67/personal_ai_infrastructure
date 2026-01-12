@@ -18,6 +18,31 @@ Evaluate company risks including litigation, adverse media, regulatory issues, a
 - `depth` (optional): basic, standard, enhanced (default: standard)
 - `categories` (optional): specific risk categories to focus on
 
+---
+
+## REQUIRED: Agent Delegation
+
+**This workflow MUST be executed by a specialized OSINT agent with security expertise.**
+
+```bash
+# Spawn risk assessment agent
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,security,skeptical" \
+  --task "Conduct risk assessment for '{company}' including litigation, regulatory status, sanctions screening, adverse media, and ESG evaluation" \
+  --output json
+```
+
+**Agent Traits:**
+- `intelligence` - OSINT expertise and due diligence tradecraft
+- `security` - Understanding of threat models and risk frameworks
+- `skeptical` - Critical evaluation of claims, demand evidence
+
+**For Enhanced Due Diligence:** Add `thorough` approach trait for exhaustive analysis.
+
+**Do NOT execute this workflow directly without spawning an agent.**
+
+---
+
 ## Process
 
 ### Step 1: Litigation Research
@@ -145,9 +170,9 @@ Calculate overall risk score:
 - Compare to industry benchmarks
 ```
 
-### Step 9: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the risk assessment:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter with type: research, category: osint
 
 ```
 Store the following as structured episodes:
@@ -420,7 +445,7 @@ business engagement. No significant barriers identified.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 Stored to Knowledge Graph: Yes
 🔗 Entity ID: risk_assessment_acme_2026
-📁 Report saved: $PAI_DIR/history/research/osint/risk_acme_2026-01-10.md
+💾 Captured to Memory: Yes (type: research, category: osint)
 ```
 
 ## Data Sources

@@ -85,9 +85,9 @@ Verify with multiple sources:
 - Court records
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the corporate structure:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the corporate structure:
 
 ```
 Store the following as structured episodes:

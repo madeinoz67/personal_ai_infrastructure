@@ -13,6 +13,57 @@ Create comprehensive target profile by combining all OSINT workflows.
 - `target`: Primary identifier (username, email, domain, or name)
 - `scope` (optional): light, standard, comprehensive
 
+---
+
+## REQUIRED: Multi-Agent Orchestration
+
+**This workflow requires MULTIPLE specialized agents working in parallel.**
+
+### Agent Team Composition
+
+```bash
+# Agent 1: Username/Identity Analyst
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,analytical,exploratory" \
+  --task "Enumerate username '{target}' across platforms, build comprehensive account inventory" \
+  --output json
+
+# Agent 2: Domain/Infrastructure Specialist
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,technical,systematic" \
+  --task "Analyze domains and infrastructure associated with '{target}'" \
+  --output json
+
+# Agent 3: Social Network Analyst
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,analytical,synthesizing" \
+  --task "Map social network, relationships, and entity connections for '{target}'" \
+  --output json
+
+# Agent 4: Timeline/Pattern Analyst
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,analytical,systematic" \
+  --task "Construct activity timeline and behavioral patterns for '{target}'" \
+  --output json
+
+# Agent 5: Intelligence Synthesizer (Coordinator)
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,meticulous,thorough" \
+  --task "Compile comprehensive target dossier from all investigation findings for '{target}'" \
+  --output json
+```
+
+### Orchestration Pattern
+
+1. **Parallel Execution:** Agents 1-4 run concurrently on different intelligence domains
+2. **Synthesis:** Agent 5 consolidates findings into unified dossier
+3. **Cross-Reference:** Verify overlapping identifiers between agents
+4. **Confidence Scoring:** Rate each finding based on source corroboration
+
+**Do NOT execute this workflow as a single agent or without spawning specialized agents.**
+
+---
+
 ## Process
 
 ### Step 1: Initial Target Analysis
@@ -81,43 +132,30 @@ Evaluate:
 Compile IntelReport with all findings
 ```
 
-### Step 6: Store to Knowledge Graph
+### Step 6: Output for Memory Capture
 
-Use the **knowledge** skill to persist the complete profile:
+Format the report with proper metadata so memory hooks can capture it automatically.
 
+**Required Output Format:**
+
+```markdown
+---
+type: research
+category: osint
+subcategory: target-profile
+target: {target}
+date: {YYYY-MM-DD}
+---
+
+# OSINT Target Profile: {target}
+
+[Full investigation report content...]
 ```
-Store the following as structured episodes:
 
-1. Target Profile:
-   - Name: "Profile: {target}"
-   - Data: Target type, primary identifiers, key findings summary
-   - Group: "osint-profiles"
-
-2. Identity Summary:
-   - Name: "Identity: {target}"
-   - Data: Confirmed name, aliases, email, location, occupation
-   - Confidence levels for each attribute
-
-3. Digital Footprint:
-   - Name: "Footprint: {target}"
-   - Data: All platforms, domains, infrastructure summary
-   - Relationships: owns, uses, controls
-
-4. Network Graph:
-   - Name: "Network: {target}"
-   - Data: Key relationships, organizations, geographic associations
-   - Relationships: works_at, collaborates_with, follows
-
-5. Risk Assessment:
-   - Name: "Risk: {target}"
-   - Data: Exposure level, security posture, attack surface
-   - Recommendations
-
-6. Investigation Metadata:
-   - Name: "Investigation: {target}_{date}"
-   - Data: Duration, entities discovered, relationships mapped, scope level
-   - Source attribution and methodology
-```
+**Memory Hook Recognition:**
+- The `type: research` frontmatter triggers automatic capture
+- `category: osint` routes to OSINT knowledge domain
+- Knowledge graph automatically extracts entities and relationships
 
 ## Output Format
 
@@ -316,8 +354,7 @@ Entities Discovered: 23
 Relationships Mapped: 45
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💾 Stored to Knowledge Graph: Yes
-📁 Report saved: $PAI_DIR/history/research/osint/profile_johndoe_2026-01-09.md
+💾 Captured to Memory: Yes (type: research, category: osint)
 ```
 
 ## Scope Levels

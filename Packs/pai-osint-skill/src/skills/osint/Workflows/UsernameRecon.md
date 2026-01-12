@@ -12,6 +12,48 @@ Enumerate a username across 400+ platforms to discover digital footprint.
 ## Input
 - `username`: The username/handle to search
 
+---
+
+## REQUIRED: Agent Delegation
+
+**This workflow MUST be executed by a specialized OSINT agent via the Task tool.**
+
+### Step 1: Generate Agent Prompt
+```bash
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,analytical,exploratory" \
+  --task "Enumerate username '{username}' across social media, developer, gaming, and creative platforms" \
+  --output json
+```
+
+### Step 2: Spawn Subagent (MANDATORY)
+
+**IMMEDIATELY after getting the AgentFactory output, use the Task tool:**
+
+```
+Task tool parameters:
+  subagent_type: "general-purpose"
+  description: "OSINT username recon for {username}"
+  prompt: |
+    [Paste the "prompt" field from AgentFactory JSON]
+
+    ## Workflow Instructions
+    [Include the Process steps below]
+
+    ## Voice Output Required
+    Include 🗣️ Recon: or 🗣️ Analyst: lines at start, key findings, and completion.
+```
+
+**Agent Traits:**
+- `intelligence` - OSINT expertise and tradecraft
+- `analytical` - Methodical platform enumeration
+- `exploratory` - Follow leads to discover accounts
+
+⚠️ **FORBIDDEN: Executing this workflow directly without the Task tool spawn.**
+⚠️ **WHY: Voice system requires SubagentStop hook, which only fires for Task subagents.**
+
+---
+
 ## Process
 
 ### Step 1: Validate Input
@@ -62,9 +104,9 @@ Found on [X] platforms:
   - Last Activity: [if detectable]
 ```
 
-### Step 5: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the findings:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the findings:
 
 ```
 Store the following as structured episodes:

@@ -14,6 +14,48 @@ Generate structured intelligence reports from collected OSINT data.
 - `targets` (optional): Specific targets to include
 - `format` (optional): Output format (markdown, pdf, json)
 
+---
+
+## REQUIRED: Agent Delegation
+
+**This workflow MUST be executed by a specialized report synthesis agent via the Task tool.**
+
+### Step 1: Generate Agent Prompt
+```bash
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,communications,consultative" \
+  --task "Generate comprehensive intelligence report for investigation '{investigation_name}', synthesizing all collected OSINT data into structured dossier format" \
+  --output json
+```
+
+### Step 2: Spawn Subagent (MANDATORY)
+
+**IMMEDIATELY after getting the AgentFactory output, use the Task tool:**
+
+```
+Task tool parameters:
+  subagent_type: "general-purpose"
+  description: "OSINT intel report for {investigation_name}"
+  prompt: |
+    [Paste the "prompt" field from AgentFactory JSON]
+
+    ## Workflow Instructions
+    [Include the Process steps below]
+
+    ## Voice Output Required
+    Include 🗣️ IntelBriefer: lines at start, key sections, and completion.
+```
+
+**Agent Traits:**
+- `intelligence` - OSINT expertise and tradecraft for intelligence products
+- `communications` - Professional report writing and clear presentation
+- `consultative` - Advisory stance with actionable recommendations
+
+⚠️ **FORBIDDEN: Executing this workflow directly without the Task tool spawn.**
+⚠️ **WHY: Voice system requires SubagentStop hook, which only fires for Task subagents.**
+
+---
+
 ## Process
 
 ### Step 1: Gather Intelligence
@@ -82,14 +124,14 @@ Report metadata:
 
 ### Step 5: Export
 ```
-Save to:
-- $PAI_DIR/history/research/osint/[investigation_name]/
-- Knowledge graph (report entity)
+Format with frontmatter for memory capture:
+- type: research
+- category: osint
 ```
 
-### Step 6: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the report:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter with type: research, category: osint
 
 ```
 Store the following as structured episodes:

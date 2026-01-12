@@ -15,6 +15,48 @@ Comprehensive email address investigation including validation, breach exposure,
 - `email`: The email address to investigate (e.g., john.doe@example.com)
 - `headers`: (Optional) Raw email headers for header analysis
 
+---
+
+## REQUIRED: Agent Delegation
+
+**This workflow MUST be executed by a specialized OSINT agent via the Task tool.**
+
+### Step 1: Generate Agent Prompt
+```bash
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,analytical,systematic" \
+  --task "Investigate email '{email}' including validation, breach exposure, social correlation, and domain analysis" \
+  --output json
+```
+
+### Step 2: Spawn Subagent (MANDATORY)
+
+**IMMEDIATELY after getting the AgentFactory output, use the Task tool:**
+
+```
+Task tool parameters:
+  subagent_type: "general-purpose"
+  description: "OSINT email recon for {email}"
+  prompt: |
+    [Paste the "prompt" field from AgentFactory JSON]
+
+    ## Workflow Instructions
+    [Include the Process steps below]
+
+    ## Voice Output Required
+    Include 🗣️ Recon: or 🗣️ Analyst: lines at start, key findings, and completion.
+```
+
+**Agent Traits:**
+- `intelligence` - OSINT expertise and breach database knowledge
+- `analytical` - Systematic breach and account correlation
+- `systematic` - Structured investigation methodology
+
+⚠️ **FORBIDDEN: Executing this workflow directly without the Task tool spawn.**
+⚠️ **WHY: Voice system requires SubagentStop hook, which only fires for Task subagents.**
+
+---
+
 ## Process
 
 ### Step 1: Email Validation
@@ -121,9 +163,9 @@ Email reputation scoring:
 - Risk indicators
 ```
 
-### Step 8: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist findings:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter with type: research, category: osint
 
 ```
 Store the following as structured episodes:

@@ -12,6 +12,48 @@ Capture and analyze social media profiles, storing intelligence to knowledge gra
 ## Input
 - `target`: Username, handle (@user), or profile URL
 
+---
+
+## REQUIRED: Agent Delegation
+
+**This workflow MUST be executed by a specialized OSINT agent via the Task tool.**
+
+### Step 1: Generate Agent Prompt
+```bash
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,meticulous,thorough" \
+  --task "Capture and analyze social media profile '{target}' including profile data, engagement metrics, and content analysis" \
+  --output json
+```
+
+### Step 2: Spawn Subagent (MANDATORY)
+
+**IMMEDIATELY after getting the AgentFactory output, use the Task tool:**
+
+```
+Task tool parameters:
+  subagent_type: "general-purpose"
+  description: "OSINT social capture for {target}"
+  prompt: |
+    [Paste the "prompt" field from AgentFactory JSON]
+
+    ## Workflow Instructions
+    [Include the Process steps below]
+
+    ## Voice Output Required
+    Include 🗣️ Collector: or 🗣️ Analyst: lines at start, key findings, and completion.
+```
+
+**Agent Traits:**
+- `intelligence` - OSINT expertise and tradecraft
+- `meticulous` - Detailed profile data extraction
+- `thorough` - Complete content capture
+
+⚠️ **FORBIDDEN: Executing this workflow directly without the Task tool spawn.**
+⚠️ **WHY: Voice system requires SubagentStop hook, which only fires for Task subagents.**
+
+---
+
 ## Process
 
 ### Step 1: Identify Platform
@@ -75,9 +117,9 @@ Location clues:
 - Time zone indicators from posting times
 ```
 
-### Step 6: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the capture:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the capture:
 
 ```
 Store the following as structured episodes:

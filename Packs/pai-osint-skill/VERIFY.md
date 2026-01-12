@@ -76,6 +76,31 @@ done
 
 ---
 
+## Voice Configuration (3 checks)
+
+### Check 10: VoiceServer Config Present
+```bash
+[ -f "$PAI_DIR/VoiceServer/voice-personalities.json" ] && echo "✓ PASS" || echo "✗ FAIL"
+```
+**Expected:** voice-personalities.json exists in VoiceServer directory
+
+### Check 10a: OSINT Voices Configured
+```bash
+# Check that OSINT agents have voices configured (collector, linker, auditor, shadow, verifier)
+OSINT_VOICES=$(grep -c '"collector"\|"linker"\|"auditor"\|"shadow"\|"verifier"' "$PAI_DIR/VoiceServer/voice-personalities.json" 2>/dev/null)
+[ "$OSINT_VOICES" -ge 5 ] && echo "✓ PASS ($OSINT_VOICES/5 OSINT voices)" || echo "⚠ WARNING: Only $OSINT_VOICES/5 OSINT voices configured"
+```
+**Expected:** All 5 OSINT agent voices are configured
+
+### Check 10b: Voice IDs Are Real
+```bash
+# Check that voices have real ElevenLabs IDs (not env var placeholders)
+! grep -q '"\${ELEVENLABS_VOICE_' "$PAI_DIR/VoiceServer/voice-personalities.json" 2>/dev/null && echo "✓ PASS" || echo "⚠ WARNING: Some voices use env var placeholders"
+```
+**Expected:** Voice IDs are actual ElevenLabs IDs, not ${ENV_VAR} placeholders
+
+---
+
 ## Skill Configuration (3 checks)
 
 ### Check 11: Valid YAML Frontmatter
@@ -139,6 +164,14 @@ echo "Dependencies:"
 if [ -d "$PAI_DIR/skills/Browser" ]; then echo "  ✓ Browser skill"; ((PASS++)); else echo "  ⚠ Browser skill not installed"; ((WARN++)); fi
 if [ -d "$PAI_DIR/skills/Knowledge" ]; then echo "  ✓ Knowledge skill"; ((PASS++)); else echo "  ⚠ Knowledge skill not installed"; ((WARN++)); fi
 
+# Voice Configuration
+echo ""
+echo "Voice Configuration:"
+if [ -f "$PAI_DIR/VoiceServer/voice-personalities.json" ]; then echo "  ✓ VoiceServer config present"; ((PASS++)); else echo "  ✗ VoiceServer config missing"; ((FAIL++)); fi
+OSINT_VOICES=$(grep -c '"collector"\|"linker"\|"auditor"\|"shadow"\|"verifier"' "$PAI_DIR/VoiceServer/voice-personalities.json" 2>/dev/null || echo 0)
+if [ "$OSINT_VOICES" -ge 5 ]; then echo "  ✓ OSINT voices configured ($OSINT_VOICES/5)"; ((PASS++)); else echo "  ⚠ OSINT voices incomplete ($OSINT_VOICES/5)"; ((WARN++)); fi
+if ! grep -q '"\${ELEVENLABS_VOICE_' "$PAI_DIR/VoiceServer/voice-personalities.json" 2>/dev/null; then echo "  ✓ Voice IDs are real"; ((PASS++)); else echo "  ⚠ Some voices use env placeholders"; ((WARN++)); fi
+
 # Configuration
 echo ""
 echo "Configuration:"
@@ -167,8 +200,9 @@ fi
 | Core Structure | 5 | All must pass |
 | Workflows | 2 | All must pass (16 files, 16 with knowledge) |
 | Dependencies | 2 | Warnings acceptable |
+| Voice Configuration | 3 | 1 must pass (Traits.yaml), 2 warnings acceptable |
 | Configuration | 3 | All must pass |
-| **Total** | **12** | **10+ pass, 0 fail** |
+| **Total** | **15** | **11+ pass, 0 fail** |
 
 ---
 

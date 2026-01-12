@@ -13,6 +13,48 @@ Comprehensive domain investigation including DNS, WHOIS, SSL, and subdomain enum
 ## Input
 - `domain`: The domain to investigate (e.g., example.com)
 
+---
+
+## REQUIRED: Agent Delegation
+
+**This workflow MUST be executed by a specialized OSINT agent via the Task tool.**
+
+### Step 1: Generate Agent Prompt
+```bash
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,technical,systematic" \
+  --task "Investigate domain '{domain}' including WHOIS, DNS records, SSL certificates, subdomains, and infrastructure" \
+  --output json
+```
+
+### Step 2: Spawn Subagent (MANDATORY)
+
+**IMMEDIATELY after getting the AgentFactory output, use the Task tool:**
+
+```
+Task tool parameters:
+  subagent_type: "general-purpose"
+  description: "OSINT domain recon for {domain}"
+  prompt: |
+    [Paste the "prompt" field from AgentFactory JSON]
+
+    ## Workflow Instructions
+    [Include the Process steps below]
+
+    ## Voice Output Required
+    Include 🗣️ Recon: or 🗣️ Analyst: lines at start, key findings, and completion.
+```
+
+**Agent Traits:**
+- `intelligence` - OSINT expertise and tradecraft
+- `technical` - DNS, networking, and infrastructure knowledge
+- `systematic` - Structured enumeration methodology
+
+⚠️ **FORBIDDEN: Executing this workflow directly without the Task tool spawn.**
+⚠️ **WHY: Voice system requires SubagentStop hook, which only fires for Task subagents.**
+
+---
+
 ## Process
 
 ### Step 1: WHOIS Lookup
@@ -78,9 +120,9 @@ For main domain and discovered subdomains:
 - Archive.org snapshots
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the findings:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the findings:
 
 ```
 Store the following as structured episodes:

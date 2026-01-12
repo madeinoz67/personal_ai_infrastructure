@@ -15,6 +15,57 @@ Comprehensive company/business investigation combining all company-focused OSINT
 - `jurisdiction` (optional): Country/state for registry lookup
 - `scope` (optional): light, standard, comprehensive
 
+---
+
+## REQUIRED: Multi-Agent Orchestration
+
+**This workflow requires MULTIPLE specialized agents working in parallel.**
+
+### Agent Team Composition
+
+```bash
+# Agent 1: Corporate Structure Analyst
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,business,systematic" \
+  --task "Map corporate structure, ownership hierarchy, subsidiaries, and key personnel for '{company}'" \
+  --output json
+
+# Agent 2: Financial Intelligence Analyst
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,finance,thorough" \
+  --task "Investigate financial status, funding history, SEC filings, and valuation for '{company}'" \
+  --output json
+
+# Agent 3: Technical Reconnaissance Specialist
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,technical,systematic" \
+  --task "Analyze digital footprint, domains, technology stack, and infrastructure for '{company}'" \
+  --output json
+
+# Agent 4: Risk Assessment Analyst
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,security,skeptical" \
+  --task "Conduct risk assessment, litigation check, adverse media, and sanctions screening for '{company}'" \
+  --output json
+
+# Agent 5: Intelligence Synthesizer (Coordinator)
+bun run $PAI_DIR/skills/Agents/Tools/AgentFactory.ts \
+  --traits "intelligence,communications,synthesizing" \
+  --task "Compile comprehensive company intelligence dossier from parallel agent findings for '{company}'" \
+  --output json
+```
+
+### Orchestration Pattern
+
+1. **Parallel Execution:** Agents 1-4 run concurrently on different intelligence domains
+2. **Synthesis:** Agent 5 consolidates findings into unified dossier
+3. **Cross-Reference:** Verify overlapping data points between agents
+4. **Confidence Scoring:** Rate each finding based on source corroboration
+
+**Do NOT execute this workflow as a single agent or without spawning specialized agents.**
+
+---
+
 ## Process
 
 ### Step 1: Initial Company Identification
@@ -80,9 +131,9 @@ Merge all workflow outputs:
 Compile IntelReport with all findings
 ```
 
-### Step 6: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the investigation:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the investigation:
 
 ```
 Store the following as structured episodes:
@@ -351,7 +402,7 @@ Relationships Mapped: 52
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 Stored to Knowledge Graph: Yes
-📁 Report saved: $PAI_DIR/history/research/osint/company_acme_2026-01-10.md
+💾 Captured to Memory: Yes (type: research, category: osint)
 ```
 
 ## Scope Levels

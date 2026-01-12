@@ -91,9 +91,9 @@ Synthesize findings:
 - Threats (competitive risks)
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the competitive intelligence:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the competitive intelligence:
 
 ```
 Store the following as structured episodes:

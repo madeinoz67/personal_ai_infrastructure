@@ -82,9 +82,9 @@ Create relationship map:
 - Related entities (associated but different)
 ```
 
-### Step 9: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the entity links:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the entity links:
 
 ```
 Store the following as structured episodes:

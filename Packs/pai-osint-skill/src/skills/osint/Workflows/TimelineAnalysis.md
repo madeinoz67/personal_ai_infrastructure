@@ -69,9 +69,9 @@ Identify unusual patterns:
 - Behavioral shifts
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the timeline analysis:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the timeline analysis:
 
 ```
 Store the following as structured episodes:

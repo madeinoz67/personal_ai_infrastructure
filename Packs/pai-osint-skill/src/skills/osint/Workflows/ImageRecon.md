@@ -213,9 +213,9 @@ Shadow Analysis:
 - Hemisphere determination
 ```
 
-### Step 7: Store to Knowledge Graph
+### Step: Output for Memory Capture
 
-Use the **knowledge** skill to persist the findings:
+Format output with proper metadata so memory hooks can capture it automatically. Include frontmatter: the findings:
 
 ```
 Store the following as structured episodes:

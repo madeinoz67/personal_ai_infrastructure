@@ -1,23 +1,23 @@
 ---
 name: PAI OSINT Skill
-pack-id: pai-osint-skill-v1.1.0
-version: 1.1.0
+pack-id: pai-osint-skill-v1.3.0
+version: 1.3.0
 author: pai
-description: AI-powered Open Source Intelligence collection and analysis with knowledge graph integration
+description: AI-powered Open Source Intelligence collection and analysis with knowledge graph integration and iterative pivot-driven investigations
 type: skill
 purpose-type: [intelligence, reconnaissance, investigation, analysis]
 platform: claude-code
-dependencies: [pai-browser-skill, pai-knowledge-system]
-keywords: [osint, intelligence, reconnaissance, investigation, social-media, domain-analysis, geolocation, company-research, due-diligence, corporate-intelligence, competitor-analysis]
+dependencies: [pai-browser-skill, pai-knowledge-system, pai-agents-skill]
+keywords: [osint, intelligence, reconnaissance, investigation, social-media, domain-analysis, geolocation, company-research, due-diligence, corporate-intelligence, competitor-analysis, pivot-detection, iterative-investigation]
 ---
 
 <p align="center">
   <img src="../icons/pai-osint-skill.png" alt="PAI OSINT Skill" width="256">
 </p>
 
-# PAI OSINT Skill v1.1.0
+# PAI OSINT Skill v1.3.0
 
-> AI-powered Open Source Intelligence collection and analysis with knowledge graph integration
+> AI-powered Open Source Intelligence collection and analysis with knowledge graph integration and **iterative pivot-driven investigations**
 
 ---
 
@@ -31,6 +31,7 @@ keywords: [osint, intelligence, reconnaissance, investigation, social-media, dom
 - [User Guide](docs/USER_GUIDE.md) - Complete usage documentation
 - [Quick Reference](docs/QUICK_REFERENCE.md) - Command cheat sheet
 - [Company Research Guide](docs/COMPANY_RESEARCH.md) - Business intelligence workflows
+- [Changelog](docs/CHANGELOG.md) - Version history and release notes
 
 **Advanced:**
 - [Image Analysis Tools](docs/IMAGE_ANALYSIS_TOOLS.md) - Tool requirements and setup
@@ -72,6 +73,7 @@ Please follow the installation instructions in `INSTALL.md` to integrate this pa
 | Component | File | Purpose |
 |-----------|------|---------|
 | OSINT Skill Definition | `skills/osint/SKILL.md` | Intent routing and workflow dispatch |
+| **Investigation Orchestrator** | `Workflows/InvestigationOrchestrator.md` | **Iterative pivot-driven investigations with parallel agents** |
 | Username Reconnaissance | `Workflows/UsernameRecon.md` | Enumerate usernames across 400+ platforms |
 | Domain Reconnaissance | `Workflows/DomainRecon.md` | DNS, WHOIS, CT logs, subdomains |
 | Social Media Capture | `Workflows/SocialCapture.md` | Profile capture to knowledge graph |
@@ -90,9 +92,9 @@ Please follow the installation instructions in `INSTALL.md` to integrate this pa
 | Image Reconnaissance | `Workflows/ImageRecon.md` | Image metadata, forensics, reverse search |
 
 **Summary:**
-- **Files created:** 17 (1 skill + 16 workflows)
+- **Files created:** 19 (1 skill + 18 workflows including InvestigationOrchestrator)
 - **Directories created:** 2 (`skills/osint/Workflows/`, `history/research/osint/`)
-- **Dependencies:** pai-browser-skill (recommended), pai-knowledge-system (required)
+- **Dependencies:** pai-agents-skill (required), pai-knowledge-system (required), pai-browser-skill (recommended), Bright Data MCP (recommended)
 
 ---
 
@@ -259,6 +261,8 @@ The OSINT system triggers on natural language or `/osint` commands:
 
 | Trigger | Workflow | Description |
 |---------|----------|-------------|
+| **"deep dive on X"** | **InvestigationOrchestrator** | **Iterative pivot-driven investigation** |
+| **"investigate X, follow the leads"** | **InvestigationOrchestrator** | **Auto-expand as intel discovered** |
 | "find accounts for username X" | UsernameRecon | Enumerate across platforms |
 | "investigate domain X" | DomainRecon | DNS, WHOIS, CT logs |
 | "capture social profile for @X" | SocialCapture | Store profile to graph |
@@ -280,7 +284,38 @@ The OSINT system triggers on natural language or `/osint` commands:
 
 ## Example Usage
 
-### Example 1: Username Reconnaissance
+### Example 1: Iterative Pivot-Driven Investigation (NEW)
+
+```
+User: "Deep dive on username johndoe"
+
+System executes InvestigationOrchestrator workflow:
+
+PHASE 1: Initial Collection (Parallel Agents)
+├── UsernameRecon Agent → Found 15 accounts
+├── SocialCapture Agent → Captured 8 profiles
+└── DomainRecon Agent → Found personal domain
+
+PHASE 2: Pivot Detection
+├── Email discovered: john@example.com (HIGH priority)
+├── Company discovered: Acme Corp (MEDIUM priority)
+└── Domain discovered: johndoe.dev (MEDIUM priority)
+
+PHASE 3: User Approval (Interactive Mode)
+"Found 3 pivot opportunities. Pursue 1,2,3 or defer?"
+
+PHASE 4: Expansion (Depth 1)
+├── EmailRecon Agent → 2 breach exposures
+├── CompanyProfile Agent → Corporate structure mapped
+└── DomainRecon Agent → WHOIS, hosting analyzed
+
+PHASE 5: Synthesis & Report
+└── Comprehensive dossier with 27 entities, 45 relationships
+
+Output: Investigation complete. Deferred pivots saved to Knowledge Graph.
+```
+
+### Example 2: Username Reconnaissance
 
 ```
 User: "Find all accounts for username johndoe"
@@ -381,13 +416,17 @@ export PAI_DIR="$HOME/.claude"
 
 ## Dependencies
 
-- **browser skill** - Browser automation for web scraping (recommended)
-  - Without this: Limited web scraping, some workflows will fail
+- **agents skill** - Agent delegation and parallel spawning (required)
+  - Without this: Cannot execute OSINT workflows
 - **knowledge skill** - Knowledge graph for entity storage (required)
   - Without this: Findings stored to files only, no cross-investigation linking
+- **browser skill** - Browser automation for web scraping (recommended)
+  - Without this: Limited web scraping, some workflows will fail
+- **Bright Data MCP** - Enhanced web scraping and search (recommended)
+  - Without this: Uses standard search, may hit rate limits on some sites
 
-**Required:** pai-knowledge-system for knowledge graph persistence
-**Recommended:** pai-browser-skill for JavaScript-heavy sites and authentication
+**Required:** pai-agents-skill, pai-knowledge-system
+**Recommended:** pai-browser-skill, Bright Data MCP (see [MCP servers](https://github.com/anthropics/claude-code-mcp-servers#bright-data))
 
 ---
 
@@ -431,28 +470,21 @@ See `docs/` directory for detailed user guides:
 
 ## Changelog
 
+See [docs/CHANGELOG.md](docs/CHANGELOG.md) for full version history.
+
+### v1.2.0 (January 2026)
+- **Mandatory Agent Delegation** - All OSINT workflows now require specialized agents
+- **Workflow → Agent Trait Mapping** - Each workflow has specific recommended traits
+- **Multi-Agent Orchestration** - Complex investigations support parallel agents
+- **pai-agents-skill** is now a required dependency
+
 ### v1.1.0 (January 2026)
-- **NEW: Company & Business Research Module**
-  - CompanyProfile: Comprehensive company investigation dossiers
-  - CorporateStructure: Ownership hierarchy, subsidiaries, directors
-  - FinancialRecon: SEC filings, funding history, investor analysis
-  - CompetitorAnalysis: Market positioning, SWOT, competitive landscape
-  - RiskAssessment: Litigation, sanctions, adverse media, due diligence
-- **NEW: Digital Artifact Analysis Module**
-  - EmailRecon: Email address investigation and breach checking
-  - PhoneRecon: Phone number lookup and validation
-  - ImageRecon: Image metadata, forensics, and reverse search
+- **Company & Business Research Module** - 5 new workflows for corporate intelligence
+- **Digital Artifact Analysis Module** - Email, phone, and image reconnaissance
 - Added explicit **knowledge** skill integration to all 16 workflows
-- Changed skill name to lowercase `osint` per PAI conventions
 - Added user documentation under `docs/`
-- Updated VERIFY.md with comprehensive checks
 
 ### v1.0.0 (January 2026)
-- Initial release
-- 8 core workflows
-- Browser skill integration
-- Knowledge skill integration
-- Username enumeration (400+ platforms)
-- Domain reconnaissance
-- Social media capture
-- Intelligence reporting
+- Initial release with 8 core workflows
+- Browser and knowledge skill integration
+- Username enumeration, domain recon, social capture, intelligence reporting
