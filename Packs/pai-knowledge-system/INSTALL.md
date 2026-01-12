@@ -92,6 +92,23 @@ else
     echo "✓ Port 6379 is available"
 fi
 
+# 5b. Check if Neo4j ports are available (for Neo4j backend)
+echo ""
+echo "Checking Neo4j ports (7474, 7687)..."
+if lsof -i :7474 > /dev/null 2>&1; then
+    echo "⚠️  Port 7474 is already in use (Neo4j Browser)"
+    lsof -i :7474 | head -5
+else
+    echo "✓ Port 7474 is available (Neo4j Browser)"
+fi
+
+if lsof -i :7687 > /dev/null 2>&1; then
+    echo "⚠️  Port 7687 is already in use (Neo4j Bolt)"
+    lsof -i :7687 | head -5
+else
+    echo "✓ Port 7687 is available (Neo4j Bolt)"
+fi
+
 # 6. Check for existing Knowledge skill
 echo ""
 echo "Checking for existing Knowledge skill..."
@@ -161,7 +178,8 @@ Based on the detection above, follow the appropriate path:
 |----------|---------------|--------|
 | **Clean Install** | No MCP server, ports available, no existing skill | Proceed normally with Step 1 |
 | **Server Running** | MCP server already running | Decide: keep existing (skip to Step 4) or stop/reinstall |
-| **Port Conflict** | Ports 8000 or 6379 in use | Stop conflicting services or change ports in run.ts |
+| **Port Conflict (FalkorDB)** | Ports 8000 or 6379 in use | Stop conflicting services or change ports in run.ts |
+| **Port Conflict (Neo4j)** | Ports 7474 or 7687 in use | Stop conflicting services or use FalkorDB backend |
 | **Skill Exists** | Knowledge skill already installed | Backup old skill, compare versions, then replace |
 | **Missing Dependencies** | Podman or Bun not installed | Install dependencies first, then retry |
 
@@ -332,13 +350,22 @@ for line in lines:
         existing_vars[match.group(1)] = match.group(2)
 
 # Variables to add (only if not already present) - all use PAI_KNOWLEDGE_* prefix
+# Note: DATABASE_TYPE defaults to 'falkordb' but can be set to 'neo4j'
 vars_to_add = {
     'PAI_KNOWLEDGE_LLM_PROVIDER': os.getenv('PAI_KNOWLEDGE_LLM_PROVIDER', os.getenv('LLM_PROVIDER', 'openai')),
     'PAI_KNOWLEDGE_EMBEDDER_PROVIDER': os.getenv('PAI_KNOWLEDGE_EMBEDDER_PROVIDER', os.getenv('EMBEDDER_PROVIDER', 'openai')),
     'PAI_KNOWLEDGE_MODEL_NAME': os.getenv('PAI_KNOWLEDGE_MODEL_NAME', os.getenv('MODEL_NAME', 'gpt-4o-mini')),
-    'PAI_KNOWLEDGE_DATABASE_TYPE': 'falkordb',
+    # Database backend: 'falkordb' (default) or 'neo4j'
+    'PAI_KNOWLEDGE_DATABASE_TYPE': os.getenv('PAI_KNOWLEDGE_DATABASE_TYPE', 'falkordb'),
+    # FalkorDB configuration (used when DATABASE_TYPE=falkordb)
     'PAI_KNOWLEDGE_FALKORDB_HOST': 'pai-knowledge-falkordb',
     'PAI_KNOWLEDGE_FALKORDB_PORT': '6379',
+    # Neo4j configuration (used when DATABASE_TYPE=neo4j)
+    'PAI_KNOWLEDGE_NEO4J_URI': 'bolt://pai-knowledge-neo4j:7687',
+    'PAI_KNOWLEDGE_NEO4J_USER': 'neo4j',
+    'PAI_KNOWLEDGE_NEO4J_PASSWORD': 'paiknowledge',
+    'PAI_KNOWLEDGE_NEO4J_DATABASE': 'neo4j',
+    # Common configuration
     'PAI_KNOWLEDGE_SEMAPHORE_LIMIT': '10',
     'PAI_KNOWLEDGE_GROUP_ID': 'main',
     'PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED': 'false',
@@ -390,7 +417,26 @@ echo "  - PAI Knowledge System settings (newly added)"
 > - If health check fails: Wait additional 30 seconds and retry - container may still be initializing
 > - Server must show "✓ Server is running" before proceeding to Step 4
 
-Launch the Graphiti MCP server with FalkorDB backend:
+**Database Backend Selection:**
+
+The PAI Knowledge System supports two database backends:
+
+| Backend | Description | Best For |
+|---------|-------------|----------|
+| **FalkorDB** (default) | Redis-based graph database with RediSearch | Simple setup, lower resource usage |
+| **Neo4j** | Native graph database with Cypher queries | Better special character handling, richer query language |
+
+To use Neo4j instead of FalkorDB, set the environment variable before starting:
+```bash
+export PAI_KNOWLEDGE_DATABASE_TYPE=neo4j
+```
+
+Or update your PAI `.env` file:
+```bash
+PAI_KNOWLEDGE_DATABASE_TYPE=neo4j
+```
+
+Launch the Graphiti MCP server:
 
 ```bash
 # Detect container runtime (Podman or Docker)
@@ -436,14 +482,24 @@ fi
 ```
 
 **Alternative: Using Docker Compose**
-If you prefer Docker Compose:
+
+If you prefer Docker Compose, use the appropriate compose file for your backend:
+
 ```bash
-# For Docker users
+# For FalkorDB backend (default)
 docker compose -f src/server/docker-compose.yml up -d
+
+# For Neo4j backend
+docker compose -f src/server/docker-compose-neo4j.yml up -d
 
 # Check status
 bun run src/skills/tools/status.ts
 ```
+
+**Neo4j Browser Access:**
+When using Neo4j backend, you can access the Neo4j Browser at http://localhost:7474
+- Username: `neo4j` (default)
+- Password: `paiknowledge` (default)
 
 **Troubleshooting:**
 - If server fails to start, check logs: `bun run src/skills/tools/logs.ts`
@@ -664,13 +720,24 @@ else
     echo "  Check logs: bun run src/skills/tools/logs.ts"
 fi
 
-# Check 3: FalkorDB accessible
-if podman exec pai-knowledge-graph-mcp redis-cli -p 6379 PING > /dev/null 2>&1; then
-    echo "✓ FalkorDB is accessible on port 6379"
-elif docker exec pai-knowledge-graph-mcp redis-cli -p 6379 PING > /dev/null 2>&1; then
-    echo "✓ FalkorDB is accessible on port 6379"
+# Check 3: Database accessible (FalkorDB or Neo4j)
+# Detect which backend is being used
+if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
+    # Neo4j backend
+    if curl -s --max-time 5 http://localhost:7474 > /dev/null 2>&1; then
+        echo "✓ Neo4j is accessible on port 7474"
+    else
+        echo "✗ Neo4j may not be accessible (port 7474)"
+    fi
 else
-    echo "✗ FalkorDB may not be accessible"
+    # FalkorDB backend (default)
+    if podman exec pai-knowledge-falkordb redis-cli PING > /dev/null 2>&1; then
+        echo "✓ FalkorDB is accessible"
+    elif docker exec pai-knowledge-falkordb redis-cli PING > /dev/null 2>&1; then
+        echo "✓ FalkorDB is accessible"
+    else
+        echo "✗ FalkorDB may not be accessible"
+    fi
 fi
 
 # Check 4: Skill installed
@@ -742,24 +809,40 @@ else
     echo "✗ Containers not found"
 fi
 
-# Test 3: Check FalkorDB is responding
+# Test 3: Check database backend is responding
 echo ""
-echo "Test 3: Checking FalkorDB..."
-if podman exec pai-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG" || \
-   docker exec pai-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG"; then
-    echo "✓ FalkorDB is responding"
+echo "Test 3: Checking database backend..."
+if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
+    # Neo4j backend
+    if curl -s --max-time 5 http://localhost:7474 > /dev/null 2>&1; then
+        echo "✓ Neo4j is responding (Browser at http://localhost:7474)"
+    else
+        echo "⚠️  Neo4j not responding (may still be starting)"
+    fi
 else
-    echo "⚠️  FalkorDB ping failed (may still be starting)"
+    # FalkorDB backend (default)
+    if podman exec pai-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG" || \
+       docker exec pai-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG"; then
+        echo "✓ FalkorDB is responding"
+    else
+        echo "⚠️  FalkorDB ping failed (may still be starting)"
+    fi
 fi
 
-# Test 4: Verify Lucene sanitization for hyphenated group_ids
+# Test 4: Verify Lucene sanitization for hyphenated group_ids (FalkorDB only)
 echo ""
 echo "Test 4: Testing Lucene query sanitization..."
-echo "This test verifies that hyphens in group_ids are properly escaped"
-echo "to prevent Lucene syntax errors."
 
-# Create a test script that calls the MCP server with a hyphenated group_id
-cat > /tmp/test_lucene_sanitization.ts << 'EOF'
+# Only run Lucene tests for FalkorDB backend
+if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
+    echo "✓ Skipping Lucene tests (Neo4j uses Cypher, not RediSearch)"
+    echo "  Neo4j handles special characters natively without escaping"
+else
+    echo "This test verifies that hyphens in group_ids are properly escaped"
+    echo "to prevent RediSearch Lucene syntax errors."
+
+    # Create a test script that calls the MCP server with a hyphenated group_id
+    cat > /tmp/test_lucene_sanitization.ts << 'EOF'
 import { sanitizeGroupId } from './src/hooks/lib/lucene';
 
 // Test cases with various hyphenated patterns
@@ -788,17 +871,18 @@ console.log('\n' + (allPassed ? '✓ All sanitization tests passed!' : '✗ Some
 process.exit(allPassed ? 0 : 1);
 EOF
 
-# Run the test
-if bun run /tmp/test_lucene_sanitization.ts 2>&1; then
-    echo "✓ Lucene sanitization is working correctly"
-    echo "  Hyphenated group_ids will be properly escaped in queries"
-else
-    echo "⚠️  Lucene sanitization test failed"
-    echo "  Check that src/hooks/lib/lucene.ts exists and exports sanitizeGroupId"
-fi
+    # Run the test
+    if bun run /tmp/test_lucene_sanitization.ts 2>&1; then
+        echo "✓ Lucene sanitization is working correctly"
+        echo "  Hyphenated group_ids will be properly escaped in queries"
+    else
+        echo "⚠️  Lucene sanitization test failed"
+        echo "  Check that src/hooks/lib/lucene.ts exists and exports sanitizeGroupId"
+    fi
 
-# Clean up test file
-rm -f /tmp/test_lucene_sanitization.ts
+    # Clean up test file
+    rm -f /tmp/test_lucene_sanitization.ts
+fi
 
 echo ""
 echo "Testing complete!"

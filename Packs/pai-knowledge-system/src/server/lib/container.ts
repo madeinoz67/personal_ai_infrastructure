@@ -44,17 +44,51 @@ export interface CommandResult {
 }
 
 /**
+ * Database backend type
+ */
+export type DatabaseBackend = "falkordb" | "neo4j";
+
+/**
  * Container Manager class
  */
 export class ContainerManager {
   private runtime: ContainerRuntime;
   private runtimeCommand: string;
 
-  // Default container names
+  // Default container names - FalkorDB backend
   static readonly FALKORDB_CONTAINER = "pai-knowledge-falkordb";
   static readonly MCP_CONTAINER = "pai-knowledge-graph-mcp";
   static readonly NETWORK_NAME = "pai-knowledge-net";
   static readonly VOLUME_NAME = "pai-knowledge-falkordb-data";
+
+  // Neo4j backend container names
+  static readonly NEO4J_CONTAINER = "pai-knowledge-neo4j";
+  static readonly NEO4J_VOLUME_DATA = "pai-knowledge-neo4j-data";
+  static readonly NEO4J_VOLUME_LOGS = "pai-knowledge-neo4j-logs";
+
+  // Container images per backend
+  static readonly IMAGES = {
+    falkordb: {
+      database: "falkordb/falkordb:latest",
+      mcp: "falkordb/graphiti-knowledge-graph-mcp:latest",
+    },
+    neo4j: {
+      database: "neo4j:5.26.0",
+      mcp: "zepai/knowledge-graph-mcp:standalone",
+    },
+  } as const;
+
+  // Port mappings per backend
+  static readonly PORTS = {
+    falkordb: {
+      database: ["3000:3000"],  // FalkorDB web UI
+      mcp: ["8000:8000"],       // MCP HTTP endpoint
+    },
+    neo4j: {
+      database: ["7474:7474", "7687:7687"],  // Neo4j Browser + Bolt
+      mcp: ["8000:8000"],                     // MCP HTTP endpoint
+    },
+  } as const;
 
   constructor(runtime?: ContainerRuntime) {
     if (runtime) {

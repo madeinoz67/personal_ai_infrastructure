@@ -10,6 +10,7 @@ Mandatory verification checklist for the Knowledge pack installation.
 > 3. **Stop on failures** - If a section fails, troubleshoot before continuing
 > 4. **All sections must pass** - Installation is NOT complete until all checks pass
 > 5. **Report failures clearly** - Tell the user which specific checks failed
+> 6. **Detect database backend FIRST** - Run Section 0 to determine which backend is configured
 
 ---
 
@@ -21,7 +22,57 @@ This checklist ensures:
 - All integrations are working
 - End-to-end functionality is operational
 
+**Supports two database backends:**
+- **FalkorDB** (default): Redis-based graph database with RediSearch
+- **Neo4j**: Native graph database with Cypher queries
+
 **Run through each section in order. Mark items as PASS or FAIL.**
+
+---
+
+## Section 0: Database Backend Detection
+
+> **FOR AI AGENTS:** Run this FIRST to determine which backend is configured.
+> The result affects which checks to run in subsequent sections.
+
+### 0.1 Determine Configured Backend
+
+- [ ] **Database backend identified**
+
+**Verification commands:**
+```bash
+# Check .env file for DATABASE_TYPE
+cd /path/to/pai-knowledge-system
+grep "PAI_KNOWLEDGE_DATABASE_TYPE" config/.env 2>/dev/null || grep "DATABASE_TYPE" config/.env 2>/dev/null
+
+# Or check running containers
+podman ps --format "{{.Names}}" | grep pai-knowledge
+# For Docker:
+docker ps --format "{{.Names}}" | grep pai-knowledge
+```
+
+**Results:**
+- If `DATABASE_TYPE=neo4j` OR container `pai-knowledge-neo4j` is running → **Neo4j Backend**
+- If `DATABASE_TYPE=falkordb` OR container `pai-knowledge-falkordb` is running → **FalkorDB Backend**
+- Default (not set) → **FalkorDB Backend**
+
+**Record your backend:** [ ] FalkorDB / [ ] Neo4j
+
+---
+
+### 0.2 Backend-Specific Verification Notes
+
+Based on your detected backend:
+
+**FalkorDB Backend:**
+- Check ports: 3000 (UI), 8000 (MCP)
+- Run Section 6 (Lucene sanitization tests)
+- Skip Neo4j-specific checks in Section 2
+
+**Neo4j Backend:**
+- Check ports: 7474 (Browser), 7687 (Bolt), 8000 (MCP)
+- Skip Section 6 (Lucene tests - not applicable)
+- Run Section 6-ALT (Neo4j Cypher tests)
 
 ---
 
@@ -146,8 +197,11 @@ Pack-level files in `src/server/` (not installed with skill):
 - [ ] `install.ts` - Interactive installation wizard
 - [ ] `diagnose.ts` - Diagnostic and troubleshooting tool
 - [ ] `mcp-wrapper.ts` - MCP protocol wrapper
-- [ ] `podman-compose.yml` - Podman compose file
-- [ ] `docker-compose.yml` - Docker compose file
+- [ ] `podman-compose.yml` - Podman compose file (FalkorDB)
+- [ ] `docker-compose.yml` - Docker compose file (FalkorDB)
+- [ ] `podman-compose-neo4j.yml` - Podman compose file (Neo4j)
+- [ ] `docker-compose-neo4j.yml` - Docker compose file (Neo4j)
+- [ ] `config-neo4j.yaml` - Neo4j backend configuration
 - [ ] `lib/` - Full library (cli, config, container, mcp-client)
 
 **Verification commands:**
@@ -156,7 +210,7 @@ ls -la src/server/
 ls -la src/server/lib/
 ```
 
-**Expected result:** run.ts, install.ts, diagnose.ts, mcp-wrapper.ts, compose files, and lib/ directory
+**Expected result:** run.ts, install.ts, diagnose.ts, mcp-wrapper.ts, compose files for both backends, config-neo4j.yaml, and lib/ directory
 
 ---
 
@@ -195,12 +249,13 @@ ls -la src/hooks/lib/
 
 > **FOR AI AGENTS:** This section verifies the MCP server is operational. ALL checks must pass.
 > If server is not running, go back to INSTALL.md Step 3 and start the server.
+> **Important:** Run database-specific checks (2.3/2.4) based on your backend from Section 0.
 
 Verify the Graphiti MCP server is running and accessible.
 
 ### 2.1 Container Status
 
-- [ ] **Container is running**
+- [ ] **Containers are running**
 
 **Verification commands:**
 ```bash
@@ -214,7 +269,11 @@ docker ps | grep pai-knowledge
 bun run src/skills/tools/status.ts
 ```
 
-**Expected result:** Containers `pai-knowledge-graph-mcp` and `pai-knowledge-falkordb` listed with status "Up"
+**Expected result (FalkorDB backend):**
+- Containers `pai-knowledge-graph-mcp` and `pai-knowledge-falkordb` listed with status "Up"
+
+**Expected result (Neo4j backend):**
+- Containers `pai-knowledge-graph-mcp` and `pai-knowledge-neo4j` listed with status "Up"
 
 ---
 
@@ -237,7 +296,9 @@ This confirms the MCP server is running and accepting connections.
 
 ---
 
-### 2.3 FalkorDB Connection
+### 2.3 Database Connection (FalkorDB)
+
+> **Skip this if using Neo4j backend** - go to 2.3-ALT instead.
 
 - [ ] **FalkorDB is responding**
 
@@ -254,7 +315,28 @@ docker exec pai-knowledge-falkordb redis-cli -p 6379 PING
 
 ---
 
-### 2.4 FalkorDB UI Access
+### 2.3-ALT Database Connection (Neo4j)
+
+> **Only run this if using Neo4j backend.**
+
+- [ ] **Neo4j is responding**
+
+**Verification commands:**
+```bash
+# Check Neo4j HTTP endpoint
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7474
+
+# Check Neo4j Bolt protocol port
+lsof -i :7687 | grep -i listen
+```
+
+**Expected result:** HTTP returns 200, port 7687 shows listening process
+
+---
+
+### 2.4 Database UI Access (FalkorDB)
+
+> **Skip this if using Neo4j backend** - go to 2.4-ALT instead.
 
 - [ ] **FalkorDB web UI is accessible on port 3000**
 
@@ -273,6 +355,31 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
 1. Open http://localhost:3000 in your browser
 2. FalkorDB Browser interface should load
 3. Connect using Host: `localhost`, Port: `6379`
+
+---
+
+### 2.4-ALT Database UI Access (Neo4j)
+
+> **Only run this if using Neo4j backend.**
+
+- [ ] **Neo4j Browser is accessible on port 7474**
+
+**Verification commands:**
+```bash
+# Check if port 7474 is listening
+lsof -i :7474 | grep -i listen
+
+# Or test HTTP response
+curl -s -o /dev/null -w "%{http_code}" http://localhost:7474
+```
+
+**Expected result:** Port 7474 shows listening process, HTTP returns 200 or 302
+
+**Browser verification:**
+1. Open http://localhost:7474 in your browser
+2. Neo4j Browser interface should load
+3. Connect using: bolt://localhost:7687
+4. Login with neo4j / (your configured password, default: paiknowledge)
 
 ---
 
@@ -451,17 +558,28 @@ fi
 
 ### 4.4 Port Availability
 
+**Common port (both backends):**
 - [ ] **Port 8000 is available** (or MCP server is listening)
+
+**FalkorDB backend ports:**
 - [ ] **Port 3000 is available** (or FalkorDB UI is listening)
 - [ ] **Port 6379 is internal** (FalkorDB on container network)
 
+**Neo4j backend ports:**
+- [ ] **Port 7474 is available** (or Neo4j Browser is listening)
+- [ ] **Port 7687 is available** (or Neo4j Bolt is listening)
+
 **Verification commands:**
 ```bash
-# Check MCP server port
+# Check MCP server port (both backends)
 lsof -i :8000
 
-# Check FalkorDB UI port
+# FalkorDB backend
 lsof -i :3000
+
+# Neo4j backend
+lsof -i :7474
+lsof -i :7687
 ```
 
 **Expected result:** Either no output (port available) or pai-knowledge process listed (using port)
@@ -581,10 +699,11 @@ curl -s -X POST http://localhost:8000/mcp/ \
 
 ---
 
-## Section 6: Lucene Query Sanitization
+## Section 6: Lucene Query Sanitization (FalkorDB Only)
 
-> **FOR AI AGENTS:** This section verifies that hyphenated group_ids work correctly with RediSearch queries.
-> This is critical for preventing syntax errors when using hyphenated identifiers.
+> **FOR AI AGENTS:** This section is ONLY for FalkorDB backend.
+> **Skip this section if using Neo4j backend** - go to Section 6-ALT instead.
+> This verifies that hyphenated group_ids work correctly with RediSearch queries.
 
 Verify that Lucene query sanitization handles special characters correctly.
 
@@ -728,6 +847,119 @@ curl -s -X POST http://localhost:8000/mcp/ \
 ```
 
 **Expected result:** JSON response with success indication, no query syntax errors
+
+---
+
+## Section 6-ALT: Neo4j Cypher Verification (Neo4j Only)
+
+> **FOR AI AGENTS:** This section is ONLY for Neo4j backend.
+> **Skip this section if using FalkorDB backend** - you should have run Section 6 instead.
+> Neo4j uses Cypher queries which handle special characters natively without sanitization.
+
+Verify that Neo4j Cypher queries work correctly with various identifiers.
+
+### 6-ALT.1 Hyphenated Group ID Capture
+
+- [ ] **Can capture knowledge with hyphenated group_id (no sanitization needed)**
+
+**Verification commands:**
+```bash
+curl -s -X POST http://localhost:8000/mcp/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "jsonrpc":"2.0",
+        "id":5,
+        "method":"tools/call",
+        "params":{
+            "name":"add_memory",
+            "arguments":{
+                "name":"Neo4j Cypher Test",
+                "episode_body":"Testing Neo4j Cypher with hyphenated group_id",
+                "source":"text",
+                "source_description":"cypher test",
+                "group_id":"test-group-123"
+            }
+        }
+    }' | head -20
+```
+
+**Expected result:** JSON response with success indication, no errors
+
+**Why this works:** Neo4j uses Cypher query language which handles special characters in string parameters natively. No escaping or sanitization is required.
+
+---
+
+### 6-ALT.2 Search with Hyphenated Group ID
+
+- [ ] **Can search knowledge using hyphenated group_id**
+
+**Verification commands:**
+```bash
+curl -s -X POST http://localhost:8000/mcp/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "jsonrpc":"2.0",
+        "id":6,
+        "method":"tools/call",
+        "params":{
+            "name":"search_memory_nodes",
+            "arguments":{
+                "query":"cypher test",
+                "max_nodes":5,
+                "group_ids":["test-group-123"]
+            }
+        }
+    }' | head -20
+```
+
+**Expected result:** JSON response with search results, no query syntax errors
+
+---
+
+### 6-ALT.3 Verify Neo4j Connection via Browser
+
+- [ ] **Can execute Cypher queries in Neo4j Browser**
+
+**Verification:**
+1. Open http://localhost:7474 in your browser
+2. Login with your credentials (default: neo4j / paiknowledge)
+3. Execute a test query:
+   ```cypher
+   MATCH (n) RETURN count(n) as nodeCount
+   ```
+
+**Expected result:** Query returns a count of nodes in the database
+
+---
+
+### 6-ALT.4 Special Characters in Group ID
+
+- [ ] **Can handle various special characters in group_id**
+
+**Verification commands:**
+```bash
+curl -s -X POST http://localhost:8000/mcp/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "jsonrpc":"2.0",
+        "id":8,
+        "method":"tools/call",
+        "params":{
+            "name":"add_memory",
+            "arguments":{
+                "name":"Special Character Test",
+                "episode_body":"Testing special characters with Neo4j Cypher",
+                "source":"text",
+                "source_description":"special char test",
+                "group_id":"test--multiple---hyphens_and_underscores"
+            }
+        }
+    }' | head -20
+```
+
+**Expected result:** JSON response with success indication, no errors
+
+**Note:** Neo4j handles these characters without the Lucene escaping required by FalkorDB's RediSearch.
 
 ---
 
@@ -915,7 +1147,7 @@ Verify the pack has no missing components (Template Requirement).
 - [ ] Workflow executes (SKILL.md routing)
 - [ ] MCP server receives request (HTTP to localhost:8000)
 - [ ] Graphiti processes episode (LLM extraction)
-- [ ] FalkorDB stores data (graph persistence)
+- [ ] Database stores data (FalkorDB or Neo4j - graph persistence)
 
 **Verification:** All components are included in pack
 
@@ -926,7 +1158,7 @@ Verify the pack has no missing components (Template Requirement).
 - [ ] Workflow executes (SearchKnowledge)
 - [ ] MCP server receives request (HTTP)
 - [ ] Graphiti searches graph (vector embeddings)
-- [ ] FalkorDB returns results (graph query)
+- [ ] Database returns results (FalkorDB RediSearch or Neo4j Cypher query)
 - [ ] Results formatted and returned (workflow output)
 
 **Verification:** All components are included in pack
@@ -953,13 +1185,15 @@ grep -i "beyond.*scope\|implement.*your.*own\|left as.*exercise" \
 ### 10.3 Complete Component List
 
 - [ ] **MCP Server included** (`src/server/run.ts` and compose files)
+- [ ] **FalkorDB compose files included** (`docker-compose.yml`, `podman-compose.yml`)
+- [ ] **Neo4j compose files included** (`docker-compose-neo4j.yml`, `podman-compose-neo4j.yml`, `config-neo4j.yaml`)
 - [ ] **PAI Skill included** (`SKILL.md` with workflows)
 - [ ] **Workflows included** (7 complete workflows in `src/skills/workflows/`)
 - [ ] **Skill tools included** (start.ts, stop.ts, status.ts, logs.ts in `src/skills/tools/`)
 - [ ] **Pack tools included** (install.ts, diagnose.ts in `src/server/`)
 - [ ] **Hooks included** (sync-history-to-knowledge.ts in `src/hooks/`)
-- [ ] **Installation included** (`INSTALL.md` with all steps)
-- [ ] **Configuration included** (`config/.env.example` with all variables)
+- [ ] **Installation included** (`INSTALL.md` with all steps and database backend selection)
+- [ ] **Configuration included** (`config/.env.example` with all variables for both backends)
 - [ ] **Documentation included** (README, INSTALL, VERIFY)
 - [ ] **Tests included** (`tests/` directory with unit and integration tests)
 - [ ] **No external dependencies** beyond documented prerequisites
@@ -1035,12 +1269,14 @@ bun test
 For a successful installation, you must have:
 
 **Critical (ALL must pass):**
+- Database backend detected (Section 0)
 - All files in correct locations (Section 1)
 - MCP server running and accessible (Section 2)
+- Database container running (Section 2.3 for FalkorDB OR 2.3-ALT for Neo4j)
 - PAI skill installed with flat structure (Section 3)
 - Configuration complete with valid API key (Section 4)
 - End-to-end functionality working (Section 5)
-- Lucene query sanitization working (Section 6)
+- Query handling verified (Section 6 for FalkorDB Lucene OR Section 6-ALT for Neo4j Cypher)
 - MCP configured in ~/.claude.json (Section 4.3)
 - No "beyond scope" gaps (Section 10)
 
@@ -1074,6 +1310,8 @@ Once all checks pass:
 **Verification completed:** _______________
 
 **Verified by:** _______________
+
+**Database backend:** [ ] FalkorDB / [ ] Neo4j
 
 **Result:** PASS / FAIL
 

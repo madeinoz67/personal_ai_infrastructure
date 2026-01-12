@@ -106,6 +106,31 @@ const OPENAI_TIERS: APITier[] = [
   { name: "Tier 4 (5000 requests/minute)", semaphoreLimit: 20 },
 ];
 
+/**
+ * Database backend choice
+ */
+interface DatabaseBackend {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/**
+ * Database backends
+ */
+const DATABASE_BACKENDS: DatabaseBackend[] = [
+  {
+    id: "falkordb",
+    name: "FalkorDB (recommended)",
+    description: "Redis-based graph database with RediSearch. Simpler setup, lower resource usage.",
+  },
+  {
+    id: "neo4j",
+    name: "Neo4j",
+    description: "Native graph database with Cypher queries. Better special character handling.",
+  },
+];
+
 // =============================================================================
 // NON-INTERACTIVE HELPERS
 // =============================================================================
@@ -432,11 +457,74 @@ class Installer {
   }
 
   /**
-   * Step 3: LLM Provider Selection
+   * Step 3: Database Backend Selection
+   */
+  private async selectDatabaseBackend(): Promise<void> {
+    cli.blank();
+    cli.header("Step 3: Database Backend Selection");
+
+    cli.blank();
+    cli.info("Choose your graph database backend:");
+    cli.blank();
+
+    for (const backend of DATABASE_BACKENDS) {
+      cli.dim(`  ${backend.name}`);
+      cli.dim(`    ${backend.description}`);
+      cli.blank();
+    }
+
+    let backend: string;
+
+    if (isNonInteractive) {
+      // Use existing backend from state (loaded from config) or default to falkordb
+      backend = this.state.paiConfig.DATABASE_TYPE || "falkordb";
+      cli.dim(`  Using database backend: ${backend}`);
+    } else {
+      const result = await inquirer.prompt([
+        {
+          type: "list",
+          name: "backend",
+          message: "Select database backend:",
+          choices: DATABASE_BACKENDS.map((b) => ({ name: b.name, value: b.id })),
+          default: this.state.paiConfig.DATABASE_TYPE || "falkordb",
+        },
+      ]);
+      backend = result.backend;
+    }
+
+    const selected = DATABASE_BACKENDS.find((b) => b.id === backend);
+    if (!selected) {
+      cli.error("Invalid backend selection");
+      process.exit(1);
+    }
+
+    this.state.paiConfig.DATABASE_TYPE = selected.id;
+    cli.success(`Selected: ${selected.name}`);
+
+    // Show backend-specific information
+    if (selected.id === "neo4j") {
+      cli.blank();
+      cli.info("Neo4j provides:");
+      cli.dim("  - Native Cypher query language");
+      cli.dim("  - No Lucene/RediSearch escaping needed");
+      cli.dim("  - Neo4j Browser UI at http://localhost:7474");
+      cli.dim("  - Bolt protocol at port 7687");
+    } else {
+      cli.blank();
+      cli.info("FalkorDB provides:");
+      cli.dim("  - Redis-based graph database");
+      cli.dim("  - RediSearch for full-text search");
+      cli.dim("  - FalkorDB UI at http://localhost:3000");
+      cli.dim("  - Lower memory footprint");
+    }
+  }
+
+  /**
+   * Step 4: LLM Provider Selection
    */
   private async selectProvider(): Promise<void> {
     cli.blank();
-    cli.header("Step 3: LLM Provider Selection");
+    cli.header("Step 4: LLM Provider Selection");
 
     let provider: string;
 
@@ -476,11 +564,11 @@ class Installer {
   }
 
   /**
-   * Step 4: API Key Collection
+   * Step 5: API Key Collection
    */
   private async collectAPIKeys(): Promise<void> {
     cli.blank();
-    cli.header("Step 4: API Key Configuration");
+    cli.header("Step 5: API Key Configuration");
 
     // Read existing PAI config first
     await this.readPAIConfig();
@@ -530,11 +618,11 @@ class Installer {
   }
 
   /**
-   * Step 5: Model Selection
+   * Step 6: Model Selection
    */
   private async selectModel(): Promise<void> {
     cli.blank();
-    cli.header("Step 5: Model Configuration");
+    cli.header("Step 6: Model Configuration");
 
     const provider = PROVIDERS.find((p) => p.id === this.state.llmProvider);
 
@@ -582,11 +670,11 @@ class Installer {
   }
 
   /**
-   * Step 6: Concurrency Configuration
+   * Step 7: Concurrency Configuration
    */
   private async configureConcurrency(): Promise<void> {
     cli.blank();
-    cli.header("Step 6: Performance Configuration");
+    cli.header("Step 7: Performance Configuration");
 
     if (this.state.llmProvider === "openai") {
       if (isNonInteractive) {
@@ -617,11 +705,11 @@ class Installer {
   }
 
   /**
-   * Step 7: Create Configuration
+   * Step 8: Create Configuration
    */
   private async createConfiguration(): Promise<void> {
     cli.blank();
-    cli.header("Step 7: Creating Configuration");
+    cli.header("Step 8: Creating Configuration");
 
     // Backup existing .env
     if (this.configLoader.envExists()) {
@@ -664,11 +752,11 @@ class Installer {
   }
 
   /**
-   * Step 8: Start Services
+   * Step 9: Start Services
    */
   private async startServices(): Promise<void> {
     cli.blank();
-    cli.header("Step 8: Starting Services");
+    cli.header("Step 9: Starting Services");
 
     cli.info("Starting Graphiti MCP server...");
     cli.blank();
@@ -723,12 +811,12 @@ class Installer {
   }
 
   /**
-   * Step 9: Install PAI Skill
+   * Step 10: Install PAI Skill
    * Path priority: PAI_DIR > ~/.claude (PAI v2.1.0 standard)
    */
   private async installPAISkill(): Promise<void> {
     cli.blank();
-    cli.header("Step 9: Installing PAI Skill");
+    cli.header("Step 10: Installing PAI Skill");
 
     // Determine PAI directory - prefer PAI_DIR, then ~/.claude
     const possiblePaths = [
@@ -813,12 +901,12 @@ class Installer {
   }
 
   /**
-   * Step 10: Install History Sync Hook
+   * Step 11: Install History Sync Hook
    * Hooks install to ~/.claude/hooks/ where Claude Code reads them (PAI v2.1.0)
    */
   private async installHistorySyncHook(): Promise<void> {
     cli.blank();
-    cli.header("Step 10: Installing History Sync Hook");
+    cli.header("Step 11: Installing History Sync Hook");
 
     cli.blank();
     cli.info("The History Sync Hook automatically syncs learnings and research");
@@ -943,7 +1031,7 @@ class Installer {
   }
 
   /**
-   * Step 11: Installation Summary
+   * Step 12: Installation Summary
    */
   private printSummary(): void {
     cli.blank();
@@ -952,6 +1040,7 @@ class Installer {
     cli.blank();
     cli.info("📦 Configuration Summary:");
     cli.blank();
+    cli.dim(`Database Backend: ${this.state.paiConfig.DATABASE_TYPE}`);
     cli.dim(`LLM Provider: ${this.state.llmProvider}`);
     cli.dim(`Model: ${this.state.modelName}`);
     cli.dim(`Concurrency: ${this.state.semaphoreLimit}`);
@@ -959,7 +1048,12 @@ class Installer {
 
     cli.info("Services:");
     cli.url("  MCP Server", "http://localhost:8000/mcp/");
-    cli.url("  FalkorDB UI", "http://localhost:3000");
+    if (this.state.paiConfig.DATABASE_TYPE === "neo4j") {
+      cli.url("  Neo4j Browser", "http://localhost:7474");
+      cli.dim("  Bolt URI: bolt://localhost:7687");
+    } else {
+      cli.url("  FalkorDB UI", "http://localhost:3000");
+    }
     cli.url("  Health Check", "http://localhost:8000/health");
     cli.blank();
 
@@ -1061,6 +1155,7 @@ class Installer {
       await this.confirmDirectory();
     }
 
+    await this.selectDatabaseBackend();
     await this.selectProvider();
     await this.collectAPIKeys();
     await this.selectModel();

@@ -2,16 +2,311 @@
 /**
  * Run PAI Knowledge System with Podman/Docker
  *
- * Uses a public bridge network with FalkorDB and MCP server containers.
+ * Supports two database backends:
+ *   - FalkorDB (default): Redis-based graph database with RediSearch
+ *   - Neo4j: Native graph database with Cypher queries
+ *
+ * Uses a public bridge network with database and MCP server containers.
  * This is the main setup script that creates containers, networks, and volumes.
  *
  * This script expects the .env file to be in config/.env
  */
 
-import { createContainerManager, ContainerManager } from "./lib/container.js";
+import { createContainerManager, ContainerManager, type DatabaseBackend } from "./lib/container.js";
 import { createConfigLoader, type KnowledgeConfig } from "./lib/config.js";
 import { cli } from "./lib/cli.js";
 import inquirer from "inquirer";
+import { dirname, join } from "path";
+
+/**
+ * Get the database backend from config
+ */
+function getDatabaseBackend(config: KnowledgeConfig): DatabaseBackend {
+  const dbType = config.DATABASE_TYPE?.toLowerCase() || "falkordb";
+  if (dbType === "neo4j") {
+    return "neo4j";
+  }
+  return "falkordb";
+}
+
+/**
+ * Start FalkorDB backend
+ */
+async function startFalkorDB(
+  containerManager: ContainerManager,
+  config: KnowledgeConfig,
+  networkName: string
+): Promise<boolean> {
+  const containerName = ContainerManager.FALKORDB_CONTAINER;
+  const volumeName = ContainerManager.VOLUME_NAME;
+  const image = ContainerManager.IMAGES.falkordb.database;
+
+  cli.blank();
+  cli.header("Starting FalkorDB container...");
+
+  // Check if container exists
+  const exists = await containerManager.containerExists(containerName);
+  if (exists) {
+    cli.warning(`FalkorDB container '${containerName}' already exists.`);
+
+    const { recreate } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "recreate",
+        message: "Do you want to remove and recreate it?",
+        default: false,
+      },
+    ]);
+
+    if (recreate) {
+      cli.info("Stopping and removing existing FalkorDB container...");
+      await containerManager.stopAndRemoveContainer(containerName);
+    } else {
+      return true; // Already exists, continue
+    }
+  }
+
+  // Run FalkorDB container
+  if (!await containerManager.containerExists(containerName)) {
+    const args = [
+      `--name=${containerName}`,
+      "--restart=unless-stopped",
+      `--network=${networkName}`,
+      "-p=3000:3000",  // FalkorDB web UI
+      `-v=${volumeName}:/data`,
+      `-e=FALKORDB_PASSWORD=${config.FALKORDB_PASSWORD || ""}`,
+      image,
+    ];
+
+    const result = await containerManager.runContainer(args);
+    if (result.success) {
+      cli.success("✓ FalkorDB container started");
+      cli.dim(`  Container: ${containerName}`);
+      cli.dim(`  Volume: ${volumeName}`);
+      cli.dim(`  Network: ${networkName}`);
+    } else {
+      cli.error(`Failed to start FalkorDB: ${result.stderr}`);
+      return false;
+    }
+  }
+
+  // Wait for FalkorDB to be ready
+  cli.info("Waiting for FalkorDB to be ready...");
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+
+  return true;
+}
+
+/**
+ * Start Neo4j backend
+ */
+async function startNeo4j(
+  containerManager: ContainerManager,
+  config: KnowledgeConfig,
+  networkName: string
+): Promise<boolean> {
+  const containerName = ContainerManager.NEO4J_CONTAINER;
+  const volumeData = ContainerManager.NEO4J_VOLUME_DATA;
+  const volumeLogs = ContainerManager.NEO4J_VOLUME_LOGS;
+  const image = ContainerManager.IMAGES.neo4j.database;
+
+  cli.blank();
+  cli.header("Starting Neo4j container...");
+
+  // Check if container exists
+  const exists = await containerManager.containerExists(containerName);
+  if (exists) {
+    cli.warning(`Neo4j container '${containerName}' already exists.`);
+
+    const { recreate } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "recreate",
+        message: "Do you want to remove and recreate it?",
+        default: false,
+      },
+    ]);
+
+    if (recreate) {
+      cli.info("Stopping and removing existing Neo4j container...");
+      await containerManager.stopAndRemoveContainer(containerName);
+    } else {
+      return true; // Already exists, continue
+    }
+  }
+
+  // Run Neo4j container
+  if (!await containerManager.containerExists(containerName)) {
+    const neo4jUser = config.NEO4J_USER || "neo4j";
+    const neo4jPassword = config.NEO4J_PASSWORD || "paiknowledge";
+
+    const args = [
+      `--name=${containerName}`,
+      "--restart=unless-stopped",
+      `--network=${networkName}`,
+      "-p=7474:7474",  // Neo4j Browser HTTP
+      "-p=7687:7687",  // Bolt protocol
+      `-v=${volumeData}:/data`,
+      `-v=${volumeLogs}:/logs`,
+      `-e=NEO4J_AUTH=${neo4jUser}/${neo4jPassword}`,
+      "-e=NEO4J_server_memory_heap_initial__size=512m",
+      "-e=NEO4J_server_memory_heap_max__size=1G",
+      "-e=NEO4J_server_memory_pagecache_size=512m",
+      image,
+    ];
+
+    const result = await containerManager.runContainer(args);
+    if (result.success) {
+      cli.success("✓ Neo4j container started");
+      cli.dim(`  Container: ${containerName}`);
+      cli.dim(`  Volumes: ${volumeData}, ${volumeLogs}`);
+      cli.dim(`  Network: ${networkName}`);
+    } else {
+      cli.error(`Failed to start Neo4j: ${result.stderr}`);
+      return false;
+    }
+  }
+
+  // Wait for Neo4j to be ready (takes longer than FalkorDB)
+  cli.info("Waiting for Neo4j to be ready (this may take 30+ seconds)...");
+  await new Promise((resolve) => setTimeout(resolve, 15000));
+
+  // Health check
+  cli.info("Checking Neo4j health...");
+  for (let i = 0; i < 6; i++) {
+    try {
+      const response = await fetch("http://localhost:7474", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (response.ok) {
+        cli.success("✓ Neo4j is ready");
+        break;
+      }
+    } catch {
+      if (i < 5) {
+        cli.dim(`  Waiting... (attempt ${i + 1}/6)`);
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      } else {
+        cli.warning("Neo4j health check timed out - may still be starting");
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Start MCP server for the given backend
+ */
+async function startMCPServer(
+  containerManager: ContainerManager,
+  config: KnowledgeConfig,
+  configLoader: ReturnType<typeof createConfigLoader>,
+  backend: DatabaseBackend,
+  networkName: string
+): Promise<boolean> {
+  const containerName = ContainerManager.MCP_CONTAINER;
+  const image = ContainerManager.IMAGES[backend].mcp;
+
+  cli.blank();
+  cli.header(`Starting Graphiti MCP Server (${backend} backend)...`);
+
+  // Check if container exists
+  const exists = await containerManager.containerExists(containerName);
+  if (exists) {
+    cli.warning(`MCP container '${containerName}' already exists.`);
+
+    const { recreate } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "recreate",
+        message: "Do you want to remove and recreate it?",
+        default: false,
+      },
+    ]);
+
+    if (recreate) {
+      cli.info("Stopping and removing existing MCP container...");
+      await containerManager.stopAndRemoveContainer(containerName);
+    } else {
+      cli.info("Using existing MCP container...");
+      return true;
+    }
+  }
+
+  // Build container environment variables
+  const containerEnv = configLoader.getContainerEnv(config);
+
+  // Build args based on backend
+  const args: string[] = [
+    `--name=${containerName}`,
+    "--restart=unless-stopped",
+    `--network=${networkName}`,
+    "-p=8000:8000",  // MCP HTTP endpoint
+    // LLM Configuration
+    `-e=OPENAI_API_KEY=${containerEnv.OPENAI_API_KEY || ""}`,
+    `-e=ANTHROPIC_API_KEY=${containerEnv.ANTHROPIC_API_KEY || ""}`,
+    `-e=GOOGLE_API_KEY=${containerEnv.GOOGLE_API_KEY || ""}`,
+    `-e=GROQ_API_KEY=${containerEnv.GROQ_API_KEY || ""}`,
+    `-e=VOYAGE_API_KEY=${containerEnv.VOYAGE_API_KEY || ""}`,
+    // Model Configuration
+    `-e=MODEL_NAME=${containerEnv.MODEL_NAME}`,
+    `-e=LLM_PROVIDER=${containerEnv.LLM_PROVIDER}`,
+    `-e=EMBEDDER_PROVIDER=${containerEnv.EMBEDDER_PROVIDER}`,
+    // App Configuration
+    `-e=SEMAPHORE_LIMIT=${containerEnv.SEMAPHORE_LIMIT}`,
+    `-e=GRAPHITI_TELEMETRY_ENABLED=${containerEnv.GRAPHITI_TELEMETRY_ENABLED}`,
+    `-e=GROUP_ID=${containerEnv.GROUP_ID}`,
+    `-e=GRAPHITI_GROUP_ID=${containerEnv.GROUP_ID}`,
+  ];
+
+  // Add backend-specific configuration
+  if (backend === "falkordb") {
+    args.push(
+      `-e=DATABASE_TYPE=falkordb`,
+      `-e=FALKORDB_HOST=${ContainerManager.FALKORDB_CONTAINER}`,
+      `-e=FALKORDB_PORT=6379`,
+      `-e=FALKORDB_PASSWORD=${containerEnv.FALKORDB_PASSWORD || ""}`,
+    );
+  } else {
+    // Neo4j backend
+    const neo4jUser = config.NEO4J_USER || "neo4j";
+    const neo4jPassword = config.NEO4J_PASSWORD || "paiknowledge";
+
+    args.push(
+      `-e=DATABASE_TYPE=neo4j`,
+      `-e=NEO4J_URI=bolt://${ContainerManager.NEO4J_CONTAINER}:7687`,
+      `-e=NEO4J_USER=${neo4jUser}`,
+      `-e=NEO4J_PASSWORD=${neo4jPassword}`,
+      `-e=NEO4J_DATABASE=${config.NEO4J_DATABASE || "neo4j"}`,
+    );
+
+    // Mount the Neo4j config file for the standalone image
+    const packDir = dirname(dirname(import.meta.dir));
+    const configPath = join(packDir, "src/server/config-neo4j.yaml");
+    args.push(`-v=${configPath}:/app/mcp/config/config.yaml:ro`);
+    args.push(`-e=CONFIG_PATH=/app/mcp/config/config.yaml`);
+  }
+
+  // Add the image
+  args.push(image);
+
+  // Run MCP server
+  if (!await containerManager.containerExists(containerName)) {
+    const result = await containerManager.runContainer(args);
+    if (result.success) {
+      cli.success("✓ MCP Server container started");
+      cli.dim(`  Container: ${containerName}`);
+      cli.dim(`  Image: ${image}`);
+      cli.dim(`  Network: ${networkName}`);
+    } else {
+      cli.error(`Failed to start MCP server: ${result.stderr}`);
+      return false;
+    }
+  }
+
+  return true;
+}
 
 /**
  * Main run function
@@ -44,8 +339,11 @@ async function main() {
   cli.info("Loading configuration...");
   const config = await configLoader.load();
 
+  // Determine database backend
+  const backend = getDatabaseBackend(config);
+  cli.success(`✓ Database backend: ${backend.toUpperCase()}`);
+
   // Check if PAI_KNOWLEDGE_OPENAI_API_KEY is set
-  // Map PAI_KNOWLEDGE_OPENAI_API_KEY to OPENAI_API_KEY for container compatibility
   let openaiKey = config.OPENAI_API_KEY;
   if (!openaiKey && config.PAI_PREFIXES?.PAI_KNOWLEDGE_OPENAI_API_KEY) {
     openaiKey = config.PAI_PREFIXES.PAI_KNOWLEDGE_OPENAI_API_KEY;
@@ -69,16 +367,13 @@ async function main() {
     process.exit(1);
   }
 
-  cli.success(`Using container runtime: ${containerManager.getRuntimeCommand()}`);
+  cli.success(`✓ Container runtime: ${containerManager.getRuntimeCommand()}`);
   cli.blank();
 
-  // Container and network names
+  // Network name (same for both backends)
   const NETWORK_NAME = ContainerManager.NETWORK_NAME;
-  const FALKORDB_CONTAINER = ContainerManager.FALKORDB_CONTAINER;
-  const MCP_CONTAINER = ContainerManager.MCP_CONTAINER;
-  const VOLUME_NAME = ContainerManager.VOLUME_NAME;
 
-  // Create network if it doesn't exist (public bridge network)
+  // Create network if it doesn't exist
   const networkExists = await containerManager.networkExists(NETWORK_NAME);
   if (!networkExists) {
     cli.info(`Creating public network: ${NETWORK_NAME}`);
@@ -93,147 +388,63 @@ async function main() {
     cli.success(`✓ Network exists: ${NETWORK_NAME}`);
   }
 
-  // Check if FalkorDB container exists
-  const falkorDbExists = await containerManager.containerExists(FALKORDB_CONTAINER);
-  if (falkorDbExists) {
-    cli.warning(`FalkorDB container '${FALKORDB_CONTAINER}' already exists.`);
-
-    const { recreate } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "recreate",
-        message: "Do you want to remove and recreate it?",
-        default: false,
-      },
-    ]);
-
-    if (recreate) {
-      cli.info("Stopping and removing existing FalkorDB container...");
-      await containerManager.stopAndRemoveContainer(FALKORDB_CONTAINER);
-    }
+  // Start database backend
+  let dbStarted: boolean;
+  if (backend === "neo4j") {
+    dbStarted = await startNeo4j(containerManager, config, NETWORK_NAME);
+  } else {
+    dbStarted = await startFalkorDB(containerManager, config, NETWORK_NAME);
   }
 
-  // Check if MCP container exists
-  const mcpExists = await containerManager.containerExists(MCP_CONTAINER);
-  if (mcpExists) {
-    cli.warning(`MCP container '${MCP_CONTAINER}' already exists.`);
-
-    const { recreate } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "recreate",
-        message: "Do you want to remove and recreate it?",
-        default: false,
-      },
-    ]);
-
-    if (recreate) {
-      cli.info("Stopping and removing existing MCP container...");
-      await containerManager.stopAndRemoveContainer(MCP_CONTAINER);
-    } else {
-      cli.info("Using existing MCP container...");
-      cli.blank();
-      cli.success("✓ Done! System is already set up.");
-      cli.blank();
-      cli.info("Access points:");
-      cli.url("MCP Server", "http://localhost:8000/mcp/");
-      cli.url("Health Check", "http://localhost:8000/health");
-      cli.url("FalkorDB UI", "http://localhost:3000");
-      process.exit(0);
-    }
+  if (!dbStarted) {
+    cli.error("Failed to start database container");
+    process.exit(1);
   }
 
-  cli.blank();
-  cli.header("Starting FalkorDB container...");
+  // Start MCP server
+  const mcpStarted = await startMCPServer(
+    containerManager,
+    config,
+    configLoader,
+    backend,
+    NETWORK_NAME
+  );
 
-  // Run FalkorDB container (web UI on port 3000)
-  if (!await containerManager.containerExists(FALKORDB_CONTAINER)) {
-    const falkorDbArgs = [
-      `--name=${FALKORDB_CONTAINER}`,
-      "--restart=unless-stopped",
-      `--network=${NETWORK_NAME}`,
-      "-p=3000:3000",  // FalkorDB web UI
-      `-v=${VOLUME_NAME}:/data`,
-      `-e=FALKORDB_PASSWORD=${config.FALKORDB_PASSWORD || ""}`,
-      "falkordb/falkordb:latest",
-    ];
-
-    const result = await containerManager.runContainer(falkorDbArgs);
-    if (result.success) {
-      cli.success("✓ FalkorDB container started");
-      cli.dim(`  Container: ${FALKORDB_CONTAINER}`);
-      cli.dim(`  Volume: ${VOLUME_NAME}`);
-      cli.dim(`  Network: ${NETWORK_NAME}`);
-    } else {
-      cli.error(`Failed to start FalkorDB: ${result.stderr}`);
-      process.exit(1);
-    }
+  if (!mcpStarted) {
+    cli.error("Failed to start MCP server");
+    process.exit(1);
   }
 
-  // Wait for FalkorDB to be ready
-  cli.info("Waiting for FalkorDB to be ready...");
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
-  cli.blank();
-  cli.header("Starting Graphiti MCP Server container...");
-
-  // Build container environment variables
-  const containerEnv = configLoader.getContainerEnv(config);
-
-  // Run MCP server container (exposed to host)
-  if (!await containerManager.containerExists(MCP_CONTAINER)) {
-    const mcpArgs = [
-      `--name=${MCP_CONTAINER}`,
-      "--restart=unless-stopped",
-      `--network=${NETWORK_NAME}`,
-      "-p=8000:8000",  // MCP SSE endpoint
-      `-e=OPENAI_API_KEY=${containerEnv.OPENAI_API_KEY || ""}`,
-      `-e=ANTHROPIC_API_KEY=${containerEnv.ANTHROPIC_API_KEY || ""}`,
-      `-e=GOOGLE_API_KEY=${containerEnv.GOOGLE_API_KEY || ""}`,
-      `-e=GROQ_API_KEY=${containerEnv.GROQ_API_KEY || ""}`,
-      `-e=VOYAGE_API_KEY=${containerEnv.VOYAGE_API_KEY || ""}`,
-      `-e=DATABASE_TYPE=${containerEnv.DATABASE_TYPE}`,
-      `-e=FALKORDB_HOST=${containerEnv.FALKORDB_HOST}`,
-      "-e=FALKORDB_PORT=6379",
-      `-e=FALKORDB_PASSWORD=${containerEnv.FALKORDB_PASSWORD || ""}`,
-      `-e=NEO4J_URI=${containerEnv.NEO4J_URI}`,
-      `-e=NEO4J_USER=${containerEnv.NEO4J_USER}`,
-      `-e=NEO4J_PASSWORD=${containerEnv.NEO4J_PASSWORD}`,
-      `-e=SEMAPHORE_LIMIT=${containerEnv.SEMAPHORE_LIMIT}`,
-      `-e=GRAPHITI_TELEMETRY_ENABLED=${containerEnv.GRAPHITI_TELEMETRY_ENABLED}`,
-      `-e=MODEL_NAME=${containerEnv.MODEL_NAME}`,
-      `-e=LLM_PROVIDER=${containerEnv.LLM_PROVIDER}`,
-      `-e=EMBEDDER_PROVIDER=${containerEnv.EMBEDDER_PROVIDER}`,
-      `-e=GROUP_ID=${containerEnv.GROUP_ID}`,
-      "falkordb/graphiti-knowledge-graph-mcp:latest",
-    ];
-
-    const result = await containerManager.runContainer(mcpArgs);
-    if (result.success) {
-      cli.success("✓ MCP Server container started");
-      cli.dim(`  Container: ${MCP_CONTAINER}`);
-      cli.dim(`  Network: ${NETWORK_NAME}`);
-    } else {
-      cli.error(`Failed to start MCP server: ${result.stderr}`);
-      process.exit(1);
-    }
-  }
-
+  // Print success message
   cli.blank();
   cli.success("═══════════════════════════════════════");
   cli.success("PAI Knowledge System is running!");
   cli.success("═══════════════════════════════════════");
   cli.blank();
+
+  // Network topology based on backend
   cli.info("Network Topology:");
-  cli.dim(`  FalkorDB:     ${FALKORDB_CONTAINER}`);
-  cli.dim(`  MCP Server:   ${MCP_CONTAINER}`);
+  if (backend === "neo4j") {
+    cli.dim(`  Neo4j:        ${ContainerManager.NEO4J_CONTAINER}`);
+  } else {
+    cli.dim(`  FalkorDB:     ${ContainerManager.FALKORDB_CONTAINER}`);
+  }
+  cli.dim(`  MCP Server:   ${ContainerManager.MCP_CONTAINER}`);
   cli.dim(`  Network:      ${NETWORK_NAME} (public bridge)`);
   cli.blank();
+
+  // Access points based on backend
   cli.info("Access points:");
   cli.url("MCP Server", "http://localhost:8000/mcp/");
   cli.url("Health Check", "http://localhost:8000/health");
-  cli.url("FalkorDB UI", "http://localhost:3000");
+  if (backend === "neo4j") {
+    cli.url("Neo4j Browser", "http://localhost:7474");
+    cli.dim("  Bolt URI: bolt://localhost:7687");
+  } else {
+    cli.url("FalkorDB UI", "http://localhost:3000");
+  }
   cli.blank();
+
   cli.info("Management commands:");
   cli.dim("  View logs:     bun run src/server/logs.ts");
   cli.dim("  Stop system:   bun run src/server/stop.ts");

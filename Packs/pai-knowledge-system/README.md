@@ -12,7 +12,7 @@ version: 1.0.0
 author: madeinoz67
 
 # description: (128 words max) One-line description
-description: Persistent personal knowledge management system powered by Graphiti knowledge graph with FalkorDB backend - automatic entity extraction, relationship mapping, and semantic search for AI conversations and documents
+description: Persistent personal knowledge management system powered by Graphiti knowledge graph with FalkorDB or Neo4j backend - automatic entity extraction, relationship mapping, and semantic search for AI conversations and documents
 
 # type: (single) concept | skill | hook | plugin | agent | mcp | workflow | template | other
 type: skill
@@ -27,14 +27,14 @@ platform: claude-code
 dependencies: [pai-history-system]
 
 # keywords: (24 tags max) Searchable tags for discovery
-keywords: [knowledge, graph, memory, semantic search, entity extraction, relationships, graphiti, falkordb, mcp, persistent, ai, storage, retrieval, organizational, learning, documentation]
+keywords: [knowledge, graph, memory, semantic search, entity extraction, relationships, graphiti, falkordb, neo4j, mcp, persistent, ai, storage, retrieval, organizational, learning, documentation]
 ---
 
 <p align="center"><img src="../icons/pai-knowledge-system.png" alt="PAI Knowledge System" width="256"></p>
 
 # Knowledge
 
-> Persistent personal knowledge management system powered by Graphiti knowledge graph with FalkorDB backend - automatically extracts entities, relationships, and temporal context from conversations, documents, and ideas
+> Persistent personal knowledge management system powered by Graphiti knowledge graph with FalkorDB or Neo4j backend - automatically extracts entities, relationships, and temporal context from conversations, documents, and ideas
 
 > **FOR AI AGENTS:** This is a PAI Pack - a complete, self-contained module for the PAI (Personal AI Infrastructure) system. When installing this pack:
 > 1. Read the entire README first to understand what you're installing
@@ -86,8 +86,10 @@ Please follow the installation instructions below to integrate this pack into yo
 | MCP Server Launcher | `src/server/run.sh` | Graphiti server launcher with Podman |
 | Server Management | `src/server/{start,stop,status,logs}.sh` | Container management scripts |
 | Configuration Template | `src/config/.env.example` | API keys and model settings template |
-| Docker Compose | `src/server/docker-compose.yml` | Docker Compose config (Docker users) |
+| Docker Compose (FalkorDB) | `src/server/docker-compose.yml` | Docker Compose for FalkorDB backend |
+| Docker Compose (Neo4j) | `src/server/docker-compose-neo4j.yml` | Docker Compose for Neo4j backend |
 | Podman Compose | `src/server/podman-compose.yml` | Podman Compose config (Podman users) |
+| Neo4j Config | `src/server/config-neo4j.yaml` | Graphiti MCP config for Neo4j backend |
 
 **Summary:**
 - **Files created:** 3 (README.md, INSTALL.md, VERIFY.md)
@@ -95,7 +97,8 @@ Please follow the installation instructions below to integrate this pack into yo
 - **Tools included:** 1
 - **Hooks included:** 1 (History Sync)
 - **Server scripts:** 5 (run, start, stop, status, logs)
-- **External dependencies:** Podman, Docker image (falkordb/graphiti-knowledge-graph-mcp:latest)
+- **Database backends:** FalkorDB (default) or Neo4j
+- **External dependencies:** Podman/Docker, Graph database image
 - **Dependencies:** Podman (container runtime), OpenAI API key (or compatible LLM provider)
 
 ---
@@ -180,12 +183,19 @@ User Conversation/Document
               │
               ▼
 ┌─────────────────────────────────┐
-│   FalkorDB Graph Database       │
+│   Graph Database Backend        │
 │  ┌───────────────────────────┐  │
-│  │   Nodes (Entities)        │  │
-│  │   Edges (Relationships)   │  │
-│  │   Episodes (Context)      │  │
+│  │  FalkorDB (default)       │  │
+│  │   - Redis-based           │  │
+│  │   - RediSearch queries    │  │
+│  │   - Web UI :3000          │  │
+│  ├───────────────────────────┤  │
+│  │  Neo4j (alternative)      │  │
+│  │   - Native graph DB       │  │
+│  │   - Cypher queries        │  │
+│  │   - Browser :7474         │  │
 │  └───────────────────────────┘  │
+│  Nodes, Edges, Episodes, Indices│
 └─────────────────────────────────┘
 ```
 
@@ -501,7 +511,11 @@ cd /path/to/pai-knowledge-system
 bun run src/server/install.ts
 ```
 
-This guides you through LLM provider selection, API key configuration, and service startup.
+This guides you through database backend selection, LLM provider selection, API key configuration, and service startup.
+
+**Database Backends:**
+- **FalkorDB** (default) - Redis-based, simpler setup, lower resources
+- **Neo4j** - Native graph DB, better special character handling
 
 **Flags:**
 - `--yes` or `-y`: Non-interactive mode with defaults
@@ -798,9 +812,64 @@ Adjust `SEMAPHORE_LIMIT` based on your OpenAI API tier:
 
 ---
 
-## FalkorDB UI - Viewing the Knowledge Graph
+## Database Backend Selection
 
-FalkorDB includes a built-in web UI for visualizing your knowledge graph, exploring entity relationships, and running Cypher queries directly.
+The PAI Knowledge System supports two graph database backends:
+
+| Backend | Description | Web UI | Best For |
+|---------|-------------|--------|----------|
+| **FalkorDB** (default) | Redis-based graph database with RediSearch | http://localhost:3000 | Simple setup, lower resources |
+| **Neo4j** | Native graph database with Cypher queries | http://localhost:7474 | Special character handling, richer queries |
+
+### Choosing a Backend
+
+**Use FalkorDB (default) when:**
+- You want the simplest setup with minimal configuration
+- You have limited system resources
+- Your group_ids and data don't contain many special characters
+
+**Use Neo4j when:**
+- You're working with CTI/OSINT data containing hyphenated identifiers
+- You want native Cypher query language
+- You need the Neo4j Browser for rich graph visualization
+- You're already familiar with Neo4j ecosystem
+
+### Backend-Specific Notes
+
+**FalkorDB:**
+- Uses RediSearch with Lucene query syntax
+- Special characters (hyphens, etc.) require automatic sanitization
+- Lower memory footprint (~500MB)
+- Web UI at port 3000
+
+**Neo4j:**
+- Uses native Cypher query language
+- No Lucene escaping needed - handles special characters natively
+- Higher memory footprint (~1-2GB)
+- Neo4j Browser at port 7474, Bolt protocol at port 7687
+
+### Switching Backends
+
+To switch backends, update your configuration:
+
+```bash
+# In your PAI .env file
+PAI_KNOWLEDGE_DATABASE_TYPE=neo4j  # or falkordb
+
+# Then restart services
+bun run src/server/stop.ts
+bun run src/server/run.ts
+```
+
+---
+
+## Graph Database UI - Viewing Knowledge
+
+Both backends include built-in web UIs for visualizing your knowledge graph, exploring entity relationships, and running queries directly.
+
+### FalkorDB UI (Default Backend)
+
+FalkorDB includes a built-in web UI for visualizing your knowledge graph.
 
 ### Accessing the UI
 
@@ -848,6 +917,56 @@ MATCH (n) RETURN DISTINCT labels(n), count(*)
 ### Documentation
 
 For more details on querying and visualization, see the [FalkorDB Documentation](https://docs.falkordb.com/).
+
+### Neo4j Browser (Alternative Backend)
+
+When using Neo4j backend, you get access to the Neo4j Browser for rich graph visualization.
+
+### Accessing Neo4j Browser
+
+1. **Ensure containers are running:**
+   ```bash
+   docker ps | grep pai-knowledge-neo4j
+   # or: podman ps | grep pai-knowledge-neo4j
+   ```
+
+2. **Open the Neo4j Browser:**
+   ```
+   http://localhost:7474
+   ```
+
+3. **Connect to the database:**
+   - Username: `neo4j` (default)
+   - Password: `paiknowledge` (default)
+   - Database: `neo4j`
+
+### Exploring with Cypher
+
+Neo4j uses the Cypher query language (no Lucene escaping needed):
+
+**View all entities and relationships:**
+```cypher
+MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 100
+```
+
+**Find specific entity connections:**
+```cypher
+MATCH (n {name: 'your-entity-name'})-[r]-(m) RETURN n, r, m
+```
+
+**Search with special characters (no escaping needed):**
+```cypher
+MATCH (n) WHERE n.group_id = 'pai-threat-intel' RETURN n
+```
+
+**View entity types:**
+```cypher
+MATCH (n) RETURN DISTINCT labels(n), count(*)
+```
+
+### Documentation
+
+For more details on Cypher and Neo4j, see the [Neo4j Documentation](https://neo4j.com/docs/).
 
 ---
 
@@ -1149,3 +1268,13 @@ The hook is designed for graceful degradation:
 - Fixed CTI/OSINT operations with hyphenated group_ids (e.g., `apt-28`, `tracked-actor-123`)
 - Root cause analysis: Hyphens interpreted as negation operators in Lucene syntax
 - All special Lucene characters now automatically escaped: `+ - && || ! ( ) { } [ ] ^ " ~ * ? : \ /`
+
+### 1.1.0 - 2026-01-12
+- Added Neo4j as alternative database backend
+- FalkorDB remains the default backend
+- Added `docker-compose-neo4j.yml` and `config-neo4j.yaml` for Neo4j deployment
+- Updated `install.ts` with database backend selection step
+- Added backend-specific container orchestration in `run.ts`
+- Neo4j uses native Cypher queries (no Lucene escaping needed)
+- Updated all documentation (README, INSTALL, VERIFY) with backend selection
+- Conditional Lucene sanitization: only applied for FalkorDB backend
