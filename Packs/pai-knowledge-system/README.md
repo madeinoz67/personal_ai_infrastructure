@@ -3,10 +3,10 @@
 name: PAI Knowledge System
 
 # pack-id: (format) {author}-{pack-name}-{variant}-v{version}
-pack-id: madeinoz67-pai-knowledge-system-core-v1.0.0
+pack-id: madeinoz67-pai-knowledge-system-core-v1.1.0
 
 # version: (format) SemVer major.minor.patch
-version: 1.0.0
+version: 1.1.0
 
 # author: (1 word) GitHub username or organization
 author: madeinoz67
@@ -1269,7 +1269,7 @@ The hook is designed for graceful degradation:
 - Root cause analysis: Hyphens interpreted as negation operators in Lucene syntax
 - All special Lucene characters now automatically escaped: `+ - && || ! ( ) { } [ ] ^ " ~ * ? : \ /`
 
-### 1.1.0 - 2026-01-12
+### 1.1.0 - 2026-01-13
 - Added Neo4j as alternative database backend
 - FalkorDB remains the default backend
 - Added `docker-compose-neo4j.yml` and `config-neo4j.yaml` for Neo4j deployment
@@ -1278,3 +1278,5 @@ The hook is designed for graceful degradation:
 - Neo4j uses native Cypher queries (no Lucene escaping needed)
 - Updated all documentation (README, INSTALL, VERIFY) with backend selection
 - Conditional Lucene sanitization: only applied for FalkorDB backend
+- Added search-all-groups functionality for Neo4j backend
+- Enhanced installation and configuration documentation
