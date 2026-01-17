@@ -54,7 +54,7 @@ One-page reference for the PAI Knowledge System.
 
 ### Status
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/status.ts
 ```
 
@@ -236,7 +236,7 @@ Per operation:
 ## File Locations
 
 ```
-~/.config/pai/Packs/pai-knowledge-system/
+~/.config/pai/Packs/madeinoz-knowledge-system/
 ├── config/.env              # Configuration
 ├── src/server/              # Server scripts
 │   ├── run.ts              # Start everything
@@ -298,7 +298,7 @@ bun run src/hooks/sync-history-to-knowledge.ts --dry-run
 
 **Quick Backup:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 podman exec pai-knowledge-falkordb redis-cli BGSAVE
 podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
@@ -322,7 +322,7 @@ bun run start
 
 **Quick Backup:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 docker exec pai-knowledge-falkordb redis-cli BGSAVE
 docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
@@ -379,7 +379,7 @@ See [usage.md#backup-and-restore](usage.md#backup-and-restore) for detailed inst
 1. Check logs: `bun run src/server/logs.ts`
 2. Read [troubleshooting.md](troubleshooting.md)
 3. Review [concepts.md](concepts.md)
-4. Check main [README](/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md)
+4. Check main [README](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md)
 
 ## Version Info
 

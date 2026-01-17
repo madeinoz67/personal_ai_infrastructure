@@ -228,7 +228,7 @@ Ensure you have all required files in the pack directory:
 
 ```bash
 # Navigate to pack directory
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 
 # Verify required files exist
 echo "Checking pack contents..."
@@ -967,7 +967,7 @@ echo ""
 echo "🎉 Installation Complete!"
 echo ""
 echo "Documentation:"
-echo "  - README: pai-knowledge-system/README.md"
+echo "  - README: madeinoz-knowledge-system/README.md"
 echo "  - Installation: INSTALL.md"
 echo "  - Quick Start: QUICKSTART.md"
 echo ""
@@ -1321,5 +1321,5 @@ If you encounter issues not covered here:
 
 **Related Documentation:**
 - [VERIFY.md](VERIFY.md) - Installation verification checklist
-- [README.md](pai-knowledge-system/README.md) - Complete pack documentation
+- [README.md](madeinoz-knowledge-system/README.md) - Complete pack documentation
 - [INTEGRATION.md](INTEGRATION.md) - Integration guide with other PAI components

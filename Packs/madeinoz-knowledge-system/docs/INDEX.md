@@ -199,7 +199,7 @@ docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
 ## File Locations
 
 **Configuration:**
-- Main config: `/Users/seaton/.config/pai/Packs/pai-knowledge-system/config/.env`
+- Main config: `/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/config/.env`
 - PAI config: `~/.config/pai/.env`
 - MCP settings: `~/.claude.json`
 
@@ -222,9 +222,9 @@ docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
 ## Related Documentation
 
 **Technical Documentation:**
-- [Main README](/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md) - Technical overview
-- [Installation Instructions](/Users/seaton/.config/pai/Packs/pai-knowledge-system/INSTALL.md) - Detailed installation
-- [Verification Guide](/Users/seaton/.config/pai/Packs/pai-knowledge-system/VERIFY.md) - Installation verification
+- [Main README](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md) - Technical overview
+- [Installation Instructions](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/INSTALL.md) - Detailed installation
+- [Verification Guide](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/VERIFY.md) - Installation verification
 
 **External Resources:**
 - [Graphiti Documentation](https://help.getzep.com/graphiti)
@@ -236,7 +236,7 @@ docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
 1. Check [Troubleshooting Guide](troubleshooting.md)
 2. Review relevant concept in [Concepts](concepts.md)
 3. Look for examples in [Usage Guide](usage.md)
-4. Check the technical [README](/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md)
+4. Check the technical [README](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md)
 
 ## Quick Start Path
 

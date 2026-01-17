@@ -94,10 +94,10 @@ Then close and reopen your terminal.
 The PAI Knowledge System is in your PAI packs folder:
 
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 ```
 
-**Can't find it?** If you installed PAI somewhere else, look for `Packs/pai-knowledge-system` in your PAI directory.
+**Can't find it?** If you installed PAI somewhere else, look for `Packs/madeinoz-knowledge-system` in your PAI directory.
 
 ### Step 5: Configure Your API Key
 
@@ -151,7 +151,7 @@ Server is running at http://localhost:8000
 Open a new terminal window and check the status:
 
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/status.ts
 ```
 
@@ -251,14 +251,14 @@ In the terminal where it's running, press `Ctrl + C`.
 
 Or from another terminal:
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/stop.ts
 ```
 
 ### To Start Again
 
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/start.ts
 ```
 
@@ -284,7 +284,7 @@ Add this to your shell configuration file (`~/.zshrc` or `~/.bashrc`):
 ```bash
 # Auto-start PAI Knowledge System
 if ! podman ps | grep -q "pai-knowledge-graph-mcp"; then
-    cd ~/.config/pai/Packs/pai-knowledge-system && bun run src/server/start.ts
+    cd ~/.config/pai/Packs/madeinoz-knowledge-system && bun run src/server/start.ts
 fi
 ```
 

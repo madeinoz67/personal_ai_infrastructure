@@ -869,10 +869,10 @@ class Installer {
 
     if (paiSkillsDir) {
       cli.blank();
-      cli.info(`Installing to: ${paiSkillsDir}/pai-knowledge-system`);
+      cli.info(`Installing to: ${paiSkillsDir}/madeinoz-knowledge-system`);
 
       // Remove existing installation
-      const existingPath = `${paiSkillsDir}/pai-knowledge-system`;
+      const existingPath = `${paiSkillsDir}/madeinoz-knowledge-system`;
       try {
         const existing = Bun.file(existingPath);
         if (existing.exists()) {
@@ -888,7 +888,7 @@ class Installer {
       const skillSource = `${packDir}/Knowledge`;
 
       try {
-        await this.containerManager.exec(["cp", "-r", skillSource, `${paiSkillsDir}/pai-knowledge-system`], {
+        await this.containerManager.exec(["cp", "-r", skillSource, `${paiSkillsDir}/madeinoz-knowledge-system`], {
           quiet: false,
         });
         cli.success("PAI Knowledge System skill installed");

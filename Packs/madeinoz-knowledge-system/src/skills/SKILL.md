@@ -44,7 +44,7 @@ Persistent personal knowledge system powered by Graphiti knowledge graph with Fa
 
 1. **Start the Graphiti MCP server:**
    ```bash
-   cd /path/to/pai-knowledge-system
+   cd /path/to/madeinoz-knowledge-system
    bun run src/server/run.ts
    ```
 

@@ -223,7 +223,7 @@ If something isn't working:
 1. Check if the MCP server is running: `bun run src/server/status.ts`
 2. Look at the logs: `bun run src/server/logs.ts`
 3. Read the [troubleshooting guide](troubleshooting.md)
-4. Review the main [README](/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md) for technical details
+4. Review the main [README](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md) for technical details
 
 ## Tips for Success
 

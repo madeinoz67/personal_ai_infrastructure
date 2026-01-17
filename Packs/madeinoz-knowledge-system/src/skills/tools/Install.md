@@ -33,7 +33,7 @@ Before installation, verify:
 ### Step 1: Start MCP Server
 
 ```bash
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 bun run src/server/run.ts
 ```
 

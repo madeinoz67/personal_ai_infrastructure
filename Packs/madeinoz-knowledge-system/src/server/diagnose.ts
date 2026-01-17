@@ -275,9 +275,9 @@ class Diagnostics {
 
     const possiblePaths = [
       `${process.env.HOME}/.claude/skills/Knowledge`,
-      `${process.env.HOME}/.claude/skills/pai-knowledge-system`,
+      `${process.env.HOME}/.claude/skills/madeinoz-knowledge-system`,
       process.env.PAI_DIR ? `${process.env.PAI_DIR}/skills/Knowledge` : "",
-      process.env.PAI_DIR ? `${process.env.PAI_DIR}/skills/pai-knowledge-system` : "",
+      process.env.PAI_DIR ? `${process.env.PAI_DIR}/skills/madeinoz-knowledge-system` : "",
     ].filter(Boolean);
 
     let found = false;
@@ -303,7 +303,7 @@ class Diagnostics {
         name: "PAI Skill",
         passed: false,
         message: "PAI skill not found in standard locations",
-        details: "Install with: cp -r pai-knowledge-system ~/.claude/skills/",
+        details: "Install with: cp -r madeinoz-knowledge-system ~/.claude/skills/",
       });
     }
   }

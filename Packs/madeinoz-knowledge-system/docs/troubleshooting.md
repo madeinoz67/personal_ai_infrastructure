@@ -9,7 +9,7 @@ Before diving into specific problems, run these checks:
 ### 1. Check if Services are Running
 
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/status.ts
 ```
 
@@ -63,7 +63,7 @@ If nothing shows up, the server isn't running.
 
 **Start the server:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/start.ts
 ```
 
@@ -316,7 +316,7 @@ Should see a hook definition.
 **If nothing shows:**
 The hook isn't installed. Install it:
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/server/install.ts
 ```
 
@@ -567,13 +567,13 @@ podman logs pai-knowledge-falkordb
 If these solutions don't work:
 
 1. **Check the main README:**
-   `/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md`
+   `/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md`
 
 2. **Check installation guide:**
    `docs/installation.md`
 
 3. **Review verification:**
-   `/Users/seaton/.config/pai/Packs/pai-knowledge-system/VERIFY.md`
+   `/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/VERIFY.md`
 
 4. **Check Graphiti documentation:**
    https://help.getzep.com/graphiti
@@ -586,7 +586,7 @@ If these solutions don't work:
 Create a diagnostic report:
 
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 echo "=== System Status ===" > diagnostic.txt
 bun run src/server/status.ts >> diagnostic.txt

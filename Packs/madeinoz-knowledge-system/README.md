@@ -3,7 +3,7 @@
 name: PAI Knowledge System
 
 # pack-id: (format) {author}-{pack-name}-{variant}-v{version}
-pack-id: madeinoz67-pai-knowledge-system-core-v1.1.0
+pack-id: madeinoz67-madeinoz-knowledge-system-core-v1.1.0
 
 # version: (format) SemVer major.minor.patch
 version: 1.1.0
@@ -30,7 +30,7 @@ dependencies: [pai-history-system]
 keywords: [knowledge, graph, memory, semantic search, entity extraction, relationships, graphiti, falkordb, neo4j, mcp, persistent, ai, storage, retrieval, organizational, learning, documentation]
 ---
 
-<p align="center"><img src="../icons/pai-knowledge-system.png" alt="PAI Knowledge System" width="256"></p>
+<p align="center"><img src="../icons/madeinoz-knowledge-system.png" alt="PAI Knowledge System" width="256"></p>
 
 # Knowledge
 
@@ -507,7 +507,7 @@ The AI will read [INSTALL.md](INSTALL.md) and execute each step, handling config
 For humans who prefer an interactive CLI experience without AI assistance:
 
 ```bash
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 bun run src/server/install.ts
 ```
 
@@ -741,10 +741,10 @@ Remember that I prefer gpt-4o for complex reasoning tasks
    podman ps | grep pai-knowledge-graph-mcp
 
 2. If not running, start the server:
-   bash pai-knowledge-system/src/server/run.sh
+   bash madeinoz-knowledge-system/src/server/run.sh
 
 3. Check server logs:
-   bash pai-knowledge-system/src/server/logs.sh
+   bash madeinoz-knowledge-system/src/server/logs.sh
 
 4. Verify health endpoint:
    curl http://localhost:8000/health
@@ -763,7 +763,7 @@ Once the server is running, try capturing knowledge again.
 
 **Option 1: `.env` file** (recommended - in pack config directory):
 ```bash
-# Location: pai-knowledge-system/src/config/.env
+# Location: madeinoz-knowledge-system/src/config/.env
 
 # LLM Provider Configuration
 PAI_KNOWLEDGE_LLM_PROVIDER=openai

@@ -337,7 +337,7 @@ Create a backup of your entire knowledge graph:
 **Podman:**
 ```bash
 # Navigate to pack directory
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Create backup directory
 mkdir -p backups
@@ -352,7 +352,7 @@ echo "✓ Backup created"
 
 **Docker:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 
 docker exec pai-knowledge-falkordb redis-cli BGSAVE
@@ -372,7 +372,7 @@ Create a cron job for automatic daily backups:
 crontab -e
 
 # Add this line for daily backup at 2 AM
-0 2 * * * cd ~/.config/pai/Packs/pai-knowledge-system && podman exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
 ```
 
 **Docker:**
@@ -380,7 +380,7 @@ crontab -e
 crontab -e
 
 # Add this line for daily backup at 2 AM
-0 2 * * * cd ~/.config/pai/Packs/pai-knowledge-system && docker exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && docker exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
 ```
 
 #### Restore from Backup
@@ -389,7 +389,7 @@ To restore your knowledge graph from a backup:
 
 **Podman:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # 1. Stop the running containers
 bun run stop
@@ -410,7 +410,7 @@ bun run status
 
 **Docker:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # 1. Stop the running containers
 bun run stop
@@ -471,7 +471,7 @@ For a complete backup including all container data:
 
 **Podman:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # 1. Stop containers
 bun run stop
@@ -487,7 +487,7 @@ echo "✓ Full volume backup created"
 
 **Docker:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # 1. Stop containers
 bun run stop
@@ -506,7 +506,7 @@ echo "✓ Full volume backup created"
 
 **Podman:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # 1. Stop containers
 bun run stop
@@ -527,7 +527,7 @@ bun run status
 
 **Docker:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # 1. Stop containers
 bun run stop
@@ -553,7 +553,7 @@ To move your knowledge graph to a new computer:
 
 **Podman - On the old machine:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Create portable backup
 bun run stop
@@ -566,8 +566,8 @@ scp knowledge-migration.tar user@newmachine:~/
 
 **Podman - On the new machine:**
 ```bash
-# After installing pai-knowledge-system
-cd ~/.config/pai/Packs/pai-knowledge-system
+# After installing madeinoz-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Import the volume
 podman volume create pai-knowledge-data
@@ -580,7 +580,7 @@ bun run status
 
 **Docker - On the old machine:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Create portable backup
 bun run stop
@@ -594,8 +594,8 @@ scp knowledge-migration.tar user@newmachine:~/
 
 **Docker - On the new machine:**
 ```bash
-# After installing pai-knowledge-system
-cd ~/.config/pai/Packs/pai-knowledge-system
+# After installing madeinoz-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Import the volume
 docker volume create pai-knowledge-data
@@ -853,7 +853,7 @@ The hook runs at session start and syncs new captures automatically.
 
 **Manual Sync:**
 ```bash
-cd ~/.config/pai/Packs/pai-knowledge-system
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run src/hooks/sync-history-to-knowledge.ts --verbose
 ```
 
@@ -929,4 +929,4 @@ After adding new knowledge and wanting to search for it immediately:
 
 - Learn more about [how the system works](concepts.md)
 - Troubleshoot issues in the [troubleshooting guide](troubleshooting.md)
-- Explore advanced features in the main [README](/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md)
+- Explore advanced features in the main [README](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md)

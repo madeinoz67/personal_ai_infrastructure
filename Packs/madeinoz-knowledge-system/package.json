@@ -1,5 +1,5 @@
 {
-  "name": "pai-knowledge-system",
+  "name": "madeinoz-knowledge-system",
   "version": "1.0.0",
   "description": "Persistent knowledge management system powered by Graphiti knowledge graph with FalkorDB backend",
   "type": "module",
@@ -64,10 +64,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/madeinoz67/personal-ai-infrastructure",
-    "directory": "Packs/pai-knowledge-system"
+    "directory": "Packs/madeinoz-knowledge-system"
   },
   "bugs": {
     "url": "https://github.com/madeinoz67/personal-ai-infrastructure/issues"
   },
-  "homepage": "https://github.com/madeinoz67/personal-ai-infrastructure/tree/main/Packs/pai-knowledge-system"
+  "homepage": "https://github.com/madeinoz67/personal-ai-infrastructure/tree/main/Packs/madeinoz-knowledge-system"
 }

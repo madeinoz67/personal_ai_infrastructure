@@ -42,7 +42,7 @@ This checklist ensures:
 **Verification commands:**
 ```bash
 # Check .env file for DATABASE_TYPE
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 grep "PAI_KNOWLEDGE_DATABASE_TYPE" config/.env 2>/dev/null || grep "DATABASE_TYPE" config/.env 2>/dev/null
 
 # Or check running containers
@@ -89,7 +89,7 @@ Verify all required files and directories are present.
 
 **Verification commands:**
 ```bash
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 ls -la README.md INSTALL.md VERIFY.md package.json
 ```
 
@@ -1075,7 +1075,7 @@ ls -la "$HISTORY_DIR/.synced/" 2>/dev/null || echo "Sync state directory not yet
 
 **Verification commands:**
 ```bash
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 bun run src/hooks/sync-history-to-knowledge.ts --dry-run --verbose
 ```
 
@@ -1249,7 +1249,7 @@ Test error scenarios and verify helpful error messages
 
 **Verification commands:**
 ```bash
-cd /path/to/pai-knowledge-system
+cd /path/to/madeinoz-knowledge-system
 bun test
 ```
 

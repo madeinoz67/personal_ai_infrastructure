@@ -627,4 +627,4 @@ Now that you understand the concepts:
 
 - Return to the [Usage Guide](usage.md) with deeper understanding
 - Check [Troubleshooting](troubleshooting.md) if you have issues
-- Explore the technical [README](/Users/seaton/.config/pai/Packs/pai-knowledge-system/README.md) for implementation details
+- Explore the technical [README](/Users/seaton/.config/pai/Packs/madeinoz-knowledge-system/README.md) for implementation details
