@@ -37,7 +37,7 @@ import { checkHealth, addEpisode, AddEpisodeParams } from './lib/knowledge-clien
 
 // Tools that indicate knowledge system operations (prevent feedback loop)
 const KNOWLEDGE_TOOL_PATTERNS = [
-  'mcp__pai-knowledge__',
+  'mcp__madeinoz-knowledge__',
   'search_memory',
   'add_memory',
   'get_episodes',

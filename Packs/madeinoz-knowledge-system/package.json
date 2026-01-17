@@ -6,13 +6,13 @@
   "module": "dist/server/index.js",
   "main": "dist/server/index.js",
   "bin": {
-    "pai-knowledge-run": "dist/server/run.js",
-    "pai-knowledge-start": "dist/skills/tools/start.js",
-    "pai-knowledge-stop": "dist/skills/tools/stop.js",
-    "pai-knowledge-status": "dist/skills/tools/status.js",
-    "pai-knowledge-logs": "dist/skills/tools/logs.js",
-    "pai-knowledge-install": "dist/server/install.js",
-    "pai-knowledge-diagnose": "dist/server/diagnose.js"
+    "madeinoz-knowledge-run": "dist/server/run.js",
+    "madeinoz-knowledge-start": "dist/skills/tools/start.js",
+    "madeinoz-knowledge-stop": "dist/skills/tools/stop.js",
+    "madeinoz-knowledge-status": "dist/skills/tools/status.js",
+    "madeinoz-knowledge-logs": "dist/skills/tools/logs.js",
+    "madeinoz-knowledge-install": "dist/server/install.js",
+    "madeinoz-knowledge-diagnose": "dist/server/diagnose.js"
   },
   "scripts": {
     "build": "bun build src/server/run.ts --outdir dist/server --target bun && bun build src/skills/tools/start.ts --outdir dist/skills/tools --target bun && bun build src/skills/tools/stop.ts --outdir dist/skills/tools --target bun && bun build src/skills/tools/status.ts --outdir dist/skills/tools --target bun && bun build src/skills/tools/logs.ts --outdir dist/skills/tools --target bun && bun build src/server/mcp-wrapper.ts --outdir dist/server --target bun && bun build src/server/install.ts --outdir dist/server --target bun && bun build src/server/diagnose.ts --outdir dist/server --target bun",

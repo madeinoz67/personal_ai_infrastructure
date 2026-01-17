@@ -1,10 +1,10 @@
-# PAI Knowledge System - User Guide
+# Madeinoz Knowledge System - User Guide
 
-Welcome to the PAI Knowledge System! This guide will help you understand and use your personal knowledge management system.
+Welcome to the Madeinoz Knowledge System! This guide will help you understand and use your personal knowledge management system.
 
-## What is the PAI Knowledge System?
+## What is the Madeinoz Knowledge System?
 
-Think of the PAI Knowledge System as your AI's memory. Instead of forgetting what you discussed yesterday or last week, it remembers everything you tell it to remember. It's like having a smart notebook that:
+Think of the Madeinoz Knowledge System as your AI's memory. Instead of forgetting what you discussed yesterday or last week, it remembers everything you tell it to remember. It's like having a smart notebook that:
 
 - Automatically organizes information as you add it
 - Finds connections between different topics
@@ -55,7 +55,7 @@ The system traces the relationships in your knowledge graph and explains how the
 ### Before You Begin
 
 You'll need:
-1. The PAI Knowledge System installed (see [installation guide](installation.md))
+1. The Madeinoz Knowledge System installed (see [installation guide](installation.md))
 2. The MCP server running in the background
 3. An OpenAI API key (or similar service)
 

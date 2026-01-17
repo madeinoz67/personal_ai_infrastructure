@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Stop PAI Knowledge System containers
+ * Stop Madeinoz Knowledge System containers
  *
  * Stops both MCP server and FalkorDB containers.
  */
@@ -12,7 +12,7 @@ import { cli } from "../lib/cli.js";
  * Main stop function
  */
 async function main() {
-  cli.header("PAI Knowledge System - Stop");
+  cli.header("Madeinoz Knowledge System - Stop");
 
   // Create container manager
   const containerManager = createContainerManager();
@@ -23,7 +23,7 @@ async function main() {
     process.exit(1);
   }
 
-  cli.info("Stopping PAI Knowledge System...");
+  cli.info("Stopping Madeinoz Knowledge System...");
   cli.blank();
 
   // Container names
@@ -59,7 +59,7 @@ async function main() {
   }
 
   cli.blank();
-  cli.success("PAI Knowledge System stopped");
+  cli.success("Madeinoz Knowledge System stopped");
   cli.blank();
   cli.info("To start again:");
   cli.dim("  bun run src/server/start.ts");

@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide helps you fix common issues with the PAI Knowledge System. Problems are organized by symptom with step-by-step solutions.
+This guide helps you fix common issues with the Madeinoz Knowledge System. Problems are organized by symptom with step-by-step solutions.
 
 ## Quick Diagnostics
 
@@ -15,11 +15,11 @@ bun run src/server/status.ts
 
 Expected output:
 ```
-PAI Knowledge System Status:
+Madeinoz Knowledge System Status:
 
 Containers:
-  pai-knowledge-graph-mcp: running
-  pai-knowledge-neo4j: running
+  madeinoz-knowledge-graph-mcp: running
+  madeinoz-knowledge-neo4j: running
 
 MCP Server: http://localhost:8000/sse
   Status: healthy
@@ -56,7 +56,7 @@ Should see some response about the endpoint.
 
 **Check if server is running:**
 ```bash
-podman ps | grep pai-knowledge
+podman ps | grep madeinoz-knowledge
 ```
 
 If nothing shows up, the server isn't running.
@@ -83,7 +83,7 @@ Edit `src/server/run.ts` and change the port number, then restart.
 
 **Check your configuration:**
 ```bash
-cat config/.env | grep PAI_KNOWLEDGE_OPENAI_API_KEY
+cat config/.env | grep MADEINOZ_KNOWLEDGE_OPENAI_API_KEY
 ```
 
 **If the key is missing or wrong:**
@@ -95,7 +95,7 @@ nano config/.env
 
 2. Add or fix your API key:
 ```
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-your-actual-key-here
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-your-actual-key-here
 ```
 
 3. Save (Ctrl+O, Enter, Ctrl+X)
@@ -137,7 +137,7 @@ process running as root, which manages container lifecycles and images.
 
 Edit `config/.env`:
 ```bash
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o
 ```
 
 Note: gpt-4o costs more but extracts entities better than gpt-4o-mini.
@@ -205,7 +205,7 @@ podman pull falkordb/graphiti-knowledge-graph-mcp:latest
 **Error: "network not found"**
 Recreate the network:
 ```bash
-podman network rm pai-knowledge-net
+podman network rm madeinoz-knowledge-net
 ```
 Then start the server again (it will recreate the network).
 
@@ -239,7 +239,7 @@ If you've set a custom group ID, make sure searches use the same group.
 
 Verify your group setting:
 ```bash
-grep PAI_KNOWLEDGE_GROUP_ID config/.env
+grep MADEINOZ_KNOWLEDGE_GROUP_ID config/.env
 ```
 
 **Verify entities were extracted:**
@@ -254,7 +254,7 @@ Look at a recent capture - did it show "Entities extracted: 0"? If so, see the "
 
 Reduce concurrent requests in `config/.env`:
 ```bash
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=3
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=3
 ```
 
 Lower number = fewer parallel requests.
@@ -354,7 +354,7 @@ https://platform.openai.com/usage
 
 In `config/.env`:
 ```bash
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
 ```
 (gpt-4o-mini is 10x cheaper than gpt-4o)
 
@@ -363,7 +363,7 @@ Only capture truly valuable knowledge, not every conversation.
 
 **3. Reduce concurrency:**
 ```bash
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=3
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=3
 ```
 
 **4. Monitor usage:**
@@ -403,10 +403,10 @@ lsof -i :3000  # FalkorDB UI
 **Try accessing the graph directly:**
 ```bash
 # For Neo4j (default)
-podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "RETURN 1"
+podman exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password "RETURN 1"
 
 # For FalkorDB
-podman exec pai-knowledge-falkordb redis-cli PING
+podman exec madeinoz-knowledge-falkordb redis-cli PING
 ```
 
 Should respond with `1` (Neo4j) or "PONG" (FalkorDB).
@@ -489,7 +489,7 @@ FalkorDB uses RediSearch for fulltext indexing, which interprets certain charact
 
 **Example of the bug:**
 
-When you search for `pai-threat-intel`:
+When you search for `madeinoz-threat-intel`:
 - RediSearch interprets this as: `pai AND NOT threat AND NOT intel`
 - This returns wrong results or a syntax error
 
@@ -505,10 +505,10 @@ Graphiti's FalkorDB driver has a `sanitize()` method that replaces special chara
 
 **Our Local Workaround:**
 
-The PAI Knowledge System implements client-side sanitization in `src/server/lib/lucene.ts`:
+The Madeinoz Knowledge System implements client-side sanitization in `src/server/lib/lucene.ts`:
 
 1. **For group_ids:** Hyphens are converted to underscores before sending to Graphiti
-   - `pai-threat-intel` → `pai_threat_intel`
+   - `madeinoz-threat-intel` → `pai_threat_intel`
    - This avoids the Graphiti bug where group_ids aren't escaped
 
 2. **For search queries:** Special characters are escaped with backslashes
@@ -524,7 +524,7 @@ The PAI Knowledge System implements client-side sanitization in `src/server/lib/
 
 1. Check if your group_id contains special characters:
    ```bash
-   grep PAI_KNOWLEDGE_GROUP_ID config/.env
+   grep MADEINOZ_KNOWLEDGE_GROUP_ID config/.env
    ```
 
 2. Use underscores instead of hyphens in group_ids:
@@ -556,7 +556,7 @@ cat config/.env
 curl http://localhost:8000/sse -H "Accept: text/event-stream"
 
 # Check containers
-podman ps | grep pai-knowledge
+podman ps | grep madeinoz-knowledge
 
 # Check ports
 lsof -i :8000    # MCP Server
@@ -569,9 +569,9 @@ lsof -i :3000    # FalkorDB UI
 bun run src/hooks/sync-memory-to-knowledge.ts --dry-run --verbose
 
 # View container logs directly
-podman logs pai-knowledge-graph-mcp
-podman logs pai-knowledge-neo4j       # Neo4j (default)
-podman logs pai-knowledge-falkordb    # FalkorDB backend
+podman logs madeinoz-knowledge-graph-mcp
+podman logs madeinoz-knowledge-neo4j       # Neo4j (default)
+podman logs madeinoz-knowledge-falkordb    # FalkorDB backend
 ```
 
 ## Getting More Help
@@ -610,7 +610,7 @@ echo "\n=== Recent Logs ===" >> diagnostic.txt
 bun run src/server/logs.ts | tail -100 >> diagnostic.txt
 
 echo "\n=== Container Info ===" >> diagnostic.txt
-podman ps --all | grep pai-knowledge >> diagnostic.txt
+podman ps --all | grep madeinoz-knowledge >> diagnostic.txt
 
 echo "\n=== Port Status ===" >> diagnostic.txt
 lsof -i :8000 >> diagnostic.txt

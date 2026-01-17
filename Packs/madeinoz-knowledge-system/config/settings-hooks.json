@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Hook configuration for PAI Knowledge System - syncs memory to knowledge graph",
+  "description": "Hook configuration for Madeinoz Knowledge System - syncs memory to knowledge graph",
   "_instructions": [
     "Merge these hook configurations into ~/.claude/settings.json",
     "The hooks array should be added/merged under the 'hooks' key",

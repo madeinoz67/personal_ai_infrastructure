@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * View logs from PAI Knowledge System containers
+ * View logs from Madeinoz Knowledge System containers
  *
  * Shows logs from MCP server or FalkorDB container.
  * Supports following logs in real-time.
@@ -62,9 +62,9 @@ function parseArgs(args: string[]): LogOptions {
  */
 function printHelp() {
   cli.blank();
-  cli.header("PAI Knowledge System - Logs", 50);
+  cli.header("Madeinoz Knowledge System - Logs", 50);
   cli.blank();
-  cli.info("View logs from PAI Knowledge System containers.");
+  cli.info("View logs from Madeinoz Knowledge System containers.");
   cli.blank();
   cli.info("Usage:");
   cli.dim("  bun run src/server/logs.ts [OPTIONS]");
@@ -99,7 +99,7 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
 
   // Don't show header for logs, it's too noisy
-  // cli.header("PAI Knowledge System - Logs");
+  // cli.header("Madeinoz Knowledge System - Logs");
 
   // Create container manager
   const containerManager = createContainerManager();

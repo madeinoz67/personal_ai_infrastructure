@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide shows you how to use the PAI Knowledge System in everyday situations. All commands are shown as natural language - just talk to your AI assistant normally.
+This guide shows you how to use the Madeinoz Knowledge System in everyday situations. All commands are shown as natural language - just talk to your AI assistant normally.
 
 ## Capturing Knowledge
 
@@ -247,7 +247,7 @@ You: What did I learn recently?
 AI: Recent Knowledge Additions:
 
 Past 7 Days:
-1. "PAI Knowledge System Setup" (2025-01-08)
+1. "Madeinoz Knowledge System Setup" (2025-01-08)
    - Installation and configuration
    - MCP server setup
 
@@ -345,7 +345,7 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 
 # Backup Neo4j data directory
-podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +%Y%m%d-%H%M%S).dump
+podman exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +%Y%m%d-%H%M%S).dump
 
 echo "✓ Backup created"
 ```
@@ -355,7 +355,7 @@ echo "✓ Backup created"
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 
-docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +%Y%m%d-%H%M%S).dump
+docker exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +%Y%m%d-%H%M%S).dump
 
 echo "✓ Backup created"
 ```
@@ -366,9 +366,9 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 
 # Backup the FalkorDB data (RDB snapshot)
-podman exec pai-knowledge-falkordb redis-cli BGSAVE
+podman exec madeinoz-knowledge-falkordb redis-cli BGSAVE
 sleep 2  # Wait for save to complete
-podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +%Y%m%d-%H%M%S).rdb
+podman cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +%Y%m%d-%H%M%S).rdb
 
 echo "✓ Backup created"
 ```
@@ -378,9 +378,9 @@ echo "✓ Backup created"
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 
-docker exec pai-knowledge-falkordb redis-cli BGSAVE
+docker exec madeinoz-knowledge-falkordb redis-cli BGSAVE
 sleep 2
-docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +%Y%m%d-%H%M%S).rdb
+docker cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +%Y%m%d-%H%M%S).rdb
 
 echo "✓ Backup created"
 ```
@@ -395,7 +395,7 @@ Create a cron job for automatic daily backups:
 crontab -e
 
 # Add this line for daily backup at 2 AM
-0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +\%Y\%m\%d).dump
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +\%Y\%m\%d).dump
 ```
 
 **Neo4j (Default) - Docker:**
@@ -403,7 +403,7 @@ crontab -e
 crontab -e
 
 # Add this line for daily backup at 2 AM
-0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +\%Y\%m\%d).dump
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && docker exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +\%Y\%m\%d).dump
 ```
 
 **FalkorDB Backend - Podman:**
@@ -411,7 +411,7 @@ crontab -e
 crontab -e
 
 # Add this line for daily backup at 2 AM
-0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec madeinoz-knowledge-falkordb redis-cli BGSAVE && sleep 2 && podman cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
 ```
 
 **FalkorDB Backend - Docker:**
@@ -419,7 +419,7 @@ crontab -e
 crontab -e
 
 # Add this line for daily backup at 2 AM
-0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && docker exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && docker exec madeinoz-knowledge-falkordb redis-cli BGSAVE && sleep 2 && docker cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
 ```
 
 #### Restore from Backup
@@ -437,7 +437,7 @@ bun run stop
 ls -la backups/
 
 # 3. Restore using neo4j-admin
-podman run --rm -v ./backups:/backups:ro -v pai-knowledge-neo4j-data:/data neo4j:2025.12.1 \
+podman run --rm -v ./backups:/backups:ro -v madeinoz-knowledge-neo4j-data:/data neo4j:2025.12.1 \
     neo4j-admin database load neo4j --from-stdin < ./backups/knowledge-YYYYMMDD-HHMMSS.dump --overwrite-destination
 
 # 4. Restart the knowledge system
@@ -458,7 +458,7 @@ bun run stop
 ls -la backups/
 
 # 3. Restore using neo4j-admin
-docker run --rm -v ./backups:/backups:ro -v pai-knowledge-neo4j-data:/data neo4j:2025.12.1 \
+docker run --rm -v ./backups:/backups:ro -v madeinoz-knowledge-neo4j-data:/data neo4j:2025.12.1 \
     neo4j-admin database load neo4j --from-stdin < ./backups/knowledge-YYYYMMDD-HHMMSS.dump --overwrite-destination
 
 # 4. Restart the knowledge system
@@ -481,7 +481,7 @@ bun run stop
 ls -la backups/
 
 # 3. Start a temporary container to restore data
-podman run --rm -v ./backups:/backups:ro -v pai-knowledge-data:/data falkordb/falkordb:latest \
+podman run --rm -v ./backups:/backups:ro -v madeinoz-knowledge-data:/data falkordb/falkordb:latest \
     sh -c "cp /backups/knowledge-YYYYMMDD-HHMMSS.rdb /data/dump.rdb"
 
 # 4. Restart the knowledge system
@@ -502,7 +502,7 @@ bun run stop
 ls -la backups/
 
 # 3. Start a temporary container to restore data
-docker run --rm -v ./backups:/backups:ro -v pai-knowledge-data:/data falkordb/falkordb:latest \
+docker run --rm -v ./backups:/backups:ro -v madeinoz-knowledge-data:/data falkordb/falkordb:latest \
     sh -c "cp /backups/knowledge-YYYYMMDD-HHMMSS.rdb /data/dump.rdb"
 
 # 4. Restart the knowledge system
@@ -521,45 +521,45 @@ For a human-readable backup or migration to another system:
 **Neo4j (Default) - Podman/Docker:**
 ```bash
 # Connect to Neo4j and export graph data using cypher-shell
-podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password \
+podman exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password \
     "MATCH (n)-[r]->(m) RETURN n, r, m" > backups/knowledge-export.txt
 
 # Export all nodes
-podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password \
+podman exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password \
     "MATCH (n) RETURN n" > backups/nodes-export.txt
 
 # Export all relationships
-podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password \
+podman exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password \
     "MATCH ()-[r]->() RETURN r" > backups/relationships-export.txt
 ```
 
 **FalkorDB Backend - Podman:**
 ```bash
 # Connect to FalkorDB and export graph data
-podman exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
+podman exec madeinoz-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH (n)-[r]->(m) RETURN n, r, m" > backups/knowledge-export.txt
 
 # Export all nodes
-podman exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
+podman exec madeinoz-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH (n) RETURN n" > backups/nodes-export.txt
 
 # Export all relationships
-podman exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
+podman exec madeinoz-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH ()-[r]->() RETURN r" > backups/relationships-export.txt
 ```
 
 **FalkorDB Backend - Docker:**
 ```bash
 # Connect to FalkorDB and export graph data
-docker exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
+docker exec madeinoz-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH (n)-[r]->(m) RETURN n, r, m" > backups/knowledge-export.txt
 
 # Export all nodes
-docker exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
+docker exec madeinoz-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH (n) RETURN n" > backups/nodes-export.txt
 
 # Export all relationships
-docker exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
+docker exec madeinoz-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH ()-[r]->() RETURN r" > backups/relationships-export.txt
 ```
 
@@ -575,7 +575,7 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run stop
 
 # 2. Export the entire volume
-podman volume export pai-knowledge-data > backups/volume-$(date +%Y%m%d-%H%M%S).tar
+podman volume export madeinoz-knowledge-data > backups/volume-$(date +%Y%m%d-%H%M%S).tar
 
 # 3. Restart containers
 bun run start
@@ -591,7 +591,7 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run stop
 
 # 2. Export the entire volume (Docker requires a helper container)
-docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v madeinoz-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
     tar cvf /backup/volume-$(date +%Y%m%d-%H%M%S).tar -C /data .
 
 # 3. Restart containers
@@ -610,11 +610,11 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run stop
 
 # 2. Remove existing volume (WARNING: destroys current data)
-podman volume rm pai-knowledge-data
+podman volume rm madeinoz-knowledge-data
 
 # 3. Create new volume and restore
-podman volume create pai-knowledge-data
-podman volume import pai-knowledge-data < backups/volume-YYYYMMDD-HHMMSS.tar
+podman volume create madeinoz-knowledge-data
+podman volume import madeinoz-knowledge-data < backups/volume-YYYYMMDD-HHMMSS.tar
 
 # 4. Restart containers
 bun run start
@@ -631,11 +631,11 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 bun run stop
 
 # 2. Remove existing volume (WARNING: destroys current data)
-docker volume rm pai-knowledge-data
+docker volume rm madeinoz-knowledge-data
 
 # 3. Create new volume and restore
-docker volume create pai-knowledge-data
-docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
+docker volume create madeinoz-knowledge-data
+docker run --rm -v madeinoz-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
     sh -c "cd /data && tar xvf /backup/volume-YYYYMMDD-HHMMSS.tar"
 
 # 4. Restart containers
@@ -655,7 +655,7 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Create portable backup
 bun run stop
-podman volume export pai-knowledge-data > knowledge-migration.tar
+podman volume export madeinoz-knowledge-data > knowledge-migration.tar
 bun run start
 
 # Transfer the file
@@ -668,8 +668,8 @@ scp knowledge-migration.tar user@newmachine:~/
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Import the volume
-podman volume create pai-knowledge-data
-podman volume import pai-knowledge-data < ~/knowledge-migration.tar
+podman volume create madeinoz-knowledge-data
+podman volume import madeinoz-knowledge-data < ~/knowledge-migration.tar
 
 # Start the system
 bun run start
@@ -682,7 +682,7 @@ cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Create portable backup
 bun run stop
-docker run --rm -v pai-knowledge-data:/data -v $(pwd):/backup alpine \
+docker run --rm -v madeinoz-knowledge-data:/data -v $(pwd):/backup alpine \
     tar cvf /backup/knowledge-migration.tar -C /data .
 bun run start
 
@@ -696,8 +696,8 @@ scp knowledge-migration.tar user@newmachine:~/
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Import the volume
-docker volume create pai-knowledge-data
-docker run --rm -v pai-knowledge-data:/data -v ~/:/backup alpine \
+docker volume create madeinoz-knowledge-data
+docker run --rm -v madeinoz-knowledge-data:/data -v ~/:/backup alpine \
     sh -c "cd /data && tar xvf /backup/knowledge-migration.tar"
 
 # Start the system
@@ -720,61 +720,61 @@ bun run status
 **Neo4j (Default) - Podman:**
 ```bash
 # Backup commands
-podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backup.dump
-podman volume export pai-knowledge-neo4j-data > volume-backup.tar
+podman exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backup.dump
+podman volume export madeinoz-knowledge-neo4j-data > volume-backup.tar
 
 # Restore commands
-podman volume import pai-knowledge-neo4j-data < volume-backup.tar
+podman volume import madeinoz-knowledge-neo4j-data < volume-backup.tar
 
 # Verification
-podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
+podman exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
 ```
 
 **Neo4j (Default) - Docker:**
 ```bash
 # Backup commands
-docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backup.dump
+docker exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backup.dump
 
 # Restore commands
-docker run --rm -v pai-knowledge-neo4j-data:/data -v $(pwd):/backup alpine \
+docker run --rm -v madeinoz-knowledge-neo4j-data:/data -v $(pwd):/backup alpine \
     sh -c "cd /data && tar xvf /backup/volume-backup.tar"
 
 # Verification
-docker exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
+docker exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
 ```
 
 **FalkorDB Backend - Podman:**
 ```bash
 # Backup commands
-podman exec pai-knowledge-falkordb redis-cli BGSAVE              # Trigger save
-podman cp pai-knowledge-falkordb:/data/dump.rdb ./backup.rdb     # Copy backup
-podman volume export pai-knowledge-data > volume-backup.tar       # Full volume
+podman exec madeinoz-knowledge-falkordb redis-cli BGSAVE              # Trigger save
+podman cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backup.rdb     # Copy backup
+podman volume export madeinoz-knowledge-data > volume-backup.tar       # Full volume
 
 # Restore commands
-podman volume import pai-knowledge-data < volume-backup.tar       # Restore volume
-podman cp ./backup.rdb pai-knowledge-falkordb:/data/dump.rdb     # Restore RDB
+podman volume import madeinoz-knowledge-data < volume-backup.tar       # Restore volume
+podman cp ./backup.rdb madeinoz-knowledge-falkordb:/data/dump.rdb     # Restore RDB
 
 # Verification
-podman exec pai-knowledge-falkordb redis-cli DBSIZE              # Check DB size
-podman exec pai-knowledge-falkordb redis-cli GRAPH.LIST          # List graphs
+podman exec madeinoz-knowledge-falkordb redis-cli DBSIZE              # Check DB size
+podman exec madeinoz-knowledge-falkordb redis-cli GRAPH.LIST          # List graphs
 ```
 
 **FalkorDB Backend - Docker:**
 ```bash
 # Backup commands
-docker exec pai-knowledge-falkordb redis-cli BGSAVE              # Trigger save
-docker cp pai-knowledge-falkordb:/data/dump.rdb ./backup.rdb     # Copy backup
-docker run --rm -v pai-knowledge-data:/data -v $(pwd):/backup alpine \
+docker exec madeinoz-knowledge-falkordb redis-cli BGSAVE              # Trigger save
+docker cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backup.rdb     # Copy backup
+docker run --rm -v madeinoz-knowledge-data:/data -v $(pwd):/backup alpine \
     tar cvf /backup/volume-backup.tar -C /data .                 # Full volume
 
 # Restore commands
-docker run --rm -v pai-knowledge-data:/data -v $(pwd):/backup alpine \
+docker run --rm -v madeinoz-knowledge-data:/data -v $(pwd):/backup alpine \
     sh -c "cd /data && tar xvf /backup/volume-backup.tar"        # Restore volume
-docker cp ./backup.rdb pai-knowledge-falkordb:/data/dump.rdb     # Restore RDB
+docker cp ./backup.rdb madeinoz-knowledge-falkordb:/data/dump.rdb     # Restore RDB
 
 # Verification
-docker exec pai-knowledge-falkordb redis-cli DBSIZE              # Check DB size
-docker exec pai-knowledge-falkordb redis-cli GRAPH.LIST          # List graphs
+docker exec madeinoz-knowledge-falkordb redis-cli DBSIZE              # Check DB size
+docker exec madeinoz-knowledge-falkordb redis-cli GRAPH.LIST          # List graphs
 ```
 
 ## Advanced Usage Patterns
@@ -786,8 +786,8 @@ You: Remember this bash script for starting services:
 
 ```bash
 #!/bin/bash
-podman start pai-knowledge-graph-mcp
-podman start pai-knowledge-falkordb
+podman start madeinoz-knowledge-graph-mcp
+podman start madeinoz-knowledge-falkordb
 echo "Services started"
 ```
 
@@ -842,7 +842,7 @@ not a standalone database.
 
 **Day 3:**
 ```
-Remember: Decision made - using FalkorDB for PAI Knowledge System.
+Remember: Decision made - using FalkorDB for Madeinoz Knowledge System.
 ```
 
 The system automatically links these episodes through their shared entities.
@@ -942,7 +942,7 @@ You can maintain separate graphs for different purposes:
 
 In your config (`config/.env`):
 ```bash
-PAI_KNOWLEDGE_GROUP_ID=work
+MADEINOZ_KNOWLEDGE_GROUP_ID=work
 ```
 
 Or specify in commands:

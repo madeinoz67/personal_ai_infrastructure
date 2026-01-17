@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * MCP Server Wrapper for PAI Knowledge System
+ * MCP Server Wrapper for Madeinoz Knowledge System
  *
  * This script provides a simple command-line interface to the Graphiti MCP server.
  * It handles JSON-RPC communication and provides simple wrappers around the MCP tools.
@@ -222,7 +222,7 @@ class MCPWrapper {
    */
   printHelp(): void {
     cli.blank();
-    cli.header("PAI Knowledge System - MCP Wrapper", 60);
+    cli.header("Madeinoz Knowledge System - MCP Wrapper", 60);
     cli.blank();
     cli.info("Simple command-line interface to the Graphiti MCP server.");
     cli.blank();

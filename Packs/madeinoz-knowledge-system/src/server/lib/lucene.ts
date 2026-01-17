@@ -14,7 +14,7 @@
  * "my-knowledge-base" is used, the hyphen is passed directly to RediSearch
  * and interpreted as a negation operator.
  *
- * Example: "pai-threat-intel" → RediSearch interprets as "pai AND NOT threat AND NOT intel"
+ * Example: "madeinoz-threat-intel" → RediSearch interprets as "pai AND NOT threat AND NOT intel"
  *
  * ## Special Characters
  *
@@ -74,7 +74,7 @@
  * @returns The escaped value safe for use in Lucene queries
  *
  * @example
- * luceneSanitize("pai-threat-intel") // => '"pai-threat-intel"'
+ * luceneSanitize("madeinoz-threat-intel") // => '"madeinoz-threat-intel"'
  * luceneSanitize('user "quoted" text') // => '"user \\"quoted\\" text"'
  */
 export function luceneSanitize(value: string): string {
@@ -112,7 +112,7 @@ export function luceneSanitizeMany(values: string[]): string[] {
  * @returns true if the value contains characters that need escaping
  *
  * @example
- * needsEscaping("pai-threat") // => true
+ * needsEscaping("madeinoz-threat") // => true
  * needsEscaping("simple") // => false
  */
 export function needsEscaping(value: string): boolean {
@@ -126,7 +126,7 @@ export function needsEscaping(value: string): boolean {
  * Sanitize a group_id value for use in queries
  *
  * This is a convenience function specifically for group_ids, which
- * commonly use hyphens (e.g., "pai-threat-intel", "pai-observability").
+ * commonly use hyphens (e.g., "madeinoz-threat-intel", "madeinoz-observability").
  *
  * IMPORTANT: group_ids are validated by Graphiti before reaching RediSearch.
  * The validation only allows alphanumeric characters, dashes, and underscores.
@@ -140,7 +140,7 @@ export function needsEscaping(value: string): boolean {
  * @returns The sanitized group_id (hyphens → underscores)
  *
  * @example
- * sanitizeGroupId("pai-threat-intel") // => 'pai_threat_intel'
+ * sanitizeGroupId("madeinoz-threat-intel") // => 'pai_threat_intel'
  * sanitizeGroupId("test_group") // => 'test_group' (unchanged)
  * sanitizeGroupId("invalid@group") // => 'invalid@group' (logs warning)
  */
@@ -160,7 +160,7 @@ export function sanitizeGroupId(groupId: string | undefined): string | undefined
   }
 
   // WORKAROUND: Convert hyphens to underscores to avoid Graphiti RediSearch bug
-  // This prevents "pai-test-group" from being interpreted as "pai NOT test NOT group"
+  // This prevents "madeinoz-test-group" from being interpreted as "pai NOT test NOT group"
   const sanitized = groupId.replace(/-/g, '_');
 
   if (sanitized !== groupId) {
@@ -199,7 +199,7 @@ export function sanitizeGroupIds(groupIds: string[] | undefined): string[] | und
  * @returns The sanitized query string
  *
  * @example
- * sanitizeSearchQuery("pai-threat-intel") // => 'pai\\-threat\\-intel'
+ * sanitizeSearchQuery("madeinoz-threat-intel") // => 'pai\\-threat\\-intel'
  * sanitizeSearchQuery("user's search") // => "user's search"
  */
 export function sanitizeSearchQuery(query: string): string {

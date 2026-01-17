@@ -1,4 +1,4 @@
-# PAI Knowledge System - Installation
+# Madeinoz Knowledge System - Installation
 
 **This guide is designed for AI agents installing this pack into a user's infrastructure.**
 
@@ -65,11 +65,11 @@ fi
 # 3. Check for existing MCP server
 echo ""
 echo "Checking for existing MCP server..."
-if podman ps | grep -q "pai-knowledge-graph-mcp"; then
-    echo "⚠️  PAI Knowledge MCP server is already running"
-    podman ps | grep "pai-knowledge-graph-mcp"
+if podman ps | grep -q "madeinoz-knowledge-graph-mcp"; then
+    echo "⚠️  Madeinoz Knowledge MCP server is already running"
+    podman ps | grep "madeinoz-knowledge-graph-mcp"
 else
-    echo "✓ No PAI Knowledge MCP server running"
+    echo "✓ No Madeinoz Knowledge MCP server running"
 fi
 
 # 4. Check if port 8000 is available
@@ -122,7 +122,7 @@ fi
 echo ""
 echo "Environment variables:"
 echo "  PAI_DIR: ${PAI_DIR:-'NOT SET'}"
-echo "  PAI_KNOWLEDGE_OPENAI_API_KEY: ${PAI_KNOWLEDGE_OPENAI_API_KEY:+SET (value hidden)}"
+echo "  MADEINOZ_KNOWLEDGE_OPENAI_API_KEY: ${MADEINOZ_KNOWLEDGE_OPENAI_API_KEY:+SET (value hidden)}"
 
 # 8. Check Podman installation
 echo ""
@@ -151,11 +151,11 @@ else
     echo "   Install with: curl -fsSL https://bun.sh/install | bash"
 fi
 
-# Check for API key (prefer PAI_KNOWLEDGE_* prefix)
-if [ -n "$PAI_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$PAI_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$PAI_KNOWLEDGE_GOOGLE_API_KEY" ]; then
-    echo "✓ LLM API key is configured (PAI_KNOWLEDGE_* prefix)"
+# Check for API key (prefer MADEINOZ_KNOWLEDGE_* prefix)
+if [ -n "$MADEINOZ_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY" ]; then
+    echo "✓ LLM API key is configured (MADEINOZ_KNOWLEDGE_* prefix)"
 elif [ -n "$OPENAI_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ]; then
-    echo "✓ LLM API key is configured (legacy - consider using PAI_KNOWLEDGE_* prefix)"
+    echo "✓ LLM API key is configured (legacy - consider using MADEINOZ_KNOWLEDGE_* prefix)"
 else
     echo "⚠️  No LLM API key found in environment"
     echo "   You will need to configure this during installation"
@@ -189,7 +189,7 @@ If conflicts were detected, create a backup before proceeding:
 
 ```bash
 # Create timestamped backup
-BACKUP_DIR="$HOME/.pai-backup/$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR="$HOME/.madeinoz-backup/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 PAI_CHECK="${PAI_DIR:-$HOME/.claude}"
 
@@ -208,8 +208,8 @@ if [ -f "src/config/.env" ]; then
 fi
 
 # Backup container if running
-if podman ps | grep -q "pai-knowledge-graph-mcp"; then
-    podman export pai-knowledge-graph-mcp > "$BACKUP_DIR/pai-container.tar" 2>/dev/null || true
+if podman ps | grep -q "madeinoz-knowledge-graph-mcp"; then
+    podman export madeinoz-knowledge-graph-mcp > "$BACKUP_DIR/madeinoz-container.tar" 2>/dev/null || true
     echo "✓ Backed up running container (if possible)"
 fi
 
@@ -274,7 +274,7 @@ fi
 
 ## Step 2: Add Configuration to PAI
 
-**Add PAI Knowledge System settings to your PAI configuration:**
+**Add Madeinoz Knowledge System settings to your PAI configuration:**
 
 ```bash
 PAI_ENV="${PAI_DIR:-$HOME/.claude}/.env"
@@ -291,32 +291,32 @@ echo "Checking for existing API keys..."
 source "$PAI_ENV" 2>/dev/null || true
 
 AUTO_CONFIGURED=false
-# Check for PAI_KNOWLEDGE_* prefixed keys first (preferred)
-if [ -n "$PAI_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$PAI_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$PAI_KNOWLEDGE_GOOGLE_API_KEY" ] || [ -n "$PAI_KNOWLEDGE_GROQ_API_KEY" ]; then
-    echo "✓ Found existing API keys in PAI configuration (PAI_KNOWLEDGE_* prefix)"
+# Check for MADEINOZ_KNOWLEDGE_* prefixed keys first (preferred)
+if [ -n "$MADEINOZ_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_GROQ_API_KEY" ]; then
+    echo "✓ Found existing API keys in PAI configuration (MADEINOZ_KNOWLEDGE_* prefix)"
     AUTO_CONFIGURED=true
 # Fall back to legacy keys
 elif [ -n "$OPENAI_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ] || [ -n "$GROQ_API_KEY" ]; then
-    echo "✓ Found existing API keys in PAI configuration (legacy - consider migrating to PAI_KNOWLEDGE_* prefix)"
+    echo "✓ Found existing API keys in PAI configuration (legacy - consider migrating to MADEINOZ_KNOWLEDGE_* prefix)"
     AUTO_CONFIGURED=true
 fi
 
-# Determine provider settings (check PAI_KNOWLEDGE_* first)
-if [ -z "$PAI_KNOWLEDGE_LLM_PROVIDER" ] && [ -z "$LLM_PROVIDER" ]; then
+# Determine provider settings (check MADEINOZ_KNOWLEDGE_* first)
+if [ -z "$MADEINOZ_KNOWLEDGE_LLM_PROVIDER" ] && [ -z "$LLM_PROVIDER" ]; then
     LLM_PROVIDER="openai"
     EMBEDDER_PROVIDER="openai"
 
-    if [ -n "$PAI_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
+    if [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
         LLM_PROVIDER="anthropic"
-    elif [ -n "$PAI_KNOWLEDGE_GOOGLE_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ]; then
+    elif [ -n "$MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ]; then
         LLM_PROVIDER="gemini"
         EMBEDDER_PROVIDER="gemini"
-    elif [ -n "$PAI_KNOWLEDGE_GROQ_API_KEY" ] || [ -n "$GROQ_API_KEY" ]; then
+    elif [ -n "$MADEINOZ_KNOWLEDGE_GROQ_API_KEY" ] || [ -n "$GROQ_API_KEY" ]; then
         LLM_PROVIDER="groq"
     fi
 else
-    LLM_PROVIDER="${PAI_KNOWLEDGE_LLM_PROVIDER:-$LLM_PROVIDER}"
-    EMBEDDER_PROVIDER="${PAI_KNOWLEDGE_EMBEDDER_PROVIDER:-$EMBEDDER_PROVIDER}"
+    LLM_PROVIDER="${MADEINOZ_KNOWLEDGE_LLM_PROVIDER:-$LLM_PROVIDER}"
+    EMBEDDER_PROVIDER="${MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER:-$EMBEDDER_PROVIDER}"
 fi
 
 echo ""
@@ -325,8 +325,8 @@ echo "  LLM_PROVIDER: $LLM_PROVIDER"
 echo "  EMBEDDER_PROVIDER: $EMBEDDER_PROVIDER"
 echo ""
 
-# Add PAI Knowledge System configuration to PAI .env
-echo "Adding PAI Knowledge System configuration to $PAI_ENV..."
+# Add Madeinoz Knowledge System configuration to PAI .env
+echo "Adding Madeinoz Knowledge System configuration to $PAI_ENV..."
 
 # Use Python to safely update the JSON (or .env file)
 python3 << 'PYTHON_EOF'
@@ -349,26 +349,26 @@ for line in lines:
     if match:
         existing_vars[match.group(1)] = match.group(2)
 
-# Variables to add (only if not already present) - all use PAI_KNOWLEDGE_* prefix
+# Variables to add (only if not already present) - all use MADEINOZ_KNOWLEDGE_* prefix
 # Note: DATABASE_TYPE defaults to 'neo4j' but can be set to 'falkordb'
 vars_to_add = {
-    'PAI_KNOWLEDGE_LLM_PROVIDER': os.getenv('PAI_KNOWLEDGE_LLM_PROVIDER', os.getenv('LLM_PROVIDER', 'openai')),
-    'PAI_KNOWLEDGE_EMBEDDER_PROVIDER': os.getenv('PAI_KNOWLEDGE_EMBEDDER_PROVIDER', os.getenv('EMBEDDER_PROVIDER', 'openai')),
-    'PAI_KNOWLEDGE_MODEL_NAME': os.getenv('PAI_KNOWLEDGE_MODEL_NAME', os.getenv('MODEL_NAME', 'gpt-4o-mini')),
+    'MADEINOZ_KNOWLEDGE_LLM_PROVIDER': os.getenv('MADEINOZ_KNOWLEDGE_LLM_PROVIDER', os.getenv('LLM_PROVIDER', 'openai')),
+    'MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER': os.getenv('MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER', os.getenv('EMBEDDER_PROVIDER', 'openai')),
+    'MADEINOZ_KNOWLEDGE_MODEL_NAME': os.getenv('MADEINOZ_KNOWLEDGE_MODEL_NAME', os.getenv('MODEL_NAME', 'gpt-4o-mini')),
     # Database backend: 'neo4j' (default) or 'falkordb'
-    'PAI_KNOWLEDGE_DATABASE_TYPE': os.getenv('PAI_KNOWLEDGE_DATABASE_TYPE', 'neo4j'),
+    'MADEINOZ_KNOWLEDGE_DATABASE_TYPE': os.getenv('MADEINOZ_KNOWLEDGE_DATABASE_TYPE', 'neo4j'),
     # FalkorDB configuration (used when DATABASE_TYPE=falkordb)
-    'PAI_KNOWLEDGE_FALKORDB_HOST': 'pai-knowledge-falkordb',
-    'PAI_KNOWLEDGE_FALKORDB_PORT': '6379',
+    'MADEINOZ_KNOWLEDGE_FALKORDB_HOST': 'madeinoz-knowledge-falkordb',
+    'MADEINOZ_KNOWLEDGE_FALKORDB_PORT': '6379',
     # Neo4j configuration (used when DATABASE_TYPE=neo4j)
-    'PAI_KNOWLEDGE_NEO4J_URI': 'bolt://pai-knowledge-neo4j:7687',
-    'PAI_KNOWLEDGE_NEO4J_USER': 'neo4j',
-    'PAI_KNOWLEDGE_NEO4J_PASSWORD': 'paiknowledge',
-    'PAI_KNOWLEDGE_NEO4J_DATABASE': 'neo4j',
+    'MADEINOZ_KNOWLEDGE_NEO4J_URI': 'bolt://madeinoz-knowledge-neo4j:7687',
+    'MADEINOZ_KNOWLEDGE_NEO4J_USER': 'neo4j',
+    'MADEINOZ_KNOWLEDGE_NEO4J_PASSWORD': 'madeinozknowledge',
+    'MADEINOZ_KNOWLEDGE_NEO4J_DATABASE': 'neo4j',
     # Common configuration
-    'PAI_KNOWLEDGE_SEMAPHORE_LIMIT': '10',
-    'PAI_KNOWLEDGE_GROUP_ID': 'main',
-    'PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED': 'false',
+    'MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT': '10',
+    'MADEINOZ_KNOWLEDGE_GROUP_ID': 'main',
+    'MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED': 'false',
 }
 
 # Write updated content
@@ -391,13 +391,13 @@ with open(pai_env, 'w') as f:
     # Add new variables
     for var_name, var_value in vars_to_add.items():
         if var_name not in existing_vars and var_name not in updated_vars:
-            # Add PAI Knowledge System section header if this is the first var
+            # Add Madeinoz Knowledge System section header if this is the first var
             if len(updated_vars) == 0:
-                f.write("\n# PAI Knowledge System Configuration\n")
+                f.write("\n# Madeinoz Knowledge System Configuration\n")
             f.write(f"{var_name}={var_value}\n")
             updated_vars.add(var_name)
 
-print("✓ PAI Knowledge System configuration added to PAI .env")
+print("✓ Madeinoz Knowledge System configuration added to PAI .env")
 PYTHON_EOF
 
 echo ""
@@ -405,7 +405,7 @@ echo "✓ Configuration complete"
 echo ""
 echo "PAI .env is now the source of truth for:"
 echo "  - API keys (existing)"
-echo "  - PAI Knowledge System settings (newly added)"
+echo "  - Madeinoz Knowledge System settings (newly added)"
 ```
 
 ---
@@ -413,13 +413,13 @@ echo "  - PAI Knowledge System settings (newly added)"
 ## Step 3: Start MCP Server
 
 > **FOR AI AGENTS:** This step starts the containerized MCP server. The server MUST be running before proceeding.
-> - If server fails to start: Check container logs with `podman logs pai-knowledge-graph-mcp`
+> - If server fails to start: Check container logs with `podman logs madeinoz-knowledge-graph-mcp`
 > - If health check fails: Wait additional 30 seconds and retry - container may still be initializing
 > - Server must show "✓ Server is running" before proceeding to Step 4
 
 **Database Backend Selection:**
 
-The PAI Knowledge System supports two database backends:
+The Madeinoz Knowledge System supports two database backends:
 
 | Backend | Description | Best For |
 |---------|-------------|----------|
@@ -428,12 +428,12 @@ The PAI Knowledge System supports two database backends:
 
 Neo4j is the default backend. To use FalkorDB instead, set the environment variable before starting:
 ```bash
-export PAI_KNOWLEDGE_DATABASE_TYPE=falkordb
+export MADEINOZ_KNOWLEDGE_DATABASE_TYPE=falkordb
 ```
 
 Or update your PAI `.env` file:
 ```bash
-PAI_KNOWLEDGE_DATABASE_TYPE=falkordb
+MADEINOZ_KNOWLEDGE_DATABASE_TYPE=falkordb
 ```
 
 Launch the Graphiti MCP server:
@@ -502,12 +502,12 @@ The Neo4j docker-compose includes a patch that can search across ALL groups when
 **Configuration:**
 ```bash
 # In config/.env - set to enable/disable the patch
-PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=true   # Enable (default)
-PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=false  # Disable (original behavior)
+MADEINOZ_KNOWLEDGE_SEARCH_ALL_GROUPS=true   # Enable (default)
+MADEINOZ_KNOWLEDGE_SEARCH_ALL_GROUPS=false  # Disable (original behavior)
 ```
 
 The patch:
-- Controlled by `PAI_KNOWLEDGE_SEARCH_ALL_GROUPS` environment variable
+- Controlled by `MADEINOZ_KNOWLEDGE_SEARCH_ALL_GROUPS` environment variable
 - Dynamically queries all available group_ids at search time
 - Uses a 30-second cache to balance performance and freshness
 - Ensures new groups are searchable within 30 seconds of creation
@@ -516,14 +516,14 @@ The patch:
 **Verify patch status:**
 ```bash
 curl http://localhost:8000/health
-# Returns: {"status":"healthy","service":"graphiti-mcp","patch":"pai-all-groups-enabled"}
-# Or: {"status":"healthy","service":"graphiti-mcp","patch":"pai-all-groups-disabled"}
+# Returns: {"status":"healthy","service":"graphiti-mcp","patch":"madeinoz-all-groups-enabled"}
+# Or: {"status":"healthy","service":"graphiti-mcp","patch":"madeinoz-all-groups-disabled"}
 ```
 
 **Neo4j Browser Access:**
 When using Neo4j backend, you can access the Neo4j Browser at http://localhost:7474
 - Username: `neo4j` (default)
-- Password: `paiknowledge` (default)
+- Password: `madeinozknowledge` (default)
 
 **Troubleshooting:**
 - If server fails to start, check logs: `bun run src/skills/tools/logs.ts`
@@ -614,7 +614,7 @@ except json.JSONDecodeError:
 if 'mcpServers' not in config:
     config['mcpServers'] = {}
 
-config['mcpServers']['pai-knowledge'] = {
+config['mcpServers']['madeinoz-knowledge'] = {
     'type': 'sse',
     'url': 'http://localhost:8000/sse'
 }
@@ -622,12 +622,12 @@ config['mcpServers']['pai-knowledge'] = {
 with open(config_path, 'w') as f:
     json.dump(config, f, indent=2)
 
-print("✓ Added pai-knowledge MCP server to ~/.claude.json")
+print("✓ Added madeinoz-knowledge MCP server to ~/.claude.json")
 PYTHON_EOF
     else
-        # Check if pai-knowledge already configured
-        if ! grep -q "pai-knowledge" "$CLAUDE_CONFIG" 2>/dev/null; then
-            echo "Adding pai-knowledge to existing mcpServers"
+        # Check if madeinoz-knowledge already configured
+        if ! grep -q "madeinoz-knowledge" "$CLAUDE_CONFIG" 2>/dev/null; then
+            echo "Adding madeinoz-knowledge to existing mcpServers"
             python3 << 'PYTHON_EOF'
 import json
 
@@ -635,7 +635,7 @@ config_path = "$CLAUDE_CONFIG"
 with open(config_path, 'r') as f:
     config = json.load(f)
 
-config['mcpServers']['pai-knowledge'] = {
+config['mcpServers']['madeinoz-knowledge'] = {
     'type': 'sse',
     'url': 'http://localhost:8000/sse'
 }
@@ -643,10 +643,10 @@ config['mcpServers']['pai-knowledge'] = {
 with open(config_path, 'w') as f:
     json.dump(config, f, indent=2)
 
-print("✓ Added pai-knowledge MCP server to ~/.claude.json")
+print("✓ Added madeinoz-knowledge MCP server to ~/.claude.json")
 PYTHON_EOF
         else
-            echo "✓ pai-knowledge MCP server already configured"
+            echo "✓ madeinoz-knowledge MCP server already configured"
         fi
     fi
 else
@@ -654,7 +654,7 @@ else
     cat > "$CLAUDE_CONFIG" << 'EOF'
 {
   "mcpServers": {
-    "pai-knowledge": {
+    "madeinoz-knowledge": {
       "type": "sse",
       "url": "http://localhost:8000/sse"
     }
@@ -667,7 +667,7 @@ fi
 echo ""
 echo "Configuration:"
 echo "  File: ~/.claude.json"
-echo "  Server: pai-knowledge"
+echo "  Server: madeinoz-knowledge"
 echo "  Transport: SSE (Server-Sent Events)"
 echo "  URL: http://localhost:8000/sse"
 echo ""
@@ -677,7 +677,7 @@ echo "Creating project-level .mcp.json for reference..."
 cat > .mcp.json << 'EOF'
 {
   "mcpServers": {
-    "pai-knowledge": {
+    "madeinoz-knowledge": {
       "type": "sse",
       "url": "http://localhost:8000/sse"
     }
@@ -694,7 +694,7 @@ echo ""
 ```
 
 **What this does:**
-- Configures `pai-knowledge` MCP server in global `~/.claude.json`
+- Configures `madeinoz-knowledge` MCP server in global `~/.claude.json`
 - Creates project-level `.mcp.json` for reference
 - Enables MCP tools globally across all Claude Code sessions
 - Uses SSE (Server-Sent Events) transport for real-time communication
@@ -730,7 +730,7 @@ echo ""
 
 # Check 1: Container running
 if bun run src/skills/tools/status.ts 2>/dev/null | grep -q "running"; then
-    echo "✓ PAI Knowledge container is running"
+    echo "✓ Madeinoz Knowledge container is running"
 else
     echo "✗ Container may not be running"
     echo "  Start with: bun run src/skills/tools/start.ts"
@@ -746,7 +746,7 @@ fi
 
 # Check 3: Database accessible (FalkorDB or Neo4j)
 # Detect which backend is being used
-if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
+if [ -n "$MADEINOZ_KNOWLEDGE_DATABASE_TYPE" ] && [ "$MADEINOZ_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
     # Neo4j backend
     if curl -s --max-time 5 http://localhost:7474 > /dev/null 2>&1; then
         echo "✓ Neo4j is accessible on port 7474"
@@ -755,9 +755,9 @@ if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "
     fi
 else
     # FalkorDB backend (default)
-    if podman exec pai-knowledge-falkordb redis-cli PING > /dev/null 2>&1; then
+    if podman exec madeinoz-knowledge-falkordb redis-cli PING > /dev/null 2>&1; then
         echo "✓ FalkorDB is accessible"
-    elif docker exec pai-knowledge-falkordb redis-cli PING > /dev/null 2>&1; then
+    elif docker exec madeinoz-knowledge-falkordb redis-cli PING > /dev/null 2>&1; then
         echo "✓ FalkorDB is accessible"
     else
         echo "✗ FalkorDB may not be accessible"
@@ -772,11 +772,11 @@ else
 fi
 
 # Check 5: Configuration exists
-if [[ -f "config/.env" ]] && grep -q "PAI_KNOWLEDGE_OPENAI_API_KEY=sk-" config/.env 2>/dev/null; then
+if [[ -f "config/.env" ]] && grep -q "MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-" config/.env 2>/dev/null; then
     echo "✓ Configuration file exists with API key"
 else
     echo "⚠️  API key may not be configured properly"
-    echo "  Edit config/.env and add your PAI_KNOWLEDGE_OPENAI_API_KEY"
+    echo "  Edit config/.env and add your MADEINOZ_KNOWLEDGE_OPENAI_API_KEY"
 fi
 
 # Check 6: Required skill files
@@ -825,10 +825,10 @@ fi
 # Test 2: Check containers are running
 echo ""
 echo "Test 2: Checking containers..."
-if podman ps 2>/dev/null | grep -q "pai-knowledge" || docker ps 2>/dev/null | grep -q "pai-knowledge"; then
+if podman ps 2>/dev/null | grep -q "madeinoz-knowledge" || docker ps 2>/dev/null | grep -q "madeinoz-knowledge"; then
     echo "✓ Knowledge system containers are running"
-    podman ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | grep pai-knowledge || \
-    docker ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | grep pai-knowledge
+    podman ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | grep madeinoz-knowledge || \
+    docker ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | grep madeinoz-knowledge
 else
     echo "✗ Containers not found"
 fi
@@ -836,7 +836,7 @@ fi
 # Test 3: Check database backend is responding
 echo ""
 echo "Test 3: Checking database backend..."
-if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
+if [ -n "$MADEINOZ_KNOWLEDGE_DATABASE_TYPE" ] && [ "$MADEINOZ_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
     # Neo4j backend
     if curl -s --max-time 5 http://localhost:7474 > /dev/null 2>&1; then
         echo "✓ Neo4j is responding (Browser at http://localhost:7474)"
@@ -845,8 +845,8 @@ if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "
     fi
 else
     # FalkorDB backend (default)
-    if podman exec pai-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG" || \
-       docker exec pai-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG"; then
+    if podman exec madeinoz-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG" || \
+       docker exec madeinoz-knowledge-falkordb redis-cli PING 2>/dev/null | grep -q "PONG"; then
         echo "✓ FalkorDB is responding"
     else
         echo "⚠️  FalkorDB ping failed (may still be starting)"
@@ -858,7 +858,7 @@ echo ""
 echo "Test 4: Testing Lucene query sanitization..."
 
 # Only run Lucene tests for FalkorDB backend
-if [ -n "$PAI_KNOWLEDGE_DATABASE_TYPE" ] && [ "$PAI_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
+if [ -n "$MADEINOZ_KNOWLEDGE_DATABASE_TYPE" ] && [ "$MADEINOZ_KNOWLEDGE_DATABASE_TYPE" = "neo4j" ]; then
     echo "✓ Skipping Lucene tests (Neo4j uses Cypher, not RediSearch)"
     echo "  Neo4j handles special characters natively without escaping"
 else
@@ -873,7 +873,7 @@ import { sanitizeGroupId } from './src/hooks/lib/lucene';
 const testCases = [
   'test-group',
   'my-knowledge-base',
-  'pai-history-system',
+  'madeinoz-history-system',
   'multi-hyphen-group-id',
   'group-with-dashes-123',
 ];
@@ -926,10 +926,10 @@ echo ""
 echo "📝 Next Steps"
 echo "============"
 echo ""
-echo "1. **Restart Claude Code** to load the PAI Knowledge System skill"
+echo "1. **Restart Claude Code** to load the Madeinoz Knowledge System skill"
 echo ""
 echo "2. **Test the skill** in Claude Code:"
-echo "   Remember that I'm testing the PAI Knowledge System installation."
+echo "   Remember that I'm testing the Madeinoz Knowledge System installation."
 echo ""
 echo "3. **Check system status** in Claude Code:"
 echo "   Show the knowledge graph status"
@@ -951,13 +951,13 @@ if [[ "$ADD_TO_PROFILE" =~ ^[Yy]$ ]]; then
     echo ""
     echo "Adding to profile: $PROFILE"
     echo "" >> "$PROFILE"
-    echo "# PAI Knowledge System" >> "$PROFILE"
+    echo "# Madeinoz Knowledge System" >> "$PROFILE"
     echo "export PAI_DIR=\"\${PAI_DIR:-\$HOME/.claude}\"" >> "$PROFILE"
-    echo "alias pai-status='curl -s http://localhost:8000/health'" >> "$PROFILE"
-    echo "alias pai-logs='bun run src/skills/tools/logs.ts'" >> "$PROFILE"
-    echo "alias pai-start='bun run src/skills/tools/start.ts'" >> "$PROFILE"
-    echo "alias pai-stop='bun run src/skills/tools/stop.ts'" >> "$PROFILE"
-    echo "alias pai-restart='bun run src/skills/tools/stop.ts && bun run src/skills/tools/start.ts'" >> "$PROFILE"
+    echo "alias madeinoz-status='curl -s http://localhost:8000/health'" >> "$PROFILE"
+    echo "alias madeinoz-logs='bun run src/skills/tools/logs.ts'" >> "$PROFILE"
+    echo "alias madeinoz-start='bun run src/skills/tools/start.ts'" >> "$PROFILE"
+    echo "alias madeinoz-stop='bun run src/skills/tools/stop.ts'" >> "$PROFILE"
+    echo "alias madeinoz-restart='bun run src/skills/tools/stop.ts && bun run src/skills/tools/start.ts'" >> "$PROFILE"
     echo ""
     echo "✓ Added aliases to $PROFILE"
     echo "  Source with: source $PROFILE"
@@ -1281,9 +1281,9 @@ To completely remove the Knowledge skill:
 ```bash
 # 1. Stop and remove container
 bun run src/skills/tools/stop.ts
-podman rm pai-knowledge-graph-mcp
+podman rm madeinoz-knowledge-graph-mcp
 # or for Docker users:
-# docker rm pai-knowledge-graph-mcp
+# docker rm madeinoz-knowledge-graph-mcp
 
 # 2. Remove Knowledge skill
 rm -rf ~/.claude/skills/Knowledge

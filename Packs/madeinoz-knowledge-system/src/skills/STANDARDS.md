@@ -1,4 +1,4 @@
-# PAI Knowledge System - Usage Standards
+# Madeinoz Knowledge System - Usage Standards
 
 Standards for effectively capturing, organizing, and retrieving knowledge from your personal knowledge graph.
 
@@ -240,7 +240,7 @@ The system automatically extracts entities, but you can help by using consistent
 | **People** | Full name, consistent format | "John Smith", not "John" or "J. Smith" |
 | **Organizations** | Official name | "Anthropic", not "anthropic" or "the Claude company" |
 | **Technologies** | Official casing | "TypeScript", "PostgreSQL", "GraphQL" |
-| **Projects** | Consistent identifier | "PAI Knowledge System", not "knowledge system" or "the KG project" |
+| **Projects** | Consistent identifier | "Madeinoz Knowledge System", not "knowledge system" or "the KG project" |
 | **Concepts** | Noun phrases | "rate limiting", "exponential backoff" |
 
 ### Improving Entity Extraction
@@ -417,14 +417,14 @@ Review:
 "Remember that when implementing retry logic for the OpenAI API, use exponential
 backoff starting at 1 second with a maximum of 3 retries. This handles both
 rate limiting (429) and temporary server errors (500). Learned while building
-the PAI Knowledge System's LLM integration."
+the Madeinoz Knowledge System's LLM integration."
 ```
 
 **Why it works:**
 - Specific technical details
 - Clear context (when to use)
 - Source attribution
-- Related entities mentioned (OpenAI, PAI Knowledge System)
+- Related entities mentioned (OpenAI, Madeinoz Knowledge System)
 
 ### Good Search Query
 

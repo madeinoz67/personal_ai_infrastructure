@@ -1,6 +1,6 @@
 # Install Knowledge System
 
-Workflow for installing and configuring the PAI Knowledge System.
+Workflow for installing and configuring the Madeinoz Knowledge System.
 
 ## When to Use
 
@@ -25,8 +25,8 @@ Before installation, verify:
    ```
 
 3. **API key configured:**
-   - Check for `PAI_KNOWLEDGE_OPENAI_API_KEY` in environment or `config/.env`
-   - Legacy `OPENAI_API_KEY` is also supported but `PAI_KNOWLEDGE_*` prefix is preferred
+   - Check for `MADEINOZ_KNOWLEDGE_OPENAI_API_KEY` in environment or `config/.env`
+   - Legacy `OPENAI_API_KEY` is also supported but `MADEINOZ_KNOWLEDGE_*` prefix is preferred
 
 ## Installation Steps
 
@@ -58,7 +58,7 @@ Add to `~/.claude.json`:
 ```json
 {
   "mcpServers": {
-    "pai-knowledge": {
+    "madeinoz-knowledge": {
       "type": "sse",
       "url": "http://localhost:8000/sse"
     }
@@ -75,7 +75,7 @@ Restart Claude Code to load the MCP configuration.
 After installation, test with:
 
 1. **Check status:** "Show knowledge graph status"
-2. **Capture test:** "Remember that PAI Knowledge System is now installed"
+2. **Capture test:** "Remember that Madeinoz Knowledge System is now installed"
 3. **Search test:** "What do I know about PAI?"
 
 ## Troubleshooting
@@ -83,7 +83,7 @@ After installation, test with:
 | Issue | Solution |
 |-------|----------|
 | Server won't start | Check logs: `bun run src/server/logs.ts` |
-| MCP tools not available | Verify `~/.claude.json` has pai-knowledge entry |
+| MCP tools not available | Verify `~/.claude.json` has madeinoz-knowledge entry |
 | API errors | Check API key is valid and has quota |
 
 ## Related

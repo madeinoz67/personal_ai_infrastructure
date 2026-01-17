@@ -97,7 +97,7 @@ GROUP_ID=my knowledge group
 
     it("should load MADEINOZ_KNOWLEDGE_ prefixed variables", async () => {
       const envContent = `
-MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-pai-key-789
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-madeinoz-key-789
 MADEINOZ_KNOWLEDGE_LLM_PROVIDER=groq
 MADEINOZ_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
 `;
@@ -107,7 +107,7 @@ MADEINOZ_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
       const mockLoader = createMockConfigLoader();
       const config = await mockLoader.load();
 
-      expect(config.OPENAI_API_KEY).toBe("sk-pai-key-789");
+      expect(config.OPENAI_API_KEY).toBe("sk-madeinoz-key-789");
       expect(config.LLM_PROVIDER).toBe("groq");
       expect(config.MODEL_NAME).toBe("llama-3.3-70b-versatile");
     });
@@ -128,7 +128,7 @@ MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-mapped-key
     it("should prioritize standard OPENAI_API_KEY over MADEINOZ_KNOWLEDGE_OPENAI_API_KEY", async () => {
       const envContent = `
 OPENAI_API_KEY=sk-standard-key
-MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-pai-key
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-madeinoz-key
 `;
 
       ctx.mockFile("config/.env", envContent);
@@ -259,7 +259,7 @@ MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=20
       const mockLoader = createMockConfigLoader();
 
       const config = {
-        OPENAI_API_KEY: "sk-pai-prefixed-key",
+        OPENAI_API_KEY: "sk-madeinoz-prefixed-key",
         LLM_PROVIDER: "anthropic",
         MODEL_NAME: "claude-sonnet-4-20250514",
       };
@@ -268,7 +268,7 @@ MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=20
 
       const files = ctx.getMockFiles();
       expect(files["config/.env"]).toBeDefined();
-      expect(files["config/.env"]).toContain("MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-pai-prefixed-key");
+      expect(files["config/.env"]).toContain("MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-madeinoz-prefixed-key");
       expect(files["config/.env"]).toContain("MADEINOZ_KNOWLEDGE_LLM_PROVIDER=anthropic");
     });
 

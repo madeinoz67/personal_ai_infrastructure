@@ -7,12 +7,12 @@
 ## Step 1: Announce Workflow
 
 ```bash
-~/.claude/Tools/SkillWorkflowNotification GetStatus PaiKnowledgeSystem
+~/.claude/Tools/SkillWorkflowNotification GetStatus MadeinozKnowledgeSystem
 ```
 
 **Output to user:**
 ```
-Running the **GetStatus** workflow from the **PaiKnowledgeSystem** skill...
+Running the **GetStatus** workflow from the **MadeinozKnowledgeSystem** skill...
 ```
 
 ---
@@ -220,7 +220,7 @@ cat ~/.claude/.env | grep API_KEY
 
 # Verify API key is valid
 curl https://api.openai.com/v1/models \
-  -H "Authorization: Bearer $PAI_KNOWLEDGE_OPENAI_API_KEY"
+  -H "Authorization: Bearer $MADEINOZ_KNOWLEDGE_OPENAI_API_KEY"
 
 # Update .env if needed
 nano ~/.claude/.env

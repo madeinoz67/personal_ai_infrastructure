@@ -18,7 +18,7 @@ describe("luceneSanitize", () => {
   });
 
   test("should escape hyphens", () => {
-    expect(luceneSanitize("pai-threat-intel")).toBe('"pai-threat-intel"');
+    expect(luceneSanitize("madeinoz-threat-intel")).toBe('"madeinoz-threat-intel"');
   });
 
   test("should escape backslashes", () => {
@@ -52,7 +52,7 @@ describe("luceneSanitizeMany", () => {
 
 describe("needsEscaping", () => {
   test("should return true for strings with hyphens", () => {
-    expect(needsEscaping("pai-threat")).toBe(true);
+    expect(needsEscaping("madeinoz-threat")).toBe(true);
   });
 
   test("should return true for strings with other special chars", () => {
@@ -80,14 +80,14 @@ describe("needsEscaping", () => {
 
 describe("sanitizeGroupId", () => {
   test("should convert hyphens to underscores (WORKAROUND)", () => {
-    expect(sanitizeGroupId("pai-threat-intel")).toBe("pai_threat_intel");
+    expect(sanitizeGroupId("madeinoz-threat-intel")).toBe("madeinoz_threat_intel");
     expect(sanitizeGroupId("test-group")).toBe("test_group");
     expect(sanitizeGroupId("my-knowledge-base")).toBe("my_knowledge_base");
   });
 
   test("should leave underscores unchanged", () => {
     expect(sanitizeGroupId("test_group")).toBe("test_group");
-    expect(sanitizeGroupId("pai_knowledge_system")).toBe("pai_knowledge_system");
+    expect(sanitizeGroupId("madeinoz_knowledge_system")).toBe("madeinoz_knowledge_system");
   });
 
   test("should leave alphanumeric unchanged", () => {
@@ -127,7 +127,7 @@ describe("sanitizeGroupIds", () => {
 
 describe("sanitizeSearchQuery", () => {
   test("should escape hyphens in queries", () => {
-    expect(sanitizeSearchQuery("pai-threat-intel")).toBe("pai\\-threat\\-intel");
+    expect(sanitizeSearchQuery("madeinoz-threat-intel")).toBe("madeinoz\\-threat\\-intel");
   });
 
   test("should escape multiple special characters", () => {

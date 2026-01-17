@@ -23,28 +23,28 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // FalkorDB exists but not running
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Status}}"], {
         success: true,
         stdout: "exited (0) 1 hour ago",
       });
 
-      ctx.mockExec(["ps", "-a", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Names}}"], {
+      ctx.mockExec(["ps", "-a", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Names}}"], {
         success: true,
-        stdout: "pai-knowledge-falkordb\n",
+        stdout: "madeinoz-knowledge-falkordb\n",
       });
 
-      ctx.mockExec(["start", "pai-knowledge-falkordb"], {
+      ctx.mockExec(["start", "madeinoz-knowledge-falkordb"], {
         success: true,
-        stdout: "pai-knowledge-falkordb",
+        stdout: "madeinoz-knowledge-falkordb",
       });
 
-      const exists = await mockManager.containerExists("pai-knowledge-falkordb");
+      const exists = await mockManager.containerExists("madeinoz-knowledge-falkordb");
       expect(exists).toBe(true);
 
-      const isRunning = await mockManager.isContainerRunning("pai-knowledge-falkordb");
+      const isRunning = await mockManager.isContainerRunning("madeinoz-knowledge-falkordb");
       expect(isRunning).toBe(false);
 
-      const result = await mockManager.startContainer("pai-knowledge-falkordb");
+      const result = await mockManager.startContainer("madeinoz-knowledge-falkordb");
       expect(result.success).toBe(true);
     });
 
@@ -52,20 +52,20 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // Both containers exist but not running
-      ctx.mockExec(["ps", "-a", "--filter", "name=pai-knowledge-graph-mcp", "--format", "{{.Names}}"], {
+      ctx.mockExec(["ps", "-a", "--filter", "name=madeinoz-knowledge-graph-mcp", "--format", "{{.Names}}"], {
         success: true,
-        stdout: "pai-knowledge-graph-mcp\n",
+        stdout: "madeinoz-knowledge-graph-mcp\n",
       });
 
-      ctx.mockExec(["start", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["start", "madeinoz-knowledge-graph-mcp"], {
         success: true,
-        stdout: "pai-knowledge-graph-mcp",
+        stdout: "madeinoz-knowledge-graph-mcp",
       });
 
-      const exists = await mockManager.containerExists("pai-knowledge-graph-mcp");
+      const exists = await mockManager.containerExists("madeinoz-knowledge-graph-mcp");
       expect(exists).toBe(true);
 
-      const result = await mockManager.startContainer("pai-knowledge-graph-mcp");
+      const result = await mockManager.startContainer("madeinoz-knowledge-graph-mcp");
       expect(result.success).toBe(true);
     });
 
@@ -73,12 +73,12 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // Containers are already running
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Status}}"], {
         success: true,
         stdout: "running 2 hours ago",
       });
 
-      const isRunning = await mockManager.isContainerRunning("pai-knowledge-falkordb");
+      const isRunning = await mockManager.isContainerRunning("madeinoz-knowledge-falkordb");
       expect(isRunning).toBe(true);
     });
   });
@@ -88,37 +88,37 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // MCP container is running
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-graph-mcp", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-graph-mcp", "--format", "{{.Status}}"], {
         success: true,
         stdout: "running 1 hour ago",
       });
 
-      ctx.mockExec(["stop", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["stop", "madeinoz-knowledge-graph-mcp"], {
         success: true,
-        stdout: "pai-knowledge-graph-mcp",
+        stdout: "madeinoz-knowledge-graph-mcp",
       });
 
-      const isRunning = await mockManager.isContainerRunning("pai-knowledge-graph-mcp");
+      const isRunning = await mockManager.isContainerRunning("madeinoz-knowledge-graph-mcp");
       expect(isRunning).toBe(true);
 
-      const result = await mockManager.stopContainer("pai-knowledge-graph-mcp");
+      const result = await mockManager.stopContainer("madeinoz-knowledge-graph-mcp");
       expect(result.success).toBe(true);
     });
 
     it("should stop FalkorDB container after MCP server", async () => {
       const mockManager = createMockContainerManager();
 
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Status}}"], {
         success: true,
         stdout: "running 2 hours ago",
       });
 
-      ctx.mockExec(["stop", "pai-knowledge-falkordb"], {
+      ctx.mockExec(["stop", "madeinoz-knowledge-falkordb"], {
         success: true,
-        stdout: "pai-knowledge-falkordb",
+        stdout: "madeinoz-knowledge-falkordb",
       });
 
-      const result = await mockManager.stopContainer("pai-knowledge-falkordb");
+      const result = await mockManager.stopContainer("madeinoz-knowledge-falkordb");
       expect(result.success).toBe(true);
     });
 
@@ -126,12 +126,12 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // Containers are not running
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-graph-mcp", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-graph-mcp", "--format", "{{.Status}}"], {
         success: true,
         stdout: "", // Empty means not running
       });
 
-      const isRunning = await mockManager.isContainerRunning("pai-knowledge-graph-mcp");
+      const isRunning = await mockManager.isContainerRunning("madeinoz-knowledge-graph-mcp");
       expect(isRunning).toBe(false);
     });
   });
@@ -141,17 +141,17 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       const mockNetwork = {
-        name: "pai-knowledge-net",
+        name: "madeinoz-knowledge-net",
         subnet: "172.28.0.0/16",
         gateway: "172.28.0.1",
       };
 
-      ctx.mockExec(["network", "inspect", "pai-knowledge-net", "--format", "json"], {
+      ctx.mockExec(["network", "inspect", "madeinoz-knowledge-net", "--format", "json"], {
         success: true,
         stdout: JSON.stringify([mockNetwork]),
       });
 
-      const networkInfo = await mockManager.getNetworkInfo("pai-knowledge-net");
+      const networkInfo = await mockManager.getNetworkInfo("madeinoz-knowledge-net");
       expect(networkInfo.exists).toBe(true);
       expect(networkInfo.subnet).toBe("172.28.0.0/16");
     });
@@ -160,7 +160,7 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       const mockFalkorDB = {
-        Name: "pai-knowledge-falkordb",
+        Name: "madeinoz-knowledge-falkordb",
         State: {
           Status: "running",
           StartedAt: "2025-01-04T10:00:00Z",
@@ -168,25 +168,25 @@ describe("Server Scripts Integration", () => {
       };
 
       const mockMCP = {
-        Name: "pai-knowledge-graph-mcp",
+        Name: "madeinoz-knowledge-graph-mcp",
         State: {
           Status: "running",
           StartedAt: "2025-01-04T10:02:00Z",
         },
       };
 
-      ctx.mockExec(["inspect", "pai-knowledge-falkordb", "--format", "json"], {
+      ctx.mockExec(["inspect", "madeinoz-knowledge-falkordb", "--format", "json"], {
         success: true,
         stdout: JSON.stringify([mockFalkorDB]),
       });
 
-      ctx.mockExec(["inspect", "pai-knowledge-graph-mcp", "--format", "json"], {
+      ctx.mockExec(["inspect", "madeinoz-knowledge-graph-mcp", "--format", "json"], {
         success: true,
         stdout: JSON.stringify([mockMCP]),
       });
 
-      const falkorInfo = await mockManager.getContainerInfo("pai-knowledge-falkordb");
-      const mcpInfo = await mockManager.getContainerInfo("pai-knowledge-graph-mcp");
+      const falkorInfo = await mockManager.getContainerInfo("madeinoz-knowledge-falkordb");
+      const mcpInfo = await mockManager.getContainerInfo("madeinoz-knowledge-graph-mcp");
 
       expect(falkorInfo.exists).toBe(true);
       expect(falkorInfo.status).toBe("running");
@@ -198,18 +198,18 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // Both running
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Status}}"], {
         success: true,
         stdout: "running",
       });
 
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-graph-mcp", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-graph-mcp", "--format", "{{.Status}}"], {
         success: true,
         stdout: "running",
       });
 
-      const falkorRunning = await mockManager.isContainerRunning("pai-knowledge-falkordb");
-      const mcpRunning = await mockManager.isContainerRunning("pai-knowledge-graph-mcp");
+      const falkorRunning = await mockManager.isContainerRunning("madeinoz-knowledge-falkordb");
+      const mcpRunning = await mockManager.isContainerRunning("madeinoz-knowledge-graph-mcp");
 
       const runningCount = [falkorRunning, mcpRunning].filter(Boolean).length;
 
@@ -220,18 +220,18 @@ describe("Server Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // Only MCP running
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Status}}"], {
         success: true,
         stdout: "exited",
       });
 
-      ctx.mockExec(["ps", "--filter", "name=pai-knowledge-graph-mcp", "--format", "{{.Status}}"], {
+      ctx.mockExec(["ps", "--filter", "name=madeinoz-knowledge-graph-mcp", "--format", "{{.Status}}"], {
         success: true,
         stdout: "running",
       });
 
-      const falkorRunning = await mockManager.isContainerRunning("pai-knowledge-falkordb");
-      const mcpRunning = await mockManager.isContainerRunning("pai-knowledge-graph-mcp");
+      const falkorRunning = await mockManager.isContainerRunning("madeinoz-knowledge-falkordb");
+      const mcpRunning = await mockManager.isContainerRunning("madeinoz-knowledge-graph-mcp");
 
       const runningCount = [falkorRunning, mcpRunning].filter(Boolean).length;
 
@@ -250,12 +250,12 @@ Server listening on port 8000
 Ready to accept connections
 `;
 
-      ctx.mockExec(["logs", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["logs", "madeinoz-knowledge-graph-mcp"], {
         success: true,
         stdout: mockLogs,
       });
 
-      const result = await mockManager.getLogs("pai-knowledge-graph-mcp", false);
+      const result = await mockManager.getLogs("madeinoz-knowledge-graph-mcp", false);
 
       expect(result.success).toBe(true);
       expect(result.stdout).toContain("Graphiti MCP Server");
@@ -271,12 +271,12 @@ Version: 1.0.0
 Ready to accept connections on port 6379
 `;
 
-      ctx.mockExec(["logs", "pai-knowledge-falkordb"], {
+      ctx.mockExec(["logs", "madeinoz-knowledge-falkordb"], {
         success: true,
         stdout: mockLogs,
       });
 
-      const result = await mockManager.getLogs("pai-knowledge-falkordb", false);
+      const result = await mockManager.getLogs("madeinoz-knowledge-falkordb", false);
 
       expect(result.success).toBe(true);
       expect(result.stdout).toContain("FalkorDB");
@@ -287,12 +287,12 @@ Ready to accept connections on port 6379
 
       const mockLogs = "Starting...\nNew connection\nRequest processed\n";
 
-      ctx.mockExec(["logs", "-f", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["logs", "-f", "madeinoz-knowledge-graph-mcp"], {
         success: true,
         stdout: mockLogs,
       });
 
-      const result = await mockManager.getLogs("pai-knowledge-graph-mcp", true);
+      const result = await mockManager.getLogs("madeinoz-knowledge-graph-mcp", true);
 
       expect(result.success).toBe(true);
     });
@@ -317,31 +317,31 @@ Ready to accept connections on port 6379
       const mockManager = createMockContainerManager();
 
       // Start phase
-      ctx.mockExec(["ps", "-a", "--filter", "name=pai-knowledge-falkordb", "--format", "{{.Names}}"], {
+      ctx.mockExec(["ps", "-a", "--filter", "name=madeinoz-knowledge-falkordb", "--format", "{{.Names}}"], {
         success: true,
-        stdout: "pai-knowledge-falkordb\n",
+        stdout: "madeinoz-knowledge-falkordb\n",
       });
 
-      ctx.mockExec(["start", "pai-knowledge-falkordb"], {
+      ctx.mockExec(["start", "madeinoz-knowledge-falkordb"], {
         success: true,
       });
 
-      ctx.mockExec(["start", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["start", "madeinoz-knowledge-graph-mcp"], {
         success: true,
       });
 
       // Stop phase
-      ctx.mockExec(["stop", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["stop", "madeinoz-knowledge-graph-mcp"], {
         success: true,
       });
 
-      ctx.mockExec(["stop", "pai-knowledge-falkordb"], {
+      ctx.mockExec(["stop", "madeinoz-knowledge-falkordb"], {
         success: true,
       });
 
       // Verify containers can be stopped
-      const stopResult1 = await mockManager.stopContainer("pai-knowledge-graph-mcp");
-      const stopResult2 = await mockManager.stopContainer("pai-knowledge-falkordb");
+      const stopResult1 = await mockManager.stopContainer("madeinoz-knowledge-graph-mcp");
+      const stopResult2 = await mockManager.stopContainer("madeinoz-knowledge-falkordb");
 
       expect(stopResult1.success).toBe(true);
       expect(stopResult2.success).toBe(true);
@@ -353,27 +353,27 @@ Ready to accept connections on port 6379
       // Check initial status
       const mockContainers = [
         {
-          Name: "pai-knowledge-falkordb",
+          Name: "madeinoz-knowledge-falkordb",
           State: { Status: "running", StartedAt: "2025-01-04T10:00:00Z" },
         },
         {
-          Name: "pai-knowledge-graph-mcp",
+          Name: "madeinoz-knowledge-graph-mcp",
           State: { Status: "running", StartedAt: "2025-01-04T10:02:00Z" },
         },
       ];
 
-      ctx.mockExec(["inspect", "pai-knowledge-falkordb", "--format", "json"], {
+      ctx.mockExec(["inspect", "madeinoz-knowledge-falkordb", "--format", "json"], {
         success: true,
         stdout: JSON.stringify([mockContainers[0]]),
       });
 
-      ctx.mockExec(["inspect", "pai-knowledge-graph-mcp", "--format", "json"], {
+      ctx.mockExec(["inspect", "madeinoz-knowledge-graph-mcp", "--format", "json"], {
         success: true,
         stdout: JSON.stringify([mockContainers[1]]),
       });
 
-      const info1 = await mockManager.getContainerInfo("pai-knowledge-falkordb");
-      const info2 = await mockManager.getContainerInfo("pai-knowledge-graph-mcp");
+      const info1 = await mockManager.getContainerInfo("madeinoz-knowledge-falkordb");
+      const info2 = await mockManager.getContainerInfo("madeinoz-knowledge-graph-mcp");
 
       expect(info1.status).toBe("running");
       expect(info2.status).toBe("running");
@@ -384,12 +384,12 @@ Ready to accept connections on port 6379
     it("should handle missing network gracefully", async () => {
       const mockManager = createMockContainerManager();
 
-      ctx.mockExec(["network", "inspect", "pai-knowledge-net", "--format", "json"], {
+      ctx.mockExec(["network", "inspect", "madeinoz-knowledge-net", "--format", "json"], {
         success: false,
         stderr: "network not found",
       });
 
-      const networkInfo = await mockManager.getNetworkInfo("pai-knowledge-net");
+      const networkInfo = await mockManager.getNetworkInfo("madeinoz-knowledge-net");
 
       expect(networkInfo.exists).toBe(false);
     });
@@ -427,7 +427,7 @@ Ready to accept connections on port 6379
 
       const mockStats = [
         {
-          Name: "pai-knowledge-graph-mcp",
+          Name: "madeinoz-knowledge-graph-mcp",
           CPUPerc: "15.5%",
           MemUsage: "512MiB / 1GiB",
           NetIO: "2.5GB / 1.2GB",
@@ -436,12 +436,12 @@ Ready to accept connections on port 6379
         },
       ];
 
-      ctx.mockExec(["stats", "pai-knowledge-graph-mcp", "--no-stream", "--format", "json"], {
+      ctx.mockExec(["stats", "madeinoz-knowledge-graph-mcp", "--no-stream", "--format", "json"], {
         success: true,
         stdout: JSON.stringify(mockStats),
       });
 
-      const result = await mockManager.getStats("pai-knowledge-graph-mcp");
+      const result = await mockManager.getStats("madeinoz-knowledge-graph-mcp");
 
       expect(result.success).toBe(true);
       expect(result.stdout).toBeDefined();

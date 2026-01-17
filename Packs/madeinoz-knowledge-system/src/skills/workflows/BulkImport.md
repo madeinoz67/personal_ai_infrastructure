@@ -7,12 +7,12 @@
 ## Step 1: Announce Workflow
 
 ```bash
-~/.claude/Tools/SkillWorkflowNotification BulkImport PaiKnowledgeSystem
+~/.claude/Tools/SkillWorkflowNotification BulkImport MadeinozKnowledgeSystem
 ```
 
 **Output to user:**
 ```
-Running the **BulkImport** workflow from the **PaiKnowledgeSystem** skill...
+Running the **BulkImport** workflow from the **MadeinozKnowledgeSystem** skill...
 ```
 
 ---

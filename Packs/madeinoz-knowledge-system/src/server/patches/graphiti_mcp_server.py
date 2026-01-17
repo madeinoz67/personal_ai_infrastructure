@@ -2,7 +2,7 @@
 """
 Graphiti MCP Server - Exposes Graphiti functionality through the Model Context Protocol (MCP)
 
-PAI PATCH: Modified to search ALL groups by default when no group_ids specified.
+Madeinoz Patch: Modified to search ALL groups by default when no group_ids specified.
 This ensures knowledge stored in different groups (e.g., osint-profiles, main) is discoverable.
 """
 
@@ -52,9 +52,9 @@ else:
 # Semaphore limit for concurrent Graphiti operations.
 SEMAPHORE_LIMIT = int(os.getenv('SEMAPHORE_LIMIT', 10))
 
-# PAI PATCH: Enable searching across ALL groups when no group_ids specified
+# Madeinoz Patch: Enable searching across ALL groups when no group_ids specified
 # Set to 'true' to enable, any other value (or unset) to disable
-SEARCH_ALL_GROUPS = os.getenv('PAI_KNOWLEDGE_SEARCH_ALL_GROUPS', 'false').lower() == 'true'
+SEARCH_ALL_GROUPS = os.getenv('MADEINOZ_KNOWLEDGE_SEARCH_ALL_GROUPS', 'false').lower() == 'true'
 
 
 # Configure structured logging with timestamps
@@ -91,7 +91,7 @@ logger = logging.getLogger(__name__)
 config: GraphitiConfig
 
 # ============================================================================
-# PAI PATCH: Dynamic group_id discovery with short-lived cache
+# Madeinoz Patch: Dynamic group_id discovery with short-lived cache
 # ============================================================================
 # Cache for all group_ids - refreshes every 30 seconds
 _group_ids_cache: list[str] = []
@@ -106,7 +106,7 @@ async def get_all_group_ids(client: Graphiti) -> list[str]:
     Uses a short-lived cache (30 seconds) to avoid excessive DB queries
     while ensuring new groups are discoverable quickly.
 
-    PAI PATCH: This function enables searching across ALL groups by default.
+    Madeinoz Patch: This function enables searching across ALL groups by default.
     """
     global _group_ids_cache, _group_ids_cache_time
 
@@ -129,11 +129,11 @@ async def get_all_group_ids(client: Graphiti) -> list[str]:
         _group_ids_cache = group_ids
         _group_ids_cache_time = current_time
 
-        logger.debug(f'PAI PATCH: Discovered {len(group_ids)} group_ids: {group_ids}')
+        logger.debug(f'Madeinoz Patch: Discovered {len(group_ids)} group_ids: {group_ids}')
         return group_ids
 
     except Exception as e:
-        logger.warning(f'PAI PATCH: Failed to fetch group_ids, using cache: {e}')
+        logger.warning(f'Madeinoz Patch: Failed to fetch group_ids, using cache: {e}')
         # Return stale cache or empty list on error
         return _group_ids_cache if _group_ids_cache else []
 
@@ -146,7 +146,7 @@ async def get_effective_group_ids(
     """
     Get the effective group_ids for a search operation.
 
-    PAI PATCH: When no group_ids are provided AND PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=true,
+    Madeinoz Patch: When no group_ids are provided AND MADEINOZ_KNOWLEDGE_SEARCH_ALL_GROUPS=true,
     fetches ALL groups dynamically instead of falling back to a single default group.
 
     Args:
@@ -161,13 +161,13 @@ async def get_effective_group_ids(
         # Explicit group_ids provided - use them
         return provided_group_ids
 
-    # PAI PATCH: Check if search-all-groups is enabled
+    # Madeinoz Patch: Check if search-all-groups is enabled
     if SEARCH_ALL_GROUPS:
         # No group_ids provided - search ALL groups
         all_groups = await get_all_group_ids(client)
 
         if all_groups:
-            logger.debug(f'PAI PATCH: Searching across all {len(all_groups)} groups')
+            logger.debug(f'Madeinoz Patch: Searching across all {len(all_groups)} groups')
             return all_groups
 
     # Fallback to default group (original behavior or empty database)
@@ -344,9 +344,9 @@ class GraphitiService:
 
             logger.info('Successfully initialized Graphiti client')
             if SEARCH_ALL_GROUPS:
-                logger.info('PAI PATCH: Search will query ALL groups when none specified')
+                logger.info('Madeinoz Patch: Search will query ALL groups when none specified')
             else:
-                logger.info('PAI PATCH: Search-all-groups DISABLED (set PAI_KNOWLEDGE_SEARCH_ALL_GROUPS=true to enable)')
+                logger.info('Madeinoz Patch: Search-all-groups DISABLED (set MADEINOZ_KNOWLEDGE_SEARCH_ALL_GROUPS=true to enable)')
 
             if llm_client:
                 logger.info(
@@ -465,7 +465,7 @@ async def search_nodes(
     try:
         client = await graphiti_service.get_client()
 
-        # PAI PATCH: Use dynamic group_id discovery
+        # Madeinoz Patch: Use dynamic group_id discovery
         effective_group_ids = await get_effective_group_ids(
             client, group_ids, config.graphiti.group_id
         )
@@ -542,7 +542,7 @@ async def search_memory_facts(
 
         client = await graphiti_service.get_client()
 
-        # PAI PATCH: Use dynamic group_id discovery
+        # Madeinoz Patch: Use dynamic group_id discovery
         effective_group_ids = await get_effective_group_ids(
             client, group_ids, config.graphiti.group_id
         )
@@ -652,7 +652,7 @@ async def get_episodes(
     try:
         client = await graphiti_service.get_client()
 
-        # PAI PATCH: Use dynamic group_id discovery
+        # Madeinoz Patch: Use dynamic group_id discovery
         effective_group_ids = await get_effective_group_ids(
             client, group_ids, config.graphiti.group_id
         )
@@ -762,7 +762,7 @@ async def get_status() -> StatusResponse:
 @mcp.custom_route('/health', methods=['GET'])
 async def health_check(request) -> JSONResponse:
     """Health check endpoint for Docker and load balancers."""
-    patch_status = 'pai-all-groups-enabled' if SEARCH_ALL_GROUPS else 'pai-all-groups-disabled'
+    patch_status = 'madeinoz-all-groups-enabled' if SEARCH_ALL_GROUPS else 'madeinoz-all-groups-disabled'
     return JSONResponse({'status': 'healthy', 'service': 'graphiti-mcp', 'patch': patch_status})
 
 
@@ -835,7 +835,7 @@ async def initialize_server() -> ServerConfig:
     logger.info(f'  - Database: {config.database.provider}')
     logger.info(f'  - Group ID: {config.graphiti.group_id}')
     logger.info(f'  - Transport: {config.server.transport}')
-    logger.info('  - PAI PATCH: Search ALL groups when none specified (enabled)')
+    logger.info('  - Madeinoz Patch: Search ALL groups when none specified (enabled)')
 
     try:
         import graphiti_core
@@ -898,7 +898,7 @@ async def run_mcp_server():
         logger.info(f'  Base URL: http://{display_host}:{mcp.settings.port}/')
         logger.info(f'  MCP Endpoint: http://{display_host}:{mcp.settings.port}/mcp/')
         logger.info('  Transport: HTTP (streamable)')
-        logger.info('  PAI Patch: search-all-groups (active)')
+        logger.info('  Madeinoz Patch: search-all-groups (active)')
 
         if os.environ.get('BROWSER', '1') == '1':
             logger.info(f'  FalkorDB Browser UI: http://{display_host}:3000/')

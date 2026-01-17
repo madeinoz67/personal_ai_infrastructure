@@ -1,6 +1,6 @@
 # Documentation Index
 
-Quick navigation for the PAI Knowledge System user documentation.
+Quick navigation for the Madeinoz Knowledge System user documentation.
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ For understanding how everything works:
 ## Documentation Structure
 
 ### README.md (Start Here)
-- What is the PAI Knowledge System?
+- What is the Madeinoz Knowledge System?
 - What can you do with it?
 - Quick start tutorial
 - Common use cases
@@ -147,23 +147,23 @@ bun run src/hooks/sync-memory-to-knowledge.ts --verbose
 **Backup and Restore - Neo4j (Default):**
 ```bash
 # Podman
-podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backups/knowledge-backup.dump
-podman volume export pai-knowledge-neo4j-data > backups/volume-backup.tar
+podman exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backups/knowledge-backup.dump
+podman volume export madeinoz-knowledge-neo4j-data > backups/volume-backup.tar
 
 # Docker
-docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backups/knowledge-backup.dump
+docker exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backups/knowledge-backup.dump
 ```
 
 **Backup and Restore - FalkorDB Backend:**
 ```bash
 # Podman
-podman exec pai-knowledge-falkordb redis-cli BGSAVE
-podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
-podman volume export pai-knowledge-data > backups/volume-backup.tar
+podman exec madeinoz-knowledge-falkordb redis-cli BGSAVE
+podman cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
+podman volume export madeinoz-knowledge-data > backups/volume-backup.tar
 
 # Docker
-docker exec pai-knowledge-falkordb redis-cli BGSAVE
-docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
+docker exec madeinoz-knowledge-falkordb redis-cli BGSAVE
+docker cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
 ```
 
 ### Natural Language Commands

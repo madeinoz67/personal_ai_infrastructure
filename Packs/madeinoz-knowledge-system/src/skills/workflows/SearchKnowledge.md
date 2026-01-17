@@ -7,12 +7,12 @@
 ## Step 1: Announce Workflow
 
 ```bash
-~/.claude/Tools/SkillWorkflowNotification SearchKnowledge PaiKnowledgeSystem
+~/.claude/Tools/SkillWorkflowNotification SearchKnowledge MadeinozKnowledgeSystem
 ```
 
 **Output to user:**
 ```
-Running the **SearchKnowledge** workflow from the **PaiKnowledgeSystem** skill...
+Running the **SearchKnowledge** workflow from the **MadeinozKnowledgeSystem** skill...
 ```
 
 ---

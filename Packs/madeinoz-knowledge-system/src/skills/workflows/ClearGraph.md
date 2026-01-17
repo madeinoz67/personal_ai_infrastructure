@@ -25,12 +25,12 @@
 ## Step 1: Announce Workflow
 
 ```bash
-~/.claude/Tools/SkillWorkflowNotification ClearGraph PaiKnowledgeSystem
+~/.claude/Tools/SkillWorkflowNotification ClearGraph MadeinozKnowledgeSystem
 ```
 
 **Output to user:**
 ```
-Running the **ClearGraph** workflow from the **PaiKnowledgeSystem** skill...
+Running the **ClearGraph** workflow from the **MadeinozKnowledgeSystem** skill...
 ```
 
 ---

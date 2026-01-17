@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Start PAI Knowledge System containers
+ * Start Madeinoz Knowledge System containers
  *
  * Starts both FalkorDB and MCP server containers if they exist.
  * This is a simple start script - containers should already be created.
@@ -13,7 +13,7 @@ import { cli } from "../lib/cli.js";
  * Main start function
  */
 async function main() {
-  cli.header("PAI Knowledge System - Start");
+  cli.header("Madeinoz Knowledge System - Start");
 
   // Create container manager
   const containerManager = createContainerManager();
@@ -48,7 +48,7 @@ async function main() {
     process.exit(1);
   }
 
-  cli.info("Starting PAI Knowledge System...");
+  cli.info("Starting Madeinoz Knowledge System...");
   cli.blank();
 
   // Start FalkorDB first
@@ -95,7 +95,7 @@ async function main() {
   }
 
   cli.blank();
-  cli.success("PAI Knowledge System started");
+  cli.success("Madeinoz Knowledge System started");
   cli.blank();
   cli.info("Access points:");
   cli.url("MCP Server", "http://localhost:8000/mcp/");

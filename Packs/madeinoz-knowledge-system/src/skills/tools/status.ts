@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Check the status of PAI Knowledge System containers
+ * Check the status of Madeinoz Knowledge System containers
  *
  * Shows status of both FalkorDB and MCP server containers.
  * Tests health endpoint and displays access URLs.
@@ -13,7 +13,7 @@ import { cli } from "../lib/cli.js";
  * Main status function
  */
 async function main() {
-  cli.header("PAI Knowledge System - Status");
+  cli.header("Madeinoz Knowledge System - Status");
 
   // Create container manager
   const containerManager = createContainerManager();

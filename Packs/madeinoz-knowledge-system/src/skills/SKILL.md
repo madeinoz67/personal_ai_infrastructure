@@ -55,7 +55,7 @@ Persistent personal knowledge system powered by Graphiti knowledge graph with Fa
 
 3. **Configure API key** (in `config/.env.example`):
    ```bash
-   PAI_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
+   MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
    ```
 
 **What Gets Captured:**
@@ -157,19 +157,19 @@ To disable caching, initialize the client with `enableCache: false`.
 
 ```bash
 # LLM Configuration
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
-PAI_KNOWLEDGE_LLM_PROVIDER=openai
-PAI_KNOWLEDGE_EMBEDDER_PROVIDER=openai
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
+MADEINOZ_KNOWLEDGE_LLM_PROVIDER=openai
+MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER=openai
 
 # Concurrency (adjust based on API tier)
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=10
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=10
 
 # Group ID (for multiple knowledge graphs)
-PAI_KNOWLEDGE_GROUP_ID=main
+MADEINOZ_KNOWLEDGE_GROUP_ID=main
 
 # Disable telemetry
-PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=false
+MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=false
 ```
 
 **Model Recommendations:**

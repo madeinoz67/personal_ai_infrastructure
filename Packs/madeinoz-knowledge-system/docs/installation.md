@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide will walk you through installing the PAI Knowledge System step by step. Don't worry if you're not a developer - we'll explain everything clearly.
+This guide will walk you through installing the Madeinoz Knowledge System step by step. Don't worry if you're not a developer - we'll explain everything clearly.
 
 ## What You'll Need
 
@@ -91,7 +91,7 @@ Then close and reopen your terminal.
 
 ### Step 4: Navigate to the Pack Directory
 
-The PAI Knowledge System is in your PAI packs folder:
+The Madeinoz Knowledge System is in your PAI packs folder:
 
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
@@ -115,7 +115,7 @@ nano config/.env
 
 Find this line:
 ```
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-your-openai-api-key-here
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-your-openai-api-key-here
 ```
 
 Replace `sk-your-openai-api-key-here` with your actual API key.
@@ -135,8 +135,8 @@ bun run src/server/run.ts
 
 You'll see output like:
 ```
-Starting PAI Knowledge System...
-Creating network: pai-knowledge-net
+Starting Madeinoz Knowledge System...
+Creating network: madeinoz-knowledge-net
 Starting Neo4j container...
 Starting Graphiti MCP server...
 Server is running at http://localhost:8000
@@ -157,11 +157,11 @@ bun run src/server/status.ts
 
 You should see:
 ```
-PAI Knowledge System Status:
+Madeinoz Knowledge System Status:
 
 Containers:
-  pai-knowledge-graph-mcp: running
-  pai-knowledge-neo4j: running
+  madeinoz-knowledge-graph-mcp: running
+  madeinoz-knowledge-neo4j: running
 
 MCP Server: http://localhost:8000/sse
   Status: healthy
@@ -179,10 +179,10 @@ export PAI_DIR="${PAI_DIR:-$HOME/.config/pai}"
 Add the MCP server to your PAI configuration file (`~/.config/pai/.env`):
 
 ```bash
-# PAI Knowledge System
-PAI_KNOWLEDGE_OPENAI_API_KEY=your-key-here
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
-PAI_KNOWLEDGE_LLM_PROVIDER=openai
+# Madeinoz Knowledge System
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=your-key-here
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
+MADEINOZ_KNOWLEDGE_LLM_PROVIDER=openai
 ```
 
 ### Step 9: Install Memory Sync Hook (Optional but Recommended)
@@ -205,7 +205,7 @@ Follow the prompts to:
 Time to test everything! In your AI assistant (like Claude Code), try:
 
 ```
-Remember that the PAI Knowledge System was just installed today.
+Remember that the Madeinoz Knowledge System was just installed today.
 ```
 
 The assistant should respond with something like:
@@ -213,15 +213,15 @@ The assistant should respond with something like:
 ```
 Knowledge Captured
 
-Stored episode: PAI Knowledge System Installation
+Stored episode: Madeinoz Knowledge System Installation
 
 Entities extracted:
-- PAI Knowledge System (Tool)
+- Madeinoz Knowledge System (Tool)
 - installation (Event)
 - today (Temporal)
 
 Relationships identified:
-- PAI Knowledge System -> was installed -> today
+- Madeinoz Knowledge System -> was installed -> today
 ```
 
 Then try searching:
@@ -282,8 +282,8 @@ Want the server to start automatically when you open your terminal?
 Add this to your shell configuration file (`~/.zshrc` or `~/.bashrc`):
 
 ```bash
-# Auto-start PAI Knowledge System
-if ! podman ps | grep -q "pai-knowledge-graph-mcp"; then
+# Auto-start Madeinoz Knowledge System
+if ! podman ps | grep -q "madeinoz-knowledge-graph-mcp"; then
     cd ~/.config/pai/Packs/madeinoz-knowledge-system && bun run src/server/start.ts
 fi
 ```
@@ -298,7 +298,7 @@ The default model is `gpt-4o-mini` (fast and cheap). You can change it to:
 
 Edit `config/.env`:
 ```bash
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o
 ```
 
 Then restart the server.
@@ -309,7 +309,7 @@ Want separate graphs for work and personal? Use group IDs:
 
 In `config/.env`:
 ```bash
-PAI_KNOWLEDGE_GROUP_ID=work
+MADEINOZ_KNOWLEDGE_GROUP_ID=work
 ```
 
 Or specify when capturing:
@@ -323,7 +323,7 @@ If you hit API rate limits, reduce the concurrent requests:
 
 In `config/.env`:
 ```bash
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=5
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=5
 ```
 
 Lower numbers = slower but less likely to hit rate limits.

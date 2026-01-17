@@ -1,4 +1,4 @@
-# PAI Knowledge System - Verification Checklist
+# Madeinoz Knowledge System - Verification Checklist
 
 Mandatory verification checklist for the Knowledge pack installation.
 
@@ -43,17 +43,17 @@ This checklist ensures:
 ```bash
 # Check .env file for DATABASE_TYPE
 cd /path/to/madeinoz-knowledge-system
-grep "PAI_KNOWLEDGE_DATABASE_TYPE" config/.env 2>/dev/null || grep "DATABASE_TYPE" config/.env 2>/dev/null
+grep "MADEINOZ_KNOWLEDGE_DATABASE_TYPE" config/.env 2>/dev/null || grep "DATABASE_TYPE" config/.env 2>/dev/null
 
 # Or check running containers
-podman ps --format "{{.Names}}" | grep pai-knowledge
+podman ps --format "{{.Names}}" | grep madeinoz-knowledge
 # For Docker:
-docker ps --format "{{.Names}}" | grep pai-knowledge
+docker ps --format "{{.Names}}" | grep madeinoz-knowledge
 ```
 
 **Results:**
-- If `DATABASE_TYPE=neo4j` OR container `pai-knowledge-neo4j` is running → **Neo4j Backend**
-- If `DATABASE_TYPE=falkordb` OR container `pai-knowledge-falkordb` is running → **FalkorDB Backend**
+- If `DATABASE_TYPE=neo4j` OR container `madeinoz-knowledge-neo4j` is running → **Neo4j Backend**
+- If `DATABASE_TYPE=falkordb` OR container `madeinoz-knowledge-falkordb` is running → **FalkorDB Backend**
 - Default (not set) → **Neo4j Backend**
 
 **Record your backend:** [ ] FalkorDB / [ ] Neo4j
@@ -218,15 +218,15 @@ ls -la src/server/lib/
 
 - [ ] `config/.env.example` exists
 - [ ] `config/.mcp.json` exists
-- [ ] Environment variables use `PAI_KNOWLEDGE_*` prefix
+- [ ] Environment variables use `MADEINOZ_KNOWLEDGE_*` prefix
 
 **Verification commands:**
 ```bash
 ls -la config/
-grep "PAI_KNOWLEDGE_" config/.env.example | head -5
+grep "MADEINOZ_KNOWLEDGE_" config/.env.example | head -5
 ```
 
-**Expected result:** Config files exist with PAI_KNOWLEDGE_ prefixed variables
+**Expected result:** Config files exist with MADEINOZ_KNOWLEDGE_ prefixed variables
 
 ---
 
@@ -261,20 +261,20 @@ Verify the Graphiti MCP server is running and accessible.
 **Verification commands:**
 ```bash
 # For Podman
-podman ps | grep pai-knowledge
+podman ps | grep madeinoz-knowledge
 
 # For Docker
-docker ps | grep pai-knowledge
+docker ps | grep madeinoz-knowledge
 
 # Or use the status script
 bun run src/skills/tools/status.ts
 ```
 
 **Expected result (FalkorDB backend):**
-- Containers `pai-knowledge-graph-mcp` and `pai-knowledge-falkordb` listed with status "Up"
+- Containers `madeinoz-knowledge-graph-mcp` and `madeinoz-knowledge-falkordb` listed with status "Up"
 
 **Expected result (Neo4j backend):**
-- Containers `pai-knowledge-graph-mcp` and `pai-knowledge-neo4j` listed with status "Up"
+- Containers `madeinoz-knowledge-graph-mcp` and `madeinoz-knowledge-neo4j` listed with status "Up"
 
 ---
 
@@ -306,10 +306,10 @@ This confirms the MCP server is running and accepting connections.
 **Verification commands:**
 ```bash
 # For Podman
-podman exec pai-knowledge-falkordb redis-cli -p 6379 PING
+podman exec madeinoz-knowledge-falkordb redis-cli -p 6379 PING
 
 # For Docker
-docker exec pai-knowledge-falkordb redis-cli -p 6379 PING
+docker exec madeinoz-knowledge-falkordb redis-cli -p 6379 PING
 ```
 
 **Expected result:** `PONG`
@@ -380,7 +380,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:7474
 1. Open http://localhost:7474 in your browser
 2. Neo4j Browser interface should load
 3. Connect using: bolt://localhost:7687
-4. Login with neo4j / (your configured password, default: paiknowledge)
+4. Login with neo4j / (your configured password, default: madeinozknowledge)
 
 ---
 
@@ -499,14 +499,14 @@ Verify all configuration is correct.
 Check the pack's local configuration:
 
 - [ ] `config/.env.example` exists with documented variables
-- [ ] Variables use `PAI_KNOWLEDGE_*` prefix
+- [ ] Variables use `MADEINOZ_KNOWLEDGE_*` prefix
 
 **Verification commands:**
 ```bash
-grep "^PAI_KNOWLEDGE_" config/.env.example
+grep "^MADEINOZ_KNOWLEDGE_" config/.env.example
 ```
 
-**Expected result:** Variables like PAI_KNOWLEDGE_OPENAI_API_KEY, PAI_KNOWLEDGE_MODEL_NAME, etc.
+**Expected result:** Variables like MADEINOZ_KNOWLEDGE_OPENAI_API_KEY, MADEINOZ_KNOWLEDGE_MODEL_NAME, etc.
 
 ---
 
@@ -514,7 +514,7 @@ grep "^PAI_KNOWLEDGE_" config/.env.example
 
 Check PAI's global .env for required variables:
 
-- [ ] **API key is set** (OPENAI_API_KEY or PAI_KNOWLEDGE_OPENAI_API_KEY)
+- [ ] **API key is set** (OPENAI_API_KEY or MADEINOZ_KNOWLEDGE_OPENAI_API_KEY)
 - [ ] **LLM provider is configured**
 
 **Verification commands:**
@@ -522,7 +522,7 @@ Check PAI's global .env for required variables:
 PAI_ENV="${PAI_DIR:-$HOME/.claude}/.env"
 if [ -f "$PAI_ENV" ]; then
     echo "Checking: $PAI_ENV"
-    grep -E "(OPENAI_API_KEY|PAI_KNOWLEDGE_)" "$PAI_ENV" | grep -v "^#" | sed 's/=.*/=<SET>/'
+    grep -E "(OPENAI_API_KEY|MADEINOZ_KNOWLEDGE_)" "$PAI_ENV" | grep -v "^#" | sed 's/=.*/=<SET>/'
 else
     echo "PAI .env not found at: $PAI_ENV"
 fi
@@ -535,13 +535,13 @@ fi
 ### 4.3 MCP Server Configuration
 
 - [ ] **MCP server configured in ~/.claude.json**
-- [ ] **pai-knowledge server entry exists**
+- [ ] **madeinoz-knowledge server entry exists**
 - [ ] **SSE transport configured**
 
 **Verification commands:**
 ```bash
 if [ -f ~/.claude.json ]; then
-    grep -A 5 "pai-knowledge" ~/.claude.json
+    grep -A 5 "madeinoz-knowledge" ~/.claude.json
 else
     echo "~/.claude.json not found"
 fi
@@ -549,7 +549,7 @@ fi
 
 **Expected result:**
 ```json
-"pai-knowledge": {
+"madeinoz-knowledge": {
   "type": "sse",
   "url": "http://localhost:8000/sse"
 }
@@ -583,7 +583,7 @@ lsof -i :7474
 lsof -i :7687
 ```
 
-**Expected result:** Either no output (port available) or pai-knowledge process listed (using port)
+**Expected result:** Either no output (port available) or madeinoz-knowledge process listed (using port)
 
 ---
 
@@ -611,7 +611,7 @@ curl -s -X POST http://localhost:8000/mcp/ \
             "name":"add_memory",
             "arguments":{
                 "name":"PAI Verification Test",
-                "episode_body":"PAI Knowledge System verification test completed successfully.",
+                "episode_body":"Madeinoz Knowledge System verification test completed successfully.",
                 "source":"text",
                 "source_description":"verification test"
             }
@@ -638,7 +638,7 @@ curl -s -X POST http://localhost:8000/mcp/ \
         "params":{
             "name":"search_memory_nodes",
             "arguments":{
-                "query":"PAI Knowledge System",
+                "query":"Madeinoz Knowledge System",
                 "max_nodes":5
             }
         }
@@ -785,10 +785,10 @@ curl -s -X POST http://localhost:8000/mcp/ \
 bun run src/skills/tools/logs.ts 2>&1 | grep -i "syntax error" | tail -10
 
 # Or check container logs directly
-podman logs pai-knowledge-graph-mcp 2>&1 | grep -i "syntax error" | tail -10
+podman logs madeinoz-knowledge-graph-mcp 2>&1 | grep -i "syntax error" | tail -10
 
 # For Docker
-docker logs pai-knowledge-graph-mcp 2>&1 | grep -i "syntax error" | tail -10
+docker logs madeinoz-knowledge-graph-mcp 2>&1 | grep -i "syntax error" | tail -10
 ```
 
 **Expected result:** No output (no syntax errors)
@@ -923,7 +923,7 @@ curl -s -X POST http://localhost:8000/mcp/ \
 
 **Verification:**
 1. Open http://localhost:7474 in your browser
-2. Login with your credentials (default: neo4j / paiknowledge)
+2. Login with your credentials (default: neo4j / madeinozknowledge)
 3. Execute a test query:
    ```cypher
    MATCH (n) RETURN count(n) as nodeCount
@@ -974,10 +974,10 @@ Verify integration with PAI system and Claude Code.
 
 **Verification:**
 1. Restart Claude Code
-2. In Claude Code, type: `What is the PAI Knowledge System?`
+2. In Claude Code, type: `What is the Madeinoz Knowledge System?`
 3. Check if Claude mentions the skill
 
-**Expected result:** Claude is aware of the PAI Knowledge System skill
+**Expected result:** Claude is aware of the Madeinoz Knowledge System skill
 
 ---
 
@@ -1004,11 +1004,11 @@ In Claude Code, try each trigger phrase:
 In Claude Code, the workflows reference MCP server tools. If workflows execute successfully, MCP integration is working.
 
 Check that these tools are available:
-- `mcp__pai-knowledge__add_memory`
-- `mcp__pai-knowledge__search_memory_nodes`
-- `mcp__pai-knowledge__search_memory_facts`
-- `mcp__pai-knowledge__get_episodes`
-- `mcp__pai-knowledge__clear_graph`
+- `mcp__madeinoz-knowledge__add_memory`
+- `mcp__madeinoz-knowledge__search_memory_nodes`
+- `mcp__madeinoz-knowledge__search_memory_facts`
+- `mcp__madeinoz-knowledge__get_episodes`
+- `mcp__madeinoz-knowledge__clear_graph`
 
 **Expected result:** Workflows complete without MCP connection errors
 
@@ -1299,8 +1299,8 @@ If any critical item fails:
 
 Once all checks pass:
 
-- [ ] **Create a test episode** in Claude Code: "Remember that I've successfully installed the PAI Knowledge System"
-- [ ] **Search for it**: "What do I know about the PAI Knowledge System installation?"
+- [ ] **Create a test episode** in Claude Code: "Remember that I've successfully installed the Madeinoz Knowledge System"
+- [ ] **Search for it**: "What do I know about the Madeinoz Knowledge System installation?"
 - [ ] **Verify it's returned**: The search should find your test episode
 
 **If all three steps work, your installation is complete and verified!**
@@ -1318,5 +1318,5 @@ Once all checks pass:
 ---
 
 **Next Steps:**
-- If PASS: Start using the PAI Knowledge System!
+- If PASS: Start using the Madeinoz Knowledge System!
 - If FAIL: Review failed items, re-install as needed, and re-verify

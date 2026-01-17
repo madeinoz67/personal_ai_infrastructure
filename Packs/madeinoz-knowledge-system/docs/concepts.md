@@ -1,6 +1,6 @@
 # Key Concepts
 
-This guide explains how the PAI Knowledge System works under the hood. Understanding these concepts will help you use the system more effectively.
+This guide explains how the Madeinoz Knowledge System works under the hood. Understanding these concepts will help you use the system more effectively.
 
 ## The Knowledge Graph
 
@@ -407,10 +407,10 @@ The system uses different models for different tasks:
 **In your config (`config/.env`):**
 ```bash
 # Entity extraction model
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
 
 # For better extraction (costs more):
-# PAI_KNOWLEDGE_MODEL_NAME=gpt-4o
+# MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o
 ```
 
 ### Cost Breakdown by LLM Task

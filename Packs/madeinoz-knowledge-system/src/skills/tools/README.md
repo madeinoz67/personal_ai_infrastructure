@@ -1,6 +1,6 @@
-# PAI Knowledge System - Skill Tools
+# Madeinoz Knowledge System - Skill Tools
 
-Container management tools for the installed PAI Knowledge System skill.
+Container management tools for the installed Madeinoz Knowledge System skill.
 
 These tools are installed with the skill to `~/.claude/skills/Knowledge/tools/`.
 

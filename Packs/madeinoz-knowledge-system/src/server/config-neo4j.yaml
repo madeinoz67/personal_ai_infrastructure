@@ -80,7 +80,7 @@ database:
       # Use environment variable if set, otherwise use Docker service hostname
       uri: ${NEO4J_URI:bolt://neo4j:7687}
       username: ${NEO4J_USER:neo4j}
-      password: ${NEO4J_PASSWORD:paiknowledge}
+      password: ${NEO4J_PASSWORD:madeinozknowledge}
       database: ${NEO4J_DATABASE:neo4j}
       use_parallel_runtime: ${USE_PARALLEL_RUNTIME:false}
 

@@ -1,6 +1,6 @@
 ---
 # name: (24 words max) Human-readable pack name
-name: PAI Knowledge System
+name: Madeinoz Knowledge System
 
 # pack-id: (format) {author}-{pack-name}-{variant}-v{version}
 pack-id: madeinoz67-madeinoz-knowledge-system-core-v1.1.0
@@ -30,7 +30,7 @@ dependencies: []
 keywords: [knowledge, graph, memory, semantic search, entity extraction, relationships, graphiti, falkordb, neo4j, mcp, persistent, ai, storage, retrieval, organizational, learning, documentation]
 ---
 
-<p align="center"><img src="../icons/madeinoz-knowledge-system.png" alt="PAI Knowledge System" width="256"></p>
+<p align="center"><img src="../icons/madeinoz-knowledge-system.png" alt="Madeinoz Knowledge System" width="256"></p>
 
 # Knowledge
 
@@ -51,7 +51,7 @@ You are receiving a PAI Pack - a modular upgrade for AI agent systems.
 
 **What is a Pack?** A PAI Pack is a complete, end-to-end solution that can be installed into your PAI infrastructure. Each pack contains everything needed - from source code to configuration - with no missing components or "figure it out yourself" steps.
 
-This pack adds persistent memory to your AI infrastructure. The PAI Knowledge System is not just a note-taking tool - it's a comprehensive knowledge graph that:
+This pack adds persistent memory to your AI infrastructure. The Madeinoz Knowledge System is not just a note-taking tool - it's a comprehensive knowledge graph that:
 
 - **Automatically Learns**: Extracts entities and relationships as you work
 - **Connects Concepts**: Maps how ideas relate over time
@@ -144,7 +144,7 @@ Without a knowledge system, your AI is powerful but forgetful. Every conversatio
 
 ## The Solution
 
-The PAI Knowledge System solves this through **automatic knowledge graph construction**. Instead of requiring manual note-taking, it extracts and structures knowledge as a natural byproduct of conversation.
+The Madeinoz Knowledge System solves this through **automatic knowledge graph construction**. Instead of requiring manual note-taking, it extracts and structures knowledge as a natural byproduct of conversation.
 
 **Core Architecture:**
 
@@ -153,7 +153,7 @@ User Conversation/Document
          │
          ▼
 ┌─────────────────────────────────┐
-│   PAI Knowledge System Skill    │
+│   Madeinoz Knowledge System Skill    │
 │  ┌───────────────────────────┐  │
 │  │   Intent Routing          │  │
 │  │   - "remember this"       │  │
@@ -236,7 +236,7 @@ Knowledge capture should be conversational, not administrative. By making the pr
 
 ## What Makes This Different
 
-The PAI Knowledge System solves the problem through **multi-layered semantic architecture** that goes far beyond simple keyword search or flat note storage.
+The Madeinoz Knowledge System solves the problem through **multi-layered semantic architecture** that goes far beyond simple keyword search or flat note storage.
 
 **Core Architecture:**
 
@@ -401,7 +401,7 @@ FalkorDB uses RediSearch, which implements Lucene query syntax. In Lucene, certa
 - Quotes (`"`) define phrase queries
 - Wildcards (`*`, `?`) enable pattern matching
 
-When searching for hyphenated group_ids like `pai-threat-intel`, Lucene interprets this as "pai AND NOT threat AND NOT intel", causing query syntax errors.
+When searching for hyphenated group_ids like `madeinoz-threat-intel`, Lucene interprets this as "pai AND NOT threat AND NOT intel", causing query syntax errors.
 
 **The Solution:**
 Two sanitization modules automatically escape special characters:
@@ -413,8 +413,8 @@ Two sanitization modules automatically escape special characters:
 
 | Function | Purpose | Example |
 |----------|---------|---------|
-| `luceneSanitize(value)` | Escape a value by wrapping in quotes and escaping special characters | `"pai-threat-intel"` |
-| `sanitizeGroupId(groupId)` | Convenience function for sanitizing group_ids | `"pai-threat-intel"` |
+| `luceneSanitize(value)` | Escape a value by wrapping in quotes and escaping special characters | `"madeinoz-threat-intel"` |
+| `sanitizeGroupId(groupId)` | Convenience function for sanitizing group_ids | `"madeinoz-threat-intel"` |
 | `sanitizeGroupIds(groupIds)` | Sanitize an array of group_ids | `["group-1", "group-2"]` |
 | `sanitizeSearchQuery(query)` | Escape special characters in search queries while preserving multi-word searches | `pai\\-threat\\-intel` |
 
@@ -423,12 +423,12 @@ Special Lucene characters: `+ - && || ! ( ) { } [ ] ^ " ~ * ? : \ /`
 
 **Root Cause Analysis:**
 ```
-Unsanitized query: group_id:pai-threat-intel
+Unsanitized query: group_id:madeinoz-threat-intel
 Lucene interpretation: group_id:pai AND NOT threat AND NOT intel
 Result: Syntax error (incomplete negation)
 
-Sanitized query: group_id:"pai-threat-intel"
-Lucene interpretation: group_id equals literal string "pai-threat-intel"
+Sanitized query: group_id:"madeinoz-threat-intel"
+Lucene interpretation: group_id equals literal string "madeinoz-threat-intel"
 Result: Successful search
 ```
 
@@ -462,7 +462,7 @@ NOT: "Handle special characters manually" - Lucene sanitization built-in
 
 **The Architectural Innovation:**
 
-The key insight is that **knowledge is relational, not transactional**. Traditional note-taking treats each piece of information as an isolated transaction. The PAI Knowledge System treats knowledge as a graph of interconnected entities with temporal context.
+The key insight is that **knowledge is relational, not transactional**. Traditional note-taking treats each piece of information as an isolated transaction. The Madeinoz Knowledge System treats knowledge as a graph of interconnected entities with temporal context.
 
 This isn't just "better search" - it's a fundamentally different paradigm:
 - **Transaction**: "Note about Podman volumes" (isolated, static)
@@ -482,7 +482,7 @@ This architecture makes your AI infrastructure genuinely intelligent, not just a
 
 This sounds similar to Obsidian which also does knowledge management through linked notes. What makes this approach different?
 
-The PAI Knowledge System uses LLM-powered automatic entity extraction and semantic vector embeddings, requiring zero manual effort to organize. Unlike manual note-linking systems that demand you create and maintain connections yourself, this pack automatically identifies entities, relationships, and temporal context as you converse - no tagging, categorizing, or linking required.
+The Madeinoz Knowledge System uses LLM-powered automatic entity extraction and semantic vector embeddings, requiring zero manual effort to organize. Unlike manual note-linking systems that demand you create and maintain connections yourself, this pack automatically identifies entities, relationships, and temporal context as you converse - no tagging, categorizing, or linking required.
 
 - Automatic extraction eliminates all manual tagging overhead completely
 - Semantic vector search enables concept-based knowledge queries
@@ -529,7 +529,7 @@ See [INSTALL.md](INSTALL.md) for complete step-by-step instructions that can be 
 
 ## Invocation Scenarios
 
-The PAI Knowledge System triggers automatically based on natural language intent:
+The Madeinoz Knowledge System triggers automatically based on natural language intent:
 
 | Trigger | Workflow | Action | Output |
 |---------|----------|--------|--------|
@@ -616,7 +616,7 @@ Based on your knowledge graph:
 - Maps relationships: causal, dependency, temporal, semantic
 
 **Related Episodes:**
-1. "PAI Knowledge System setup" - 2025-01-03
+1. "Madeinoz Knowledge System setup" - 2025-01-03
 2. "Entity extraction quality" - 2025-01-04
 3. "Vector search tuning" - 2025-01-05
 ```
@@ -679,7 +679,7 @@ Recent knowledge about "knowledge management" (past 7 days):
 - Default port: 6379
 - Web UI available at localhost:3000
 
-**2025-01-03 - PAI Knowledge System Setup**
+**2025-01-03 - Madeinoz Knowledge System Setup**
 - Installed Graphiti MCP server with FalkorDB backend
 - Configured OpenAI API key for LLM operations
 - Installed PAI skill to ~/.claude/skills/
@@ -738,7 +738,7 @@ Remember that I prefer gpt-4o for complex reasoning tasks
 **Troubleshooting Steps:**
 
 1. Check if server is running:
-   podman ps | grep pai-knowledge-graph-mcp
+   podman ps | grep madeinoz-knowledge-graph-mcp
 
 2. If not running, start the server:
    bash madeinoz-knowledge-system/src/server/run.sh
@@ -766,28 +766,28 @@ Once the server is running, try capturing knowledge again.
 # Location: madeinoz-knowledge-system/src/config/.env
 
 # LLM Provider Configuration
-PAI_KNOWLEDGE_LLM_PROVIDER=openai
-PAI_KNOWLEDGE_EMBEDDER_PROVIDER=openai
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
+MADEINOZ_KNOWLEDGE_LLM_PROVIDER=openai
+MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER=openai
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
 
 # API Keys
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
 
 # Performance Configuration
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=10
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=10
 
 # Knowledge Graph Configuration
-PAI_KNOWLEDGE_GROUP_ID=main
+MADEINOZ_KNOWLEDGE_GROUP_ID=main
 
 # Telemetry
-PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=false
+MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=false
 ```
 
 **Option 2: Shell profile** (for manual installation):
 ```bash
 # Add to ~/.zshrc or ~/.bashrc
 export PAI_DIR="$HOME/.config/pai"
-export PAI_KNOWLEDGE_OPENAI_API_KEY="sk-your-key-here"
+export MADEINOZ_KNOWLEDGE_OPENAI_API_KEY="sk-your-key-here"
 ```
 
 ### Model Selection
@@ -814,7 +814,7 @@ Adjust `SEMAPHORE_LIMIT` based on your OpenAI API tier:
 
 ## Database Backend Selection
 
-The PAI Knowledge System supports two graph database backends:
+The Madeinoz Knowledge System supports two graph database backends:
 
 | Backend | Description | Web UI | Best For |
 |---------|-------------|--------|----------|
@@ -854,7 +854,7 @@ To switch backends, update your configuration:
 
 ```bash
 # In your PAI .env file
-PAI_KNOWLEDGE_DATABASE_TYPE=neo4j  # or falkordb
+MADEINOZ_KNOWLEDGE_DATABASE_TYPE=neo4j  # or falkordb
 
 # Then restart services
 bun run src/server/stop.ts
@@ -875,8 +875,8 @@ FalkorDB includes a built-in web UI for visualizing your knowledge graph.
 
 1. **Ensure containers are running:**
    ```bash
-   docker ps | grep pai-knowledge
-   # or: podman ps | grep pai-knowledge
+   docker ps | grep madeinoz-knowledge
+   # or: podman ps | grep madeinoz-knowledge
    ```
 
 2. **Open the FalkorDB Browser:**
@@ -926,8 +926,8 @@ Neo4j Browser provides rich graph visualization for your knowledge graph.
 
 1. **Ensure containers are running:**
    ```bash
-   docker ps | grep pai-knowledge-neo4j
-   # or: podman ps | grep pai-knowledge-neo4j
+   docker ps | grep madeinoz-knowledge-neo4j
+   # or: podman ps | grep madeinoz-knowledge-neo4j
    ```
 
 2. **Open the Neo4j Browser:**
@@ -937,7 +937,7 @@ Neo4j Browser provides rich graph visualization for your knowledge graph.
 
 3. **Connect to the database:**
    - Username: `neo4j` (default)
-   - Password: `paiknowledge` (default)
+   - Password: `madeinozknowledge` (default)
    - Database: `neo4j`
 
 ### Exploring with Cypher
@@ -956,7 +956,7 @@ MATCH (n {name: 'your-entity-name'})-[r]-(m) RETURN n, r, m
 
 **Search with special characters (no escaping needed):**
 ```cypher
-MATCH (n) WHERE n.group_id = 'pai-threat-intel' RETURN n
+MATCH (n) WHERE n.group_id = 'madeinoz-threat-intel' RETURN n
 ```
 
 **View entity types:**
@@ -1024,7 +1024,7 @@ WARNING - Failed to validate request: Received request before initialization was
 
 If knowledge operations fail with connection errors:
 
-1. Check container status: `docker ps | grep pai-knowledge`
+1. Check container status: `docker ps | grep madeinoz-knowledge`
 2. Start containers if needed: `bun run src/skills/tools/start.ts`
 3. Check logs for errors: `bun run src/skills/tools/logs.ts`
 
@@ -1044,20 +1044,20 @@ If you see warnings about "Output length exceeded max tokens 8192":
 
 If you see errors like "Syntax error near '-'" when searching for hyphenated terms:
 
-**Cause:** FalkorDB uses RediSearch with Lucene query syntax, which interprets hyphens as negation operators (NOT). Searching for `pai-threat-intel` is parsed as "pai AND NOT threat AND NOT intel", causing syntax errors.
+**Cause:** FalkorDB uses RediSearch with Lucene query syntax, which interprets hyphens as negation operators (NOT). Searching for `madeinoz-threat-intel` is parsed as "pai AND NOT threat AND NOT intel", causing syntax errors.
 
 **Example Error:**
 ```
-QuerySyntaxError: Syntax error near '-' in query 'group_id:pai-threat-intel'
+QuerySyntaxError: Syntax error near '-' in query 'group_id:madeinoz-threat-intel'
 ```
 
-**Solution:** The PAI Knowledge System includes automatic query sanitization that escapes special Lucene characters. The sanitization happens in two places:
+**Solution:** The Madeinoz Knowledge System includes automatic query sanitization that escapes special Lucene characters. The sanitization happens in two places:
 
 1. **Client-side** (`src/hooks/lib/lucene.ts`): For hook operations
 2. **Server-side** (`src/server/lib/lucene.ts`): For MCP server operations
 
 **What Gets Escaped:**
-- Hyphens: `pai-threat-intel` → `"pai-threat-intel"`
+- Hyphens: `madeinoz-threat-intel` → `"madeinoz-threat-intel"`
 - Other special characters: `+ - && || ! ( ) { } [ ] ^ " ~ * ? : \ /`
 
 **Verification:**
@@ -1098,7 +1098,7 @@ The sanitization is automatic and happens transparently. All CTI/OSINT operation
 
 ## Memory Sync Hook Integration
 
-The PAI Knowledge System includes a **Memory Sync Hook** that automatically bridges the PAI Memory System with the knowledge graph. This creates a seamless flow where learnings and research captured during sessions are automatically enriched with semantic search and entity extraction.
+The Madeinoz Knowledge System includes a **Memory Sync Hook** that automatically bridges the PAI Memory System with the knowledge graph. This creates a seamless flow where learnings and research captured during sessions are automatically enriched with semantic search and entity extraction.
 
 ### How It Works
 

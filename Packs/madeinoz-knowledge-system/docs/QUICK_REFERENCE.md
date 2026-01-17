@@ -1,6 +1,6 @@
 # Quick Reference Card
 
-One-page reference for the PAI Knowledge System.
+One-page reference for the Madeinoz Knowledge System.
 
 ## Natural Language Commands
 
@@ -85,16 +85,16 @@ Location: `config/.env`
 Key settings:
 ```bash
 # Required: Your API key
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-your-key-here
 
 # Model selection (cost vs quality)
-PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
+MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
 
 # Concurrency (lower = fewer rate limits)
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=10
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=10
 
 # Knowledge graph group
-PAI_KNOWLEDGE_GROUP_ID=main
+MADEINOZ_KNOWLEDGE_GROUP_ID=main
 ```
 
 ## Entity Types
@@ -301,19 +301,19 @@ bun run src/hooks/sync-memory-to-knowledge.ts --dry-run
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
-podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-backup.dump
+podman exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-backup.dump
 ```
 
 **Docker:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
-docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-backup.dump
+docker exec madeinoz-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-backup.dump
 ```
 
 **Verify:**
 ```bash
-podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
+podman exec madeinoz-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
 ```
 
 ### FalkorDB Backend
@@ -322,22 +322,22 @@ podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RET
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
-podman exec pai-knowledge-falkordb redis-cli BGSAVE
-podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
+podman exec madeinoz-knowledge-falkordb redis-cli BGSAVE
+podman cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
 ```
 
 **Docker:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
-docker exec pai-knowledge-falkordb redis-cli BGSAVE
-docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
+docker exec madeinoz-knowledge-falkordb redis-cli BGSAVE
+docker cp madeinoz-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
 ```
 
 **Verify:**
 ```bash
-podman exec pai-knowledge-falkordb redis-cli DBSIZE
-podman exec pai-knowledge-falkordb redis-cli GRAPH.LIST
+podman exec madeinoz-knowledge-falkordb redis-cli DBSIZE
+podman exec madeinoz-knowledge-falkordb redis-cli GRAPH.LIST
 ```
 
 See [usage.md#backup-and-restore](usage.md#backup-and-restore) for detailed instructions.
@@ -368,7 +368,7 @@ See [usage.md#backup-and-restore](usage.md#backup-and-restore) for detailed inst
 
 ## Version Info
 
-System: PAI Knowledge System v1.1.0
+System: Madeinoz Knowledge System v1.1.0
 Components:
 - Graphiti (MCP server)
 - Neo4j (default graph database) or FalkorDB

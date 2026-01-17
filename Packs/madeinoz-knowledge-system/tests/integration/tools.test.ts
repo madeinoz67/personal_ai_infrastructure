@@ -190,7 +190,7 @@ describe("Tool Scripts Integration", () => {
       expect(files["config/.env"]).toContain("SEMAPHORE_LIMIT=10");
     });
 
-    it("should create .env with PAI_KNOWLEDGE_ prefixes", async () => {
+    it("should create .env with MADEINOZ_KNOWLEDGE_ prefixes", async () => {
       const mockConfig = createMockConfigLoader();
 
       const config = {
@@ -207,10 +207,10 @@ describe("Tool Scripts Integration", () => {
       const files = ctx.getMockFiles();
       const envContent = files["config/.env"];
 
-      expect(envContent).toContain("PAI_KNOWLEDGE_OPENAI_API_KEY=sk-test");
-      expect(envContent).toContain("PAI_KNOWLEDGE_LLM_PROVIDER=openai");
-      expect(envContent).toContain("PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini");
-      expect(envContent).toContain("PAI_KNOWLEDGE_SEMAPHORE_LIMIT=10");
+      expect(envContent).toContain("MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-test");
+      expect(envContent).toContain("MADEINOZ_KNOWLEDGE_LLM_PROVIDER=openai");
+      expect(envContent).toContain("MADEINOZ_KNOWLEDGE_MODEL_NAME=gpt-4o-mini");
+      expect(envContent).toContain("MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=10");
     });
 
     it("should backup existing .env before overwriting", async () => {
@@ -232,18 +232,18 @@ describe("Tool Scripts Integration", () => {
       const mockManager = createMockContainerManager();
 
       // Simulate starting containers
-      ctx.mockExec(["start", "pai-knowledge-falkordb"], {
+      ctx.mockExec(["start", "madeinoz-knowledge-falkordb"], {
         success: true,
-        stdout: "pai-knowledge-falkordb",
+        stdout: "madeinoz-knowledge-falkordb",
       });
 
-      ctx.mockExec(["start", "pai-knowledge-graph-mcp"], {
+      ctx.mockExec(["start", "madeinoz-knowledge-graph-mcp"], {
         success: true,
-        stdout: "pai-knowledge-graph-mcp",
+        stdout: "madeinoz-knowledge-graph-mcp",
       });
 
-      const result1 = await mockManager.startContainer("pai-knowledge-falkordb");
-      const result2 = await mockManager.startContainer("pai-knowledge-graph-mcp");
+      const result1 = await mockManager.startContainer("madeinoz-knowledge-falkordb");
+      const result2 = await mockManager.startContainer("madeinoz-knowledge-graph-mcp");
 
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);

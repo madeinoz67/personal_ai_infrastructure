@@ -138,7 +138,7 @@ async function startNeo4j(
   // Run Neo4j container
   if (!await containerManager.containerExists(containerName)) {
     const neo4jUser = config.NEO4J_USER || "neo4j";
-    const neo4jPassword = config.NEO4J_PASSWORD || "paiknowledge";
+    const neo4jPassword = config.NEO4J_PASSWORD || "madeinozknowledge";
 
     const args = [
       `--name=${containerName}`,
@@ -271,7 +271,7 @@ async function startMCPServer(
   } else {
     // Neo4j backend
     const neo4jUser = config.NEO4J_USER || "neo4j";
-    const neo4jPassword = config.NEO4J_PASSWORD || "paiknowledge";
+    const neo4jPassword = config.NEO4J_PASSWORD || "madeinozknowledge";
 
     args.push(
       `-e=DATABASE_TYPE=neo4j`,
