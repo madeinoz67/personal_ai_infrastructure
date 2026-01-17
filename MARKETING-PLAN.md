@@ -43,7 +43,7 @@ PAI has achieved 2,623 stars in 114 days—slightly ahead of fabric's early traj
 | **Show Your Work #2** | Different problem/pack | YouTube | 300 stars |
 
 **Deliverables:**
-1. Voice Pack demo: "Your AI greets you by name" (instant personalization wow)
+1. Voice Pack demo: "Your DA greets you by name" (instant personalization wow)
 2. Blog post: "From fabric to PAI: A Natural Evolution"
 3. YouTube: "How PAI's History System Saved 4 Hours of My Context"
 4. YouTube: "Automating Research with the Research Pack"

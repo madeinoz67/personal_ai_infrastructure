@@ -20,7 +20,7 @@ Instead of copying someone else's entire AI setup, you install individual **pack
 
 ## What is a Pack?
 
-A **pack** (short for "package") is a self-contained markdown file that gives your AI everything it needs to implement a specific capability.
+A **pack** (short for "package") is a self-contained markdown file that gives your DA everything it needs to implement a specific capability.
 
 ### What's Inside a Pack
 
@@ -92,7 +92,7 @@ System packs are installed BY humans and provide infrastructure. They are NOT in
 
 ### Skill Packs
 
-**Action-oriented capabilities** your AI can invoke:
+**Action-oriented capabilities** your DA can invoke:
 
 - Visual content generation
 - Research orchestration
@@ -108,10 +108,10 @@ System packs are installed BY humans and provide infrastructure. They are NOT in
 ### Option 1: AI-Assisted (Recommended)
 
 1. Open the pack file from [Packs/](Packs/)
-2. Give the entire file to your AI
+2. Give the entire file to your DA
 3. Say: "Install this pack into my system"
 
-Your AI will:
+Your DA will:
 - Create required directories
 - Save all code files
 - Configure settings.json

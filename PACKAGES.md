@@ -23,7 +23,7 @@ Last updated: 2025-12-22
 
 ## What Are PAI Packs?
 
-PAI Packs are **self-contained functionality bundles** that contain everything your AI needs to implement a specific capability in your personal AI system.
+PAI Packs are **self-contained functionality bundles** that contain everything your DA needs to implement a specific capability in your personal AI system.
 
 ### The Core Concept
 
@@ -35,7 +35,7 @@ Traditional approach:
 ❌ All-or-nothing integration
 
 PAI Pack approach:
-"Here's a complete solution with full context for your AI to integrate"
+"Here's a complete solution with full context for your DA to integrate"
 ✅ AI reads the pack and adapts it to YOUR system
 ✅ Self-contained with all dependencies documented
 ✅ Pick only what you need
@@ -60,7 +60,7 @@ Every PAI pack contains:
 
 **Portability** - Email it, version control it, share it as one file
 
-**AI-Optimized** - Your AI can read the entire context at once without navigation
+**AI-Optimized** - Your DA can read the entire context at once without navigation
 
 **Human-Readable** - Open in any text editor, searchable, transparent
 
@@ -264,11 +264,11 @@ routing:
 
 ### Option A: AI-Assisted Installation (Recommended)
 
-Give this pack to your AI and ask:
+Give this pack to your DA and ask:
 
 > "Install the PackName pack into my system. Verify dependencies, save the tools, and test it works."
 
-Your AI will:
+Your DA will:
 1. [Step 1]
 2. [Step 2]
 3. [etc]
@@ -502,7 +502,7 @@ Claude will:
 
 **For other AI platforms:**
 
-The process is similar - give your AI the pack and ask it to install. The AI should be able to read the pack format and adapt it to your system structure.
+The process is similar - give your DA the pack and ask it to install. The DA should be able to read the pack format and adapt it to your system structure.
 
 ### Method 2: Manual Installation
 
@@ -724,7 +724,7 @@ Save your pack to `Packs/YourPack-Pack.md`
 ### 4. Test Thoroughly
 
 - Install in a fresh system using the instructions
-- Have your AI try to install it
+- Have your DA try to install it
 - Fix any issues that come up
 - Document troubleshooting steps
 
