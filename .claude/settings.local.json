@@ -9,7 +9,12 @@
       "Bash(wc:*)",
       "mcp__pai-knowledge__add_memory",
       "Bash(ls:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "mcp__madeinoz-knowledge__get_status",
+      "mcp__madeinoz-knowledge__add_memory",
+      "mcp__madeinoz-knowledge__search_memory_facts",
+      "mcp__madeinoz-knowledge__get_episodes",
+      "mcp__madeinoz-knowledge__search_nodes"
     ]
   }
 }

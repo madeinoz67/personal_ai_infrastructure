@@ -278,19 +278,18 @@ bun run src/skills/tools/status.ts
 
 ---
 
-### 2.2 MCP SSE Endpoint Access
+### 2.2 MCP Health Endpoint Access
 
-- [ ] **MCP SSE endpoint is accessible and returns session**
+- [ ] **MCP health endpoint is accessible and returns healthy status**
 
 **Verification commands:**
 ```bash
-curl -s http://localhost:8000/sse --max-time 2
+curl -s http://localhost:8000/health --max-time 2
 ```
 
-**Expected result:** SSE event with session endpoint, e.g.:
-```
-event: endpoint
-data: /messages/?session_id=<session-id>
+**Expected result:** JSON response indicating healthy status:
+```json
+{"status":"healthy","service":"graphiti-mcp"}
 ```
 
 This confirms the MCP server is running and accepting connections.
@@ -536,7 +535,7 @@ fi
 
 - [ ] **MCP server configured in ~/.claude.json**
 - [ ] **madeinoz-knowledge server entry exists**
-- [ ] **SSE transport configured**
+- [ ] **HTTP transport configured**
 
 **Verification commands:**
 ```bash
@@ -550,8 +549,8 @@ fi
 **Expected result:**
 ```json
 "madeinoz-knowledge": {
-  "type": "sse",
-  "url": "http://localhost:8000/sse"
+  "type": "http",
+  "url": "http://localhost:8000/mcp"
 }
 ```
 

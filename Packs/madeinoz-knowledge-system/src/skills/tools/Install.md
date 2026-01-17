@@ -59,8 +59,8 @@ Add to `~/.claude.json`:
 {
   "mcpServers": {
     "madeinoz-knowledge": {
-      "type": "sse",
-      "url": "http://localhost:8000/sse"
+      "type": "http",
+      "url": "http://localhost:8000/mcp"
     }
   }
 }

@@ -17,7 +17,7 @@ name: madeinoz-knowledge-system
 #   1. Copy config/.env.example to config/.env and configure your API keys
 #   2. Set MADEINOZ_KNOWLEDGE_DATABASE_TYPE=neo4j in your .env
 #   3. Run: docker compose -f src/server/docker-compose-neo4j.yml up -d
-#   4. MCP server uses SSE transport at: http://localhost:8000/sse
+#   4. MCP server uses HTTP transport at: http://localhost:8000/mcp
 #   5. Access Neo4j Browser at: http://localhost:7474
 
 networks:
@@ -100,7 +100,7 @@ services:
       neo4j:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-sf", "--max-time", "5", "-H", "Accept: text/event-stream", "http://localhost:8000/sse"]
+      test: ["CMD", "curl", "-sf", "--max-time", "5", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

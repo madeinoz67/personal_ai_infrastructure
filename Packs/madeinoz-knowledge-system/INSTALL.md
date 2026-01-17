@@ -465,10 +465,10 @@ echo ""
 echo "Waiting for server to start..."
 sleep 15
 
-# Check server health (verify SSE endpoint responds)
+# Check server health
 echo "Verifying server health..."
-if curl -s --max-time 5 http://localhost:8000/sse -H "Accept: text/event-stream" | grep -q "endpoint"; then
-    echo "✓ Server is running and responding to SSE connections!"
+if curl -sf --max-time 5 http://localhost:8000/health | grep -q "healthy"; then
+    echo "✓ Server is running and healthy!"
 else
     echo "⚠️  Server health check failed"
     echo "Check logs with: bun run src/skills/tools/logs.ts"
@@ -615,8 +615,8 @@ if 'mcpServers' not in config:
     config['mcpServers'] = {}
 
 config['mcpServers']['madeinoz-knowledge'] = {
-    'type': 'sse',
-    'url': 'http://localhost:8000/sse'
+    'type': 'http',
+    'url': 'http://localhost:8000/mcp'
 }
 
 with open(config_path, 'w') as f:
@@ -636,8 +636,8 @@ with open(config_path, 'r') as f:
     config = json.load(f)
 
 config['mcpServers']['madeinoz-knowledge'] = {
-    'type': 'sse',
-    'url': 'http://localhost:8000/sse'
+    'type': 'http',
+    'url': 'http://localhost:8000/mcp'
 }
 
 with open(config_path, 'w') as f:
@@ -655,8 +655,8 @@ else
 {
   "mcpServers": {
     "madeinoz-knowledge": {
-      "type": "sse",
-      "url": "http://localhost:8000/sse"
+      "type": "http",
+      "url": "http://localhost:8000/mcp"
     }
   }
 }
@@ -669,7 +669,7 @@ echo "Configuration:"
 echo "  File: ~/.claude.json"
 echo "  Server: madeinoz-knowledge"
 echo "  Transport: SSE (Server-Sent Events)"
-echo "  URL: http://localhost:8000/sse"
+echo "  URL: http://localhost:8000/mcp"
 echo ""
 
 # Also create .mcp.json in project for reference
@@ -678,8 +678,8 @@ cat > .mcp.json << 'EOF'
 {
   "mcpServers": {
     "madeinoz-knowledge": {
-      "type": "sse",
-      "url": "http://localhost:8000/sse"
+      "type": "http",
+      "url": "http://localhost:8000/mcp"
     }
   }
 }
@@ -736,11 +736,11 @@ else
     echo "  Start with: bun run src/skills/tools/start.ts"
 fi
 
-# Check 2: Server responding (SSE endpoint)
-if curl -s --max-time 5 http://localhost:8000/sse -H "Accept: text/event-stream" | grep -q "endpoint"; then
-    echo "✓ MCP server is responding at http://localhost:8000/sse"
+# Check 2: Server responding (health endpoint)
+if curl -sf --max-time 5 http://localhost:8000/health | grep -q "healthy"; then
+    echo "✓ MCP server is responding at http://localhost:8000/mcp"
 else
-    echo "✗ MCP server SSE endpoint check failed"
+    echo "✗ MCP server health check failed"
     echo "  Check logs: bun run src/skills/tools/logs.ts"
 fi
 
@@ -814,12 +814,12 @@ echo "🧪 Testing Installation"
 echo "======================="
 echo ""
 
-# Test 1: Check SSE endpoint is available
-echo "Test 1: Checking SSE endpoint..."
-if curl -s --max-time 5 http://localhost:8000/sse -H "Accept: text/event-stream" | grep -q "endpoint"; then
-    echo "✓ SSE endpoint is available"
+# Test 1: Check health endpoint is available
+echo "Test 1: Checking server health..."
+if curl -sf --max-time 5 http://localhost:8000/health | grep -q "healthy"; then
+    echo "✓ MCP server is healthy"
 else
-    echo "✗ SSE endpoint not responding"
+    echo "✗ Health endpoint not responding"
 fi
 
 # Test 2: Check containers are running
