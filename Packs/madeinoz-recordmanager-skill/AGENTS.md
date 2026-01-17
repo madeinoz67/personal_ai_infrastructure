@@ -72,12 +72,27 @@ Task({
 
 **Usage Example:**
 ```typescript
+// Generate Trust Validator agent with specific traits
+const { exec } = require('child_process');
+const agentPrompt = execSync(
+  `cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "legal,meticulous,cautious,thorough"`,
+  { encoding: 'utf8', shell: true }
+).stdout.toString();
+
 Task({
-  prompt: <Compliance_Guardian_Agent_Prompt>,
+  prompt: agentPrompt,
   subagent_type: "Intern",
   model: "sonnet"
 })
 ```
+
+This creates a **Trust Validator agent** with:
+- **Legal Analyst** expertise
+- **Meticulous, Cautious** personality
+- **Thorough** approach
+- **Joseph voice** (authoritative, British, ID: Zlb1dXrM7653N07WRdFW3)
+
+The agent personality matches ATO compliance requirements while maintaining the response format.
 
 ---
 
@@ -245,14 +260,16 @@ Task({
 
 Each agent integrates with specific Records Manager workflows:
 
-| Agent | Primary Workflow | Tools Used |
-|-------|-------------------|-------------|
-| Records Keeper | OrganizeWorkflow, TagWorkflow, EntityHealth | TaxonomyExpert, RecordManager.ts, EntityCreator |
-| Compliance Guardian | RetentionWorkflow, DeleteConfirmation, TrustValidation, ComplianceReport | TaxonomyExpert, TrustExpert, RetentionMonitor |
-| Archive Architect | OrganizeWorkflow (strategic), WorkflowReview | PaperlessClient, WorkflowExpert, TaxonomyExpert |
-| Deletion Auditor | **DeleteConfirmation (MANDATORY)** | Review system, audit logging |
-| Sensitivity Scanner | SensitivityScan, UploadWorkflow | SensitivityExpert, PaperlessClient |
-| Retention Monitor | RetentionWorkflow, SensitivityScan | SensitivityExpert, TaxonomyExpert |
+| Agent | AgentFactory Traits | Tools Used |
+|-------|------------------|-------------|
+| Records Keeper | research,meticulous,analytical,systematic (Drew voice) | TaxonomyExpert, RecordManager.ts, EntityCreator |
+| Compliance Guardian | legal,meticulous,cautious,thorough (Joseph voice) | TaxonomyExpert, TrustExpert, RetentionMonitor |
+| Archive Architect | technical,analytical,pragmatic,systematic (Charlotte voice) | PaperlessClient, WorkflowExpert, TaxonomyExpert |
+| Deletion Auditor | security,skeptical,cautious,adversarial (George voice) | Review system, audit logging |
+| Sensitivity Scanner | security,cautious,systematic,thorough (James voice) | SensitivityExpert, PaperlessClient |
+| Retention Monitor | business,meticulous,cautious,systematic (Joseph voice) | SensitivityExpert, TaxonomyExpert |
+
+All agents use dynamic trait composition via AgentFactory, giving them specific expertise, personality, approach, and voice.
 
 ### Agent Collaboration
 
@@ -440,7 +457,97 @@ bun run $PAI_DIR/tools/RecordManager.ts retention --domain corporate
 # Test Deletion Auditor
 bun run $PAI_DIR/tools/RecordManager.ts delete --query "old documents"
 # Should trigger Delete Auditor - REFUSES to delete without approval
+### Scenario 3: Archive Planning
+
 ```
+User: "Design an archive strategy for my corporate records"
+
+System Response:
+Spawns Archive Architect agent using AgentFactory:
+```typescript
+const { execSync } = require('child_process');
+const agentPrompt = execSync(
+  `cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "technical,analytical,pragmatic,synthesizing"`,
+  { encoding: 'utf8', shell: true }
+).stdout.toString();
+
+Task({
+  prompt: agentPrompt,
+  subagent_type: "Intern",
+  model: "sonnet"
+})
+```
+
+Agent analyzes document collection structure
+Designs tiered storage strategy
+Optimizes for search and retrieval
+Provides migration plan with timelines
+
+Compliance Guardian reviews for retention compliance
+Records Keeper optimizes taxonomies
+Complete archival blueprint delivered
+```
+
+---
+
+## Creating Specialized Agents with AgentFactory
+
+All Records Manager agents are created using the Agents skill's AgentFactory tool with specific trait combinations:
+
+### Agent Creation Commands
+
+```bash
+# Trust Validator Agent (Legal + Meticulous + Cautious + Thorough)
+cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "legal,meticulous,cautious,thorough"
+# Output: Prompt with Joseph voice (authoritative, British)
+
+# Workflow Optimizer Agent (Technical + Analytical + Pragmatic + Systematic)
+cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "technical,analytical,pragmatic,systematic"
+# Output: Prompt with Daniel voice (precise, intellectual)
+
+# Sensitivity Scanner Agent (Security + Cautious + Systematic + Thorough)
+cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "security,cautious,systematic,thorough"
+# Output: Prompt with James voice (security-focused)
+
+# Retention Monitor Agent (Business + Meticulous + Cautious + Systematic)
+cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "business,meticulous,cautious,systematic"
+# Output: Prompt with Joseph voice (authoritative, British)
+
+# Entity Health Check Agent (Data + Analytical + Thorough + Systematic)
+cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "data,analytical,thorough,systematic"
+# Output: Prompt with Drew voice (balanced professional)
+
+# Compliance Reporter Agent (Legal + Meticulous + Thorough + Systematic)
+cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "legal,meticulous,thorough,systematic"
+# Output: Prompt with Alice voice (precise, methodical)
+```
+
+### Using the Generated Agents
+
+Each command outputs a complete agent prompt. Use it with the Task tool:
+
+```typescript
+// Example: Using the Trust Validator agent
+const { execSync } = require('child_process');
+const trustValidatorPrompt = execSync(
+  `cd ~/.claude/skills/Agents && bun run Tools/AgentFactory.ts --traits "legal,meticulous,cautious,thorough"`,
+  { encoding: 'uttf8', shell: true }
+).stdout.toString();
+
+Task({
+  prompt: trustValidatorPrompt,
+  subagent_type: "Intern",
+  model: "sonnet"
+});
+```
+
+This creates a specialized agent with:
+- **Expertise**: Legal Analyst
+- **Personality**: Meticulous, Cautious, Thorough
+- **Approach**: Thorough
+- **Voice**: Joseph (authoritative, British, ID: Zlb1dXrM7653N07WRdFW3)
+
+The agent brings domain expertise and personality to trust document validation with ATO-compliant retention tracking and pre-EOFY compliance monitoring.
 
 ---
 
