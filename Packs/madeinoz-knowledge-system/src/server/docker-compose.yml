@@ -1,5 +1,7 @@
-# Docker Compose configuration for PAI Knowledge System
+# Docker Compose configuration for Madeinoz Knowledge System
 # Uses a shared public network for both services
+
+name: madeinoz-knowledge-system
 #
 # Services:
 #   - falkordb: Graph database backend
@@ -12,7 +14,7 @@
 #   4. Access FalkorDB web UI at: http://localhost:3000
 
 networks:
-  pai-knowledge-net:
+  madeinoz-knowledge-net:
     driver: bridge
 
 volumes:
@@ -24,10 +26,10 @@ services:
   # On public network, web UI exposed to host
   falkordb:
     image: falkordb/falkordb:latest
-    container_name: pai-knowledge-falkordb
+    container_name: madeinoz-knowledge-falkordb
     restart: unless-stopped
     networks:
-      - pai-knowledge-net
+      - madeinoz-knowledge-net
     volumes:
       - falkordb-data:/data
     environment:
@@ -43,10 +45,10 @@ services:
   # Exposed to host on ports 8000 (MCP) and 3000 (FalkorDB UI)
   graphiti-mcp:
     image: falkordb/graphiti-knowledge-graph-mcp:latest
-    container_name: pai-knowledge-graph-mcp
+    container_name: madeinoz-knowledge-graph-mcp
     restart: unless-stopped
     networks:
-      - pai-knowledge-net
+      - madeinoz-knowledge-net
     ports:
       - "8000:8000"  # MCP HTTP endpoint
       - "3000:3000"  # FalkorDB web UI proxy

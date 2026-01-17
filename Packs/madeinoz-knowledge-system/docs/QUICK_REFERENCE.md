@@ -112,7 +112,7 @@ The system automatically extracts:
 - **Event** - Occurrences
 - **Document** - Files, articles
 
-**History-Derived Types (from PAI History sync):**
+**Memory-Derived Types (from PAI Memory sync):**
 - **Learning** - Knowledge from learning sessions
 - **Research** - Findings from research
 - **Decision** - Architectural/strategic choices
@@ -135,7 +135,7 @@ Use these types to filter searches: "Find my procedures about X"
        ↓
 6. Embedding model creates vectors (text-embedding-3-small)
        ↓
-7. Stored in FalkorDB graph
+7. Stored in Neo4j graph (default) or FalkorDB
 ```
 
 ## LLM Roles
@@ -230,7 +230,8 @@ Per operation:
 ## URLs
 
 - MCP Server: http://localhost:8000/sse
-- FalkorDB UI: http://localhost:3000
+- Neo4j Browser: http://localhost:7474 (default backend)
+- FalkorDB UI: http://localhost:3000 (if using FalkorDB)
 - OpenAI Usage: https://platform.openai.com/usage
 
 ## File Locations
@@ -275,28 +276,49 @@ docker --version
 
 Commands are the same, the system auto-detects which to use.
 
-## History Integration
+## Memory Integration
 
-If you have PAI History System installed:
+PAI Memory System syncs automatically:
 
 **Auto-sync on session start:**
-Learnings, research, and decisions automatically sync to knowledge graph.
+Learnings and research automatically sync from `~/.claude/MEMORY/` to knowledge graph.
 
 **Manual sync:**
 ```bash
-bun run src/hooks/sync-history-to-knowledge.ts
+bun run src/hooks/sync-memory-to-knowledge.ts
 ```
 
 **Check what will sync:**
 ```bash
-bun run src/hooks/sync-history-to-knowledge.ts --dry-run
+bun run src/hooks/sync-memory-to-knowledge.ts --dry-run
 ```
 
 ## Backup and Restore
 
-### Podman
+### Neo4j (Default Backend)
 
-**Quick Backup:**
+**Podman:**
+```bash
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
+mkdir -p backups
+podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-backup.dump
+```
+
+**Docker:**
+```bash
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
+mkdir -p backups
+docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-backup.dump
+```
+
+**Verify:**
+```bash
+podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
+```
+
+### FalkorDB Backend
+
+**Podman:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
@@ -304,23 +326,7 @@ podman exec pai-knowledge-falkordb redis-cli BGSAVE
 podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
 ```
 
-**Full Volume Backup:**
-```bash
-bun run stop
-podman volume export pai-knowledge-data > backups/volume-backup.tar
-bun run start
-```
-
-**Restore:**
-```bash
-bun run stop
-podman volume import pai-knowledge-data < backups/volume-backup.tar
-bun run start
-```
-
-### Docker
-
-**Quick Backup:**
+**Docker:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
@@ -328,31 +334,10 @@ docker exec pai-knowledge-falkordb redis-cli BGSAVE
 docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
 ```
 
-**Full Volume Backup:**
+**Verify:**
 ```bash
-bun run stop
-docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
-    tar cvf /backup/volume-backup.tar -C /data .
-bun run start
-```
-
-**Restore:**
-```bash
-bun run stop
-docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
-    sh -c "cd /data && tar xvf /backup/volume-backup.tar"
-bun run start
-```
-
-### Verify Database
-```bash
-# Podman
 podman exec pai-knowledge-falkordb redis-cli DBSIZE
 podman exec pai-knowledge-falkordb redis-cli GRAPH.LIST
-
-# Docker
-docker exec pai-knowledge-falkordb redis-cli DBSIZE
-docker exec pai-knowledge-falkordb redis-cli GRAPH.LIST
 ```
 
 See [usage.md#backup-and-restore](usage.md#backup-and-restore) for detailed instructions.
@@ -366,7 +351,7 @@ See [usage.md#backup-and-restore](usage.md#backup-and-restore) for detailed inst
 → Check config/.env has correct key
 
 **"Port already in use"**
-→ Stop other service using port 8000/6379
+→ Stop other service using port 8000/7687 (Neo4j) or 6379 (FalkorDB)
 
 **"No entities extracted"**
 → Add more detail to your capture
@@ -383,10 +368,10 @@ See [usage.md#backup-and-restore](usage.md#backup-and-restore) for detailed inst
 
 ## Version Info
 
-System: PAI Knowledge System v1.0.0
+System: PAI Knowledge System v1.1.0
 Components:
 - Graphiti (MCP server)
-- FalkorDB (graph database)
+- Neo4j (default graph database) or FalkorDB
 - OpenAI (LLM and embeddings)
 
 ---

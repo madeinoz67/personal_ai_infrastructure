@@ -56,15 +56,15 @@ export class ContainerManager {
   private runtimeCommand: string;
 
   // Default container names - FalkorDB backend
-  static readonly FALKORDB_CONTAINER = "pai-knowledge-falkordb";
-  static readonly MCP_CONTAINER = "pai-knowledge-graph-mcp";
-  static readonly NETWORK_NAME = "pai-knowledge-net";
-  static readonly VOLUME_NAME = "pai-knowledge-falkordb-data";
+  static readonly FALKORDB_CONTAINER = "madeinoz-knowledge-falkordb";
+  static readonly MCP_CONTAINER = "madeinoz-knowledge-graph-mcp";
+  static readonly NETWORK_NAME = "madeinoz-knowledge-net";
+  static readonly VOLUME_NAME = "madeinoz-knowledge-falkordb-data";
 
   // Neo4j backend container names
-  static readonly NEO4J_CONTAINER = "pai-knowledge-neo4j";
-  static readonly NEO4J_VOLUME_DATA = "pai-knowledge-neo4j-data";
-  static readonly NEO4J_VOLUME_LOGS = "pai-knowledge-neo4j-logs";
+  static readonly NEO4J_CONTAINER = "madeinoz-knowledge-neo4j";
+  static readonly NEO4J_VOLUME_DATA = "madeinoz-knowledge-neo4j-data";
+  static readonly NEO4J_VOLUME_LOGS = "madeinoz-knowledge-neo4j-logs";
 
   // Container images per backend
   static readonly IMAGES = {

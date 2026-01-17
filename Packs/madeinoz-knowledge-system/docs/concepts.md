@@ -69,7 +69,7 @@ Entities are the "things" in your knowledge. The system automatically extracts t
 |------|-------------|----------|
 | **Person** | Individual people | "Alice", "Bob", "Dr. Smith" |
 | **Organization** | Companies, teams, groups | "OpenAI", "My Dev Team", "PAI Project" |
-| **Location** | Places, servers, repos | "production server", "GitHub", "office" |
+| **Location** | Places, servers, repos | "production server", "GitHub", "Neo4j instance" |
 | **Concept** | Ideas, technologies | "microservices", "AI", "knowledge graph" |
 | **Procedure** | How-to guides, processes | "deployment process", "backup procedure" |
 | **Preference** | Your choices, opinions | "prefer Markdown", "use 2-space tabs" |
@@ -77,9 +77,9 @@ Entities are the "things" in your knowledge. The system automatically extracts t
 | **Event** | Time-bound occurrences | "architecture meeting", "bug discovered" |
 | **Document** | Files, articles, books | "API documentation", "user manual" |
 
-**History-Derived Entity Types:**
+**Memory-Derived Entity Types:**
 
-When integrated with the PAI History System, additional entity types are synced:
+When integrated with the PAI Memory System, additional entity types are synced:
 
 | Type | Description | Examples |
 |------|-------------|----------|
@@ -94,14 +94,14 @@ These types allow you to filter searches specifically for learnings, research, e
 
 When you say:
 ```
-"Remember that Graphiti uses OpenAI for entity extraction and FalkorDB for storage."
+"Remember that Graphiti uses OpenAI for entity extraction and Neo4j for storage."
 ```
 
 The system extracts:
 - Graphiti (Tool/Concept)
 - OpenAI (Organization)
 - entity extraction (Procedure)
-- FalkorDB (Tool/Concept)
+- Neo4j (Tool/Concept)
 - storage (Concept)
 
 ### 3. Facts (Relationships)
@@ -117,15 +117,15 @@ Facts connect entities and give your knowledge structure. They're also called "r
 | **Temporal** | X before Y | "Bug discovered" → before → "Bug fixed" |
 | **Comparison** | X vs Y | "Podman" → alternative to → "Docker" |
 | **Possession** | X has Y | "VS Code" → has setting → "2-space tabs" |
-| **Location** | X in Y | "FalkorDB" → runs in → "container" |
+| **Location** | X in Y | "Neo4j" → runs in → "container" |
 | **Purpose** | X for Y | "entity extraction" → used for → "knowledge graph" |
 
 **Example Facts:**
 ```
 Podman → [is alternative to] → Docker
 Podman → [property: daemonless] → (no daemon required)
-Graphiti → [uses] → FalkorDB
-FalkorDB → [is backend for] → Graphiti
+Graphiti → [uses] → Neo4j
+Neo4j → [is backend for] → Graphiti
 ```
 
 ### 4. Groups
@@ -187,7 +187,7 @@ You can search for "container tools" and find results about "Docker" and "Podman
                     ↓
 7. Embeddings created for semantic search
                     ↓
-8. Everything stored in FalkorDB graph database
+8. Everything stored in Neo4j graph database
 ```
 
 ### Searching Knowledge
@@ -205,7 +205,7 @@ You can search for "container tools" and find results about "Docker" and "Podman
 5. Top matches retrieved:
    - Podman (similarity: 0.89)
    - Docker (similarity: 0.87)
-   - FalkorDB (similarity: 0.72)
+   - Neo4j (similarity: 0.72)
                     ↓
 6. Related facts and episodes retrieved
                     ↓
@@ -221,7 +221,7 @@ You can search for "container tools" and find results about "Docker" and "Podman
                     ↓
 3. Graph traversal starts at both entities
                     ↓
-4. FalkorDB finds paths between them:
+4. Neo4j finds paths between them:
    - Direct: Podman → [alternative to] → Docker
    - Indirect: Podman → [uses] → containers ← [uses] ← Docker
                     ↓
@@ -265,7 +265,7 @@ You can search for "container tools" and find results about "Docker" and "Podman
              │
              ▼
 ┌─────────────────────────────────────┐
-│   FalkorDB (Graph Database)         │
+│   Neo4j (Graph Database)            │
 │   - Stores entities as nodes         │
 │   - Stores relationships as edges    │
 │   - Handles vector search            │
@@ -361,12 +361,12 @@ Vector: [0.023, 0.451, 0.122, -0.089, 0.334, ... 1536 dimensions]
 Query: "Docker alternatives"     →  Vector A: [0.021, 0.448, ...]
 Entity: "Podman"                 →  Vector B: [0.025, 0.452, ...]
 Entity: "Kubernetes"             →  Vector C: [0.189, 0.201, ...]
-Entity: "PostgreSQL"             →  Vector D: [0.891, 0.023, ...]
+Entity: "Neo4j"                  →  Vector D: [0.891, 0.023, ...]
 
 Similarity scores:
   Podman:     0.94  ← Very similar (good match!)
   Kubernetes: 0.72  ← Somewhat related
-  PostgreSQL: 0.12  ← Not related
+  Neo4j:      0.12  ← Not related (different domain)
 ```
 
 **What the embedding model does:**
@@ -386,7 +386,7 @@ Your Query: "What container tools do I know about?"
                               ↓
               Query Vector: [0.034, 0.445, ...]
                               ↓
-              Vector Similarity Search in FalkorDB
+              Vector Similarity Search in Neo4j
                               ↓
               Top Matches: Podman, Docker, containerd
 ```
@@ -599,7 +599,7 @@ Podman → [uses] → containers ← [used by] ← Kubernetes
 
 **Multi-path:**
 ```
-Path 1: Graphiti → [uses] → FalkorDB → [type] → graph database
+Path 1: Graphiti → [uses] → Neo4j → [type] → graph database
 Path 2: Graphiti → [requires] → OpenAI API → [provides] → LLM
 ```
 

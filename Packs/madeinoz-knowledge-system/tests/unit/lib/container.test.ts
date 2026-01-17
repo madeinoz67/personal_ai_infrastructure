@@ -342,10 +342,10 @@ describe("ContainerManager", () => {
     it("should have correct container names", () => {
       // These are defined in the actual ContainerManager class
       // We're just documenting the expected values here
-      const FALKORDB_CONTAINER = "pai-knowledge-falkordb";
-      const MCP_CONTAINER = "pai-knowledge-graph-mcp";
-      const NETWORK_NAME = "pai-knowledge-net";
-      const VOLUME_NAME = "pai-knowledge-falkordb-data";
+      const FALKORDB_CONTAINER = "madeinoz-knowledge-falkordb";
+      const MCP_CONTAINER = "madeinoz-knowledge-graph-mcp";
+      const NETWORK_NAME = "madeinoz-knowledge-net";
+      const VOLUME_NAME = "madeinoz-knowledge-falkordb-data";
 
       expect(FALKORDB_CONTAINER).toMatch(/falkordb/i);
       expect(MCP_CONTAINER).toMatch(/mcp|graph/i);

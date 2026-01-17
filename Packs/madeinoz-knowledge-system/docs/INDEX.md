@@ -81,7 +81,7 @@ For understanding how everything works:
 - [Installing Podman](installation.md#step-2-check-if-you-have-podman)
 - [Configuring the System](installation.md#step-5-configure-your-api-key)
 - [Starting the Server](installation.md#step-6-start-the-knowledge-system)
-- [History Sync Setup](installation.md#step-9-install-history-sync-hook-optional-but-recommended)
+- [Memory Sync Setup](installation.md#step-9-install-memory-sync-hook-optional-but-recommended)
 
 ### Basic Usage
 - [Capturing Knowledge](usage.md#capturing-knowledge)
@@ -94,7 +94,7 @@ For understanding how everything works:
 - [Bulk Import](usage.md#bulk-import)
 - [Backup and Restore](usage.md#backup-and-restore)
 - [Multiple Knowledge Graphs](usage.md#working-with-multiple-knowledge-graphs)
-- [History System Integration](usage.md#integration-with-other-pai-systems)
+- [Memory System Integration](usage.md#integration-with-other-pai-systems)
 - [Custom Models](installation.md#using-a-different-ai-model)
 
 ### Understanding the System
@@ -132,44 +132,38 @@ bun run src/server/stop.ts
 bun run src/server/logs.ts
 ```
 
-**History Sync:**
+**Memory Sync:**
 ```bash
 # Manual sync
-bun run src/hooks/sync-history-to-knowledge.ts
+bun run src/hooks/sync-memory-to-knowledge.ts
 
 # Dry run (see what would sync)
-bun run src/hooks/sync-history-to-knowledge.ts --dry-run
+bun run src/hooks/sync-memory-to-knowledge.ts --dry-run
 
 # Verbose output
-bun run src/hooks/sync-history-to-knowledge.ts --verbose
+bun run src/hooks/sync-memory-to-knowledge.ts --verbose
 ```
 
-**Backup and Restore (Podman):**
+**Backup and Restore - Neo4j (Default):**
 ```bash
-# Quick backup
+# Podman
+podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backups/knowledge-backup.dump
+podman volume export pai-knowledge-neo4j-data > backups/volume-backup.tar
+
+# Docker
+docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backups/knowledge-backup.dump
+```
+
+**Backup and Restore - FalkorDB Backend:**
+```bash
+# Podman
 podman exec pai-knowledge-falkordb redis-cli BGSAVE
 podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
-
-# Full volume backup
 podman volume export pai-knowledge-data > backups/volume-backup.tar
 
-# Restore from volume
-podman volume import pai-knowledge-data < backups/volume-backup.tar
-```
-
-**Backup and Restore (Docker):**
-```bash
-# Quick backup
+# Docker
 docker exec pai-knowledge-falkordb redis-cli BGSAVE
 docker cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-backup.rdb
-
-# Full volume backup
-docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
-    tar cvf /backup/volume-backup.tar -C /data .
-
-# Restore from volume
-docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
-    sh -c "cd /data && tar xvf /backup/volume-backup.tar"
 ```
 
 ### Natural Language Commands
@@ -216,7 +210,8 @@ docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
 - Tools: `src/skills/tools/*.md`
 
 **Hooks:**
-- Sync hook: `src/hooks/sync-history-to-knowledge.ts`
+- Sync hook: `src/hooks/sync-memory-to-knowledge.ts`
+- Realtime sync: `src/hooks/sync-learning-realtime.ts`
 - Hook libraries: `src/hooks/lib/*.ts`
 
 ## Related Documentation
@@ -228,6 +223,7 @@ docker run --rm -v pai-knowledge-data:/data -v $(pwd)/backups:/backup alpine \
 
 **External Resources:**
 - [Graphiti Documentation](https://help.getzep.com/graphiti)
+- [Neo4j Documentation](https://neo4j.com/docs/)
 - [FalkorDB Documentation](https://docs.falkordb.com/)
 - [OpenAI API Documentation](https://platform.openai.com/docs)
 

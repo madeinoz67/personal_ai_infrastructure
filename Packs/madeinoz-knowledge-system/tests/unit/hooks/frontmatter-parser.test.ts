@@ -53,24 +53,35 @@ Research findings here.
       expect(result.frontmatter.agent_completion).toBe('API Investigation Complete');
     });
 
-    it('should throw on missing frontmatter delimiters', () => {
+    it('should return defaults on missing frontmatter delimiters', () => {
       const content = `No frontmatter here
 
 Just some content.
 `;
 
-      expect(() => parseFrontmatter(content)).toThrow('Invalid frontmatter format');
+      const result = parseFrontmatter(content);
+
+      // Memory System v7.0: graceful degradation with defaults
+      expect(result.hasFrontmatter).toBe(false);
+      expect(result.frontmatter.capture_type).toBe('LEARNING');
+      expect(result.frontmatter.auto_captured).toBe(true);
+      expect(result.body).toContain('No frontmatter here');
     });
 
-    it('should throw on missing required fields', () => {
+    it('should fill defaults for missing optional fields', () => {
       const content = `---
 capture_type: LEARNING
 ---
 
-Missing required fields.
+Missing optional fields.
 `;
 
-      expect(() => parseFrontmatter(content)).toThrow('Missing required frontmatter field');
+      const result = parseFrontmatter(content);
+
+      // Memory System v7.0: timestamp is auto-filled if missing
+      expect(result.hasFrontmatter).toBe(true);
+      expect(result.frontmatter.capture_type).toBe('LEARNING');
+      expect(result.frontmatter.timestamp).toBeDefined();
     });
 
     it('should handle colons in values', () => {

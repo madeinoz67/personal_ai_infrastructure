@@ -36,9 +36,9 @@ interface SSESession {
 }
 
 const DEFAULT_CONFIG: KnowledgeClientConfig = {
-  baseURL: process.env.PAI_KNOWLEDGE_MCP_URL || 'http://localhost:8000',
-  timeout: parseInt(process.env.PAI_KNOWLEDGE_TIMEOUT || '15000', 10),
-  retries: parseInt(process.env.PAI_KNOWLEDGE_RETRIES || '3', 10)
+  baseURL: process.env.MADEINOZ_KNOWLEDGE_MCP_URL || 'http://localhost:8000',
+  timeout: parseInt(process.env.MADEINOZ_KNOWLEDGE_TIMEOUT || '15000', 10),
+  retries: parseInt(process.env.MADEINOZ_KNOWLEDGE_RETRIES || '3', 10)
 };
 
 /**
@@ -143,7 +143,7 @@ async function initializeSession(
       protocolVersion: '2024-11-05',
       capabilities: {},
       clientInfo: {
-        name: 'pai-knowledge-hook',
+        name: 'madeinoz-knowledge-hook',
         version: '1.0.0'
       }
     }

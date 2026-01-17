@@ -66,11 +66,11 @@
  * ## Database Backend Detection
  *
  * The database backend is detected from environment variables:
- * - PAI_KNOWLEDGE_DATABASE_TYPE=neo4j → Neo4j backend (no sanitization)
- * - PAI_KNOWLEDGE_DATABASE_TYPE=falkordb → FalkorDB backend (sanitization applied)
+ * - MADEINOZ_KNOWLEDGE_DATABASE_TYPE=neo4j → Neo4j backend (no sanitization)
+ * - MADEINOZ_KNOWLEDGE_DATABASE_TYPE=falkordb → FalkorDB backend (sanitization applied)
  * - DATABASE_TYPE=neo4j → Neo4j backend (no sanitization)
  * - DATABASE_TYPE=falkordb → FalkorDB backend (sanitization applied)
- * - Not set or any other value → FalkorDB backend (default, sanitization applied)
+ * - Not set or any other value → Neo4j backend (default, no sanitization applied)
  *
  * @module lucene
  */
@@ -84,22 +84,22 @@ export type DatabaseBackend = 'falkordb' | 'neo4j';
  * Detect the database backend from environment variables
  *
  * Checks for:
- * - PAI_KNOWLEDGE_DATABASE_TYPE (pack-specific)
+ * - MADEINOZ_KNOWLEDGE_DATABASE_TYPE (pack-specific)
  * - DATABASE_TYPE (container environment)
  *
- * @returns The detected database backend, defaults to 'falkordb'
+ * @returns The detected database backend, defaults to 'neo4j'
  */
 export function getDatabaseBackend(): DatabaseBackend {
   const dbType = (
-    process.env.PAI_KNOWLEDGE_DATABASE_TYPE ||
+    process.env.MADEINOZ_KNOWLEDGE_DATABASE_TYPE ||
     process.env.DATABASE_TYPE ||
-    'falkordb'
+    'neo4j'
   ).toLowerCase();
 
-  if (dbType === 'neo4j') {
-    return 'neo4j';
+  if (dbType === 'falkordb') {
+    return 'falkordb';
   }
-  return 'falkordb';
+  return 'neo4j';
 }
 
 /**

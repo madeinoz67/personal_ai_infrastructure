@@ -1,21 +1,27 @@
 #!/usr/bin/env bun
 /**
- * Sync History to Knowledge Hook
+ * Sync Memory to Knowledge Hook
  *
- * Syncs high-value history files (learnings, research, decisions) to the
+ * Syncs high-value memory files (learnings, research) to the
  * knowledge graph. Designed to run on SessionStart to catch up from
  * previous sessions.
  *
+ * Updated for PAI Memory System v7.0 (2026-01-12):
+ * - Reads from ~/.claude/MEMORY/ instead of ~/.config/pai/history/
+ * - Handles LEARNING/ALGORITHM/, LEARNING/SYSTEM/, and RESEARCH/
+ * - Supports new frontmatter schema (rating, source, tags)
+ * - Handles files without frontmatter
+ *
  * Features:
- * - Parses YAML frontmatter for metadata
- * - Maps history format to knowledge API
+ * - Parses YAML frontmatter for metadata (optional)
+ * - Maps memory format to knowledge API
  * - Tracks synced files to avoid duplicates
  * - Graceful degradation when MCP is unavailable
  * - Non-blocking execution (fire and forget)
  *
  * Usage:
  * - As SessionStart hook: Syncs recent files automatically
- * - Manual: bun run sync-history-to-knowledge.ts [--all] [--dry-run]
+ * - Manual: bun run sync-memory-to-knowledge.ts [--all] [--dry-run]
  */
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
@@ -40,11 +46,24 @@ function hashContent(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
-// Categories worth syncing to knowledge (high-value content)
-const SYNC_CATEGORIES = ['learnings', 'research', 'decisions'];
+/**
+ * Memory System source directories to sync
+ * Each has a path relative to MEMORY/ and a default capture type
+ */
+const SYNC_SOURCES = [
+  { path: 'LEARNING/ALGORITHM', type: 'LEARNING', description: 'Task execution learnings' },
+  { path: 'LEARNING/SYSTEM', type: 'LEARNING', description: 'PAI/tooling learnings' },
+  { path: 'RESEARCH', type: 'RESEARCH', description: 'Agent research outputs' }
+];
 
-// Skip sessions by default (mostly tool/file lists, low entity value)
-const SKIP_CATEGORIES = ['sessions'];
+// Skip these directories (low entity value or specialized formats)
+const SKIP_PATTERNS = [
+  'LEARNING/SIGNALS',    // JSONL format, not markdown
+  'LEARNING/SYNTHESIS',  // Aggregated reports, separate sync if needed
+  'WORK',                // Work tracking, different structure
+  'SECURITY',            // Security events, JSONL format
+  'STATE'                // Runtime state, not knowledge
+];
 
 interface SyncOptions {
   dryRun: boolean;
@@ -109,26 +128,44 @@ async function waitForMcpServer(verbose: boolean): Promise<boolean> {
 }
 
 /**
- * Find all markdown files in a category directory
+ * Get the Memory System directory
  */
-function findMarkdownFiles(categoryDir: string): string[] {
-  if (!existsSync(categoryDir)) {
+function getMemoryDir(): string {
+  return join(homedir(), '.claude', 'MEMORY');
+}
+
+/**
+ * Find all markdown files in a source directory
+ * Handles both flat structure and YYYY-MM subdirectories
+ */
+function findMarkdownFiles(sourceDir: string): string[] {
+  if (!existsSync(sourceDir)) {
     return [];
   }
 
   const files: string[] = [];
 
-  // Get year-month subdirectories
-  const subdirs = readdirSync(categoryDir).filter(d => {
-    const fullPath = join(categoryDir, d);
+  // Check for YYYY-MM subdirectories first
+  const subdirs = readdirSync(sourceDir).filter(d => {
+    const fullPath = join(sourceDir, d);
     return statSync(fullPath).isDirectory() && /^\d{4}-\d{2}$/.test(d);
   });
 
-  for (const subdir of subdirs) {
-    const subdirPath = join(categoryDir, subdir);
-    const mdFiles = readdirSync(subdirPath)
+  if (subdirs.length > 0) {
+    // Has year-month subdirectories
+    for (const subdir of subdirs) {
+      const subdirPath = join(sourceDir, subdir);
+      const mdFiles = readdirSync(subdirPath)
+        .filter(f => f.endsWith('.md'))
+        .map(f => join(subdirPath, f));
+
+      files.push(...mdFiles);
+    }
+  } else {
+    // Flat directory structure
+    const mdFiles = readdirSync(sourceDir)
       .filter(f => f.endsWith('.md'))
-      .map(f => join(subdirPath, f));
+      .map(f => join(sourceDir, f));
 
     files.push(...mdFiles);
   }
@@ -144,27 +181,40 @@ function findMarkdownFiles(categoryDir: string): string[] {
 }
 
 /**
- * Map parsed history to knowledge API parameters
+ * Map parsed memory file to knowledge API parameters
  */
 function mapToKnowledgeParams(
   parsed: ReturnType<typeof parseMarkdownFile>,
-  filepath: string
+  filepath: string,
+  sourceType: string
 ): AddEpisodeParams {
   const { frontmatter, title, body } = parsed;
   const cleanedBody = cleanBody(body);
+  const filename = basename(filepath);
+
+  // Build source description from available metadata
+  const sourceDescParts: (string | null)[] = [];
+
+  if (frontmatter.source) {
+    sourceDescParts.push(`Source: ${frontmatter.source}`);
+  }
+  if (frontmatter.session_id) {
+    sourceDescParts.push(`Session: ${frontmatter.session_id.slice(0, 8)}`);
+  }
+  if (frontmatter.rating) {
+    sourceDescParts.push(`Rating: ${frontmatter.rating}/10`);
+  }
+  sourceDescParts.push(`File: ${filename}`);
+
+  const captureType = frontmatter.capture_type || sourceType;
 
   return {
-    name: `${frontmatter.capture_type}: ${title}`.slice(0, 200),
+    name: `${captureType}: ${title}`.slice(0, 200),
     episode_body: cleanedBody.slice(0, 5000),
     source: 'text',
-    source_description: [
-      `Executor: ${frontmatter.executor}`,
-      `Session: ${frontmatter.session_id.slice(0, 8)}`,
-      `File: ${basename(filepath)}`,
-      frontmatter.agent_completion ? `Agent: ${frontmatter.agent_completion}` : null
-    ].filter(Boolean).join(' | '),
+    source_description: sourceDescParts.filter(Boolean).join(' | '),
     reference_timestamp: frontmatter.timestamp,
-    group_id: frontmatter.capture_type.toLowerCase()
+    group_id: captureType.toLowerCase()
   };
 }
 
@@ -186,12 +236,14 @@ function isRetryableError(error: string | undefined): boolean {
  */
 async function syncFile(
   filepath: string,
+  sourceType: string,
   options: SyncOptions
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const content = readFileSync(filepath, 'utf-8');
-    const parsed = parseMarkdownFile(content);
-    const params = mapToKnowledgeParams(parsed, filepath);
+    const filename = basename(filepath);
+    const parsed = parseMarkdownFile(content, filename);
+    const params = mapToKnowledgeParams(parsed, filepath, sourceType);
 
     if (options.verbose) {
       console.error(`[Sync] Processing: ${params.name}`);
@@ -242,15 +294,20 @@ async function syncFile(
 /**
  * Main sync function
  */
-async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): Promise<{
+async function syncMemoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): Promise<{
   synced: number;
   failed: number;
   skipped: number;
 }> {
-  const paiDir = process.env.PAI_DIR || join(homedir(), '.config', 'pai');
-  const historyDir = join(paiDir, 'history');
+  const memoryDir = getMemoryDir();
 
   const stats = { synced: 0, failed: 0, skipped: 0 };
+
+  // Check if memory directory exists
+  if (!existsSync(memoryDir)) {
+    console.error(`[Sync] Memory directory not found: ${memoryDir}`);
+    return stats;
+  }
 
   // Check if MCP is healthy with retry logic
   if (!options.dryRun) {
@@ -271,12 +328,16 @@ async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): P
     console.error(`[Sync] Previously synced: ${stateStats.totalSynced} files, ${syncedHashes.size} unique hashes`);
   }
 
-  // Collect files to sync
-  const filesToSync: string[] = [];
+  // Collect files to sync from all sources
+  const filesToSync: { filepath: string; sourceType: string }[] = [];
 
-  for (const category of SYNC_CATEGORIES) {
-    const categoryDir = join(historyDir, category);
-    const files = findMarkdownFiles(categoryDir);
+  for (const source of SYNC_SOURCES) {
+    const sourceDir = join(memoryDir, source.path);
+    const files = findMarkdownFiles(sourceDir);
+
+    if (options.verbose && files.length > 0) {
+      console.error(`[Sync] Found ${files.length} files in ${source.path}`);
+    }
 
     for (const file of files) {
       if (!options.syncAll && syncedPaths.has(file)) {
@@ -284,7 +345,7 @@ async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): P
         continue;
       }
 
-      filesToSync.push(file);
+      filesToSync.push({ filepath: file, sourceType: source.type });
 
       if (filesToSync.length >= options.maxFiles) {
         break;
@@ -306,14 +367,18 @@ async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): P
   }
 
   // Sync files
-  for (const filepath of filesToSync) {
+  for (const { filepath, sourceType } of filesToSync) {
     // Pre-check content hash for deduplication
     let contentHash: string | undefined;
+    let captureType = sourceType;
+
     try {
       const content = readFileSync(filepath, 'utf-8');
-      const parsed = parseMarkdownFile(content);
+      const filename = basename(filepath);
+      const parsed = parseMarkdownFile(content, filename);
       const cleanedBody = cleanBody(parsed.body);
       contentHash = hashContent(cleanedBody);
+      captureType = parsed.frontmatter.capture_type || sourceType;
 
       // Skip if content already synced (even from a different file)
       if (syncedHashes.has(contentHash)) {
@@ -323,7 +388,7 @@ async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): P
         stats.skipped++;
         // Mark filepath as synced to avoid re-checking (only if not dry run)
         if (!options.dryRun) {
-          markAsSynced(syncState, filepath, parsed.frontmatter.capture_type, undefined, contentHash);
+          markAsSynced(syncState, filepath, captureType, undefined, contentHash);
         }
         continue;
       }
@@ -331,7 +396,7 @@ async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): P
       // Continue with sync attempt if pre-check fails
     }
 
-    const result = await syncFile(filepath, options);
+    const result = await syncFile(filepath, sourceType, options);
 
     if (result.success) {
       stats.synced++;
@@ -339,8 +404,9 @@ async function syncHistoryToKnowledge(options: SyncOptions = DEFAULT_OPTIONS): P
       if (!options.dryRun) {
         try {
           const content = readFileSync(filepath, 'utf-8');
-          const parsed = parseMarkdownFile(content);
-          markAsSynced(syncState, filepath, parsed.frontmatter.capture_type, undefined, contentHash);
+          const filename = basename(filepath);
+          const parsed = parseMarkdownFile(content, filename);
+          markAsSynced(syncState, filepath, parsed.frontmatter.capture_type || sourceType, undefined, contentHash);
           // Add hash to in-memory set for this run
           if (contentHash) syncedHashes.add(contentHash);
         } catch {
@@ -411,7 +477,7 @@ async function main() {
       await Bun.stdin.text().catch(() => '');
 
       // Run sync with defaults (limited files, not verbose)
-      await syncHistoryToKnowledge({
+      await syncMemoryToKnowledge({
         ...DEFAULT_OPTIONS,
         maxFiles: 20 // Limit for hook execution
       });
@@ -426,9 +492,10 @@ async function main() {
     if (options.verbose) {
       console.error('[Sync] Running in CLI mode');
       console.error(`[Sync] Options: ${JSON.stringify(options)}`);
+      console.error(`[Sync] Memory directory: ${getMemoryDir()}`);
     }
 
-    await syncHistoryToKnowledge(options);
+    await syncMemoryToKnowledge(options);
   }
 
   process.exit(0);

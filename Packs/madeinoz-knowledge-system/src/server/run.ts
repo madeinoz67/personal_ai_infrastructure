@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 /**
- * Run PAI Knowledge System with Podman/Docker
+ * Run Madeinoz Knowledge System with Podman/Docker
  *
  * Supports two database backends:
- *   - FalkorDB (default): Redis-based graph database with RediSearch
- *   - Neo4j: Native graph database with Cypher queries
+ *   - Neo4j (default): Native graph database with Cypher queries
+ *   - FalkorDB: Redis-based graph database with RediSearch
  *
  * Uses a public bridge network with database and MCP server containers.
  * This is the main setup script that creates containers, networks, and volumes.
@@ -22,11 +22,11 @@ import { dirname, join } from "path";
  * Get the database backend from config
  */
 function getDatabaseBackend(config: KnowledgeConfig): DatabaseBackend {
-  const dbType = config.DATABASE_TYPE?.toLowerCase() || "falkordb";
-  if (dbType === "neo4j") {
-    return "neo4j";
+  const dbType = config.DATABASE_TYPE?.toLowerCase() || "neo4j";
+  if (dbType === "falkordb") {
+    return "falkordb";
   }
-  return "falkordb";
+  return "neo4j";
 }
 
 /**
@@ -312,9 +312,9 @@ async function startMCPServer(
  * Main run function
  */
 async function main() {
-  cli.header("PAI Knowledge System - Setup & Run");
+  cli.header("Madeinoz Knowledge System - Setup & Run");
   cli.blank();
-  cli.info("This script will set up and start the PAI Knowledge System.");
+  cli.info("This script will set up and start the Madeinoz Knowledge System.");
   cli.blank();
   cli.info("Prerequisites:");
   cli.dim("  - Podman or Docker (container runtime)");
@@ -343,13 +343,13 @@ async function main() {
   const backend = getDatabaseBackend(config);
   cli.success(`✓ Database backend: ${backend.toUpperCase()}`);
 
-  // Check if PAI_KNOWLEDGE_OPENAI_API_KEY is set
+  // Check if MADEINOZ_KNOWLEDGE_OPENAI_API_KEY is set
   let openaiKey = config.OPENAI_API_KEY;
-  if (!openaiKey && config.PAI_PREFIXES?.PAI_KNOWLEDGE_OPENAI_API_KEY) {
-    openaiKey = config.PAI_PREFIXES.PAI_KNOWLEDGE_OPENAI_API_KEY;
-    cli.success("✓ Using dedicated PAI Knowledge System API key");
+  if (!openaiKey && config.PAI_PREFIXES?.MADEINOZ_KNOWLEDGE_OPENAI_API_KEY) {
+    openaiKey = config.PAI_PREFIXES.MADEINOZ_KNOWLEDGE_OPENAI_API_KEY;
+    cli.success("✓ Using dedicated Madeinoz Knowledge System API key");
   } else if (!openaiKey) {
-    cli.warning("Warning: PAI_KNOWLEDGE_OPENAI_API_KEY is not set in .env");
+    cli.warning("Warning: MADEINOZ_KNOWLEDGE_OPENAI_API_KEY is not set in .env");
     cli.warning("The server may not work properly without an API key.");
   }
 
@@ -418,7 +418,7 @@ async function main() {
   // Print success message
   cli.blank();
   cli.success("═══════════════════════════════════════");
-  cli.success("PAI Knowledge System is running!");
+  cli.success("Madeinoz Knowledge System is running!");
   cli.success("═══════════════════════════════════════");
   cli.blank();
 

@@ -51,10 +51,10 @@ export class ContainerManager {
   private runtimeCommand: string;
 
   // Default container names
-  static readonly FALKORDB_CONTAINER = "pai-knowledge-falkordb";
-  static readonly MCP_CONTAINER = "pai-knowledge-graph-mcp";
-  static readonly NETWORK_NAME = "pai-knowledge-net";
-  static readonly VOLUME_NAME = "pai-knowledge-falkordb-data";
+  static readonly FALKORDB_CONTAINER = "madeinoz-knowledge-falkordb";
+  static readonly MCP_CONTAINER = "madeinoz-knowledge-graph-mcp";
+  static readonly NETWORK_NAME = "madeinoz-knowledge-net";
+  static readonly VOLUME_NAME = "madeinoz-knowledge-falkordb-data";
 
   constructor(runtime?: ContainerRuntime) {
     if (runtime) {

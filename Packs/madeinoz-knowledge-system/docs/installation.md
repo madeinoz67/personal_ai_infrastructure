@@ -17,7 +17,7 @@ Before starting, make sure you have:
    - An OpenAI API key (or compatible service)
 
 3. **Dependent systems:**
-   - PAI History System (should be installed first)
+   - None (PAI Memory System is built-in to Claude Code)
 
 ## What is a Container?
 
@@ -137,7 +137,7 @@ You'll see output like:
 ```
 Starting PAI Knowledge System...
 Creating network: pai-knowledge-net
-Starting FalkorDB container...
+Starting Neo4j container...
 Starting Graphiti MCP server...
 Server is running at http://localhost:8000
 ```
@@ -161,7 +161,7 @@ PAI Knowledge System Status:
 
 Containers:
   pai-knowledge-graph-mcp: running
-  pai-knowledge-falkordb: running
+  pai-knowledge-neo4j: running
 
 MCP Server: http://localhost:8000/sse
   Status: healthy
@@ -185,16 +185,16 @@ PAI_KNOWLEDGE_MODEL_NAME=gpt-4o-mini
 PAI_KNOWLEDGE_LLM_PROVIDER=openai
 ```
 
-### Step 9: Install History Sync Hook (Optional but Recommended)
+### Step 9: Install Memory Sync Hook (Optional but Recommended)
 
-This hook automatically syncs your learning captures from the PAI History System to your knowledge graph:
+This hook automatically syncs your learning captures from the PAI Memory System to your knowledge graph:
 
 ```bash
 bun run src/server/install.ts
 ```
 
 Follow the prompts to:
-1. Verify your history directory location
+1. Verify your memory directory location (~/.claude/MEMORY)
 2. Install the sync hook
 3. Configure automatic syncing
 
@@ -236,7 +236,7 @@ You should see your newly stored knowledge!
 
 Let's review what you installed:
 
-1. **FalkorDB** - A graph database (like a smart filing cabinet)
+1. **Neo4j** - A graph database (like a smart filing cabinet)
 2. **Graphiti MCP Server** - The AI brain that processes your knowledge
 3. **PAI Skill** - The interface that lets you talk to the system naturally
 4. **Sync Hook** - Automatically captures learnings to your knowledge graph
@@ -339,7 +339,7 @@ Now that everything is installed:
 ## Troubleshooting
 
 **Problem: "Port already in use"**
-- Another service is using port 8000 or 6379
+- Another service is using port 8000 or 7687 (Neo4j)
 - Stop the other service or change ports in `src/server/run.ts`
 
 **Problem: "API key invalid"**

@@ -5,6 +5,11 @@
  * Syncs newly created learning files to the knowledge graph immediately
  * after they are created (runs after Stop hook).
  *
+ * Updated for PAI Memory System v7.0 (2026-01-12):
+ * - Reads from ~/.claude/MEMORY/LEARNING/ instead of ~/.config/pai/history/learnings/
+ * - Handles both ALGORITHM and SYSTEM subdirectories
+ * - Supports new frontmatter schema
+ *
  * Features:
  * - Syncs only the most recent learning file
  * - Excludes sessions containing knowledge tool operations (prevents feedback loop)
@@ -17,7 +22,7 @@
  */
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { homedir } from 'os';
 import { createHash } from 'crypto';
 import { parseMarkdownFile, cleanBody } from './lib/frontmatter-parser';
@@ -64,46 +69,63 @@ function hashContent(content: string): string {
 }
 
 /**
+ * Get the Memory System directory
+ */
+function getMemoryDir(): string {
+  return join(homedir(), '.claude', 'MEMORY');
+}
+
+/**
  * Find the most recently created learning file
+ * Checks both LEARNING/ALGORITHM and LEARNING/SYSTEM directories
  */
 function findLatestLearning(): string | null {
-  const paiDir = process.env.PAI_DIR || join(homedir(), '.config', 'pai');
-  const learningsDir = join(paiDir, 'history', 'learnings');
+  const memoryDir = getMemoryDir();
+  const learningDirs = [
+    join(memoryDir, 'LEARNING', 'ALGORITHM'),
+    join(memoryDir, 'LEARNING', 'SYSTEM')
+  ];
 
-  if (!existsSync(learningsDir)) {
+  const allFiles: { path: string; mtime: number }[] = [];
+
+  for (const learningDir of learningDirs) {
+    if (!existsSync(learningDir)) {
+      continue;
+    }
+
+    // Get year-month subdirectories
+    const subdirs = readdirSync(learningDir).filter(d => {
+      const fullPath = join(learningDir, d);
+      return statSync(fullPath).isDirectory() && /^\d{4}-\d{2}$/.test(d);
+    });
+
+    if (subdirs.length === 0) {
+      continue;
+    }
+
+    // Sort to get most recent month
+    subdirs.sort().reverse();
+    const latestMonth = subdirs[0];
+    const monthDir = join(learningDir, latestMonth);
+
+    // Get all markdown files in the latest month
+    const files = readdirSync(monthDir)
+      .filter(f => f.endsWith('.md'))
+      .map(f => ({
+        path: join(monthDir, f),
+        mtime: statSync(join(monthDir, f)).mtime.getTime()
+      }));
+
+    allFiles.push(...files);
+  }
+
+  if (allFiles.length === 0) {
     return null;
   }
 
-  // Get year-month subdirectories
-  const subdirs = readdirSync(learningsDir).filter(d => {
-    const fullPath = join(learningsDir, d);
-    return statSync(fullPath).isDirectory() && /^\d{4}-\d{2}$/.test(d);
-  });
-
-  if (subdirs.length === 0) {
-    return null;
-  }
-
-  // Sort to get most recent month
-  subdirs.sort().reverse();
-  const latestMonth = subdirs[0];
-  const monthDir = join(learningsDir, latestMonth);
-
-  // Get all markdown files in the latest month
-  const files = readdirSync(monthDir)
-    .filter(f => f.endsWith('.md'))
-    .map(f => ({
-      path: join(monthDir, f),
-      mtime: statSync(join(monthDir, f)).mtime.getTime()
-    }))
-    .sort((a, b) => b.mtime - a.mtime);
-
-  if (files.length === 0) {
-    return null;
-  }
-
-  // Return the most recently modified file
-  return files[0].path;
+  // Sort by modification time (newest first) and return the latest
+  allFiles.sort((a, b) => b.mtime - a.mtime);
+  return allFiles[0].path;
 }
 
 /**
@@ -115,7 +137,8 @@ async function syncLearning(
 ): Promise<{ success: boolean; reason?: string }> {
   try {
     const content = readFileSync(filepath, 'utf-8');
-    const parsed = parseMarkdownFile(content);
+    const filename = basename(filepath);
+    const parsed = parseMarkdownFile(content, filename);
     const cleanedBody = cleanBody(parsed.body);
 
     // Check for knowledge operations (prevent feedback loop)
@@ -141,17 +164,27 @@ async function syncLearning(
       return { success: false, reason: 'File already synced' };
     }
 
+    // Build source description
+    const sourceDescParts: string[] = [];
+    if (parsed.frontmatter.source) {
+      sourceDescParts.push(`Source: ${parsed.frontmatter.source}`);
+    }
+    if (parsed.frontmatter.session_id) {
+      sourceDescParts.push(`Session: ${parsed.frontmatter.session_id.slice(0, 8)}`);
+    }
+    if (parsed.frontmatter.rating) {
+      sourceDescParts.push(`Rating: ${parsed.frontmatter.rating}/10`);
+    }
+    sourceDescParts.push('Realtime sync');
+
     // Prepare episode parameters
+    const captureType = parsed.frontmatter.capture_type || 'LEARNING';
     const params: AddEpisodeParams = {
-      name: `${parsed.frontmatter.capture_type}: ${parsed.title}`.slice(0, 200),
+      name: `${captureType}: ${parsed.title}`.slice(0, 200),
       episode_body: cleanedBody.slice(0, 5000),
       source: 'text',
-      source_description: [
-        `Executor: ${parsed.frontmatter.executor}`,
-        `Session: ${parsed.frontmatter.session_id?.slice(0, 8) || 'unknown'}`,
-        `Realtime sync`
-      ].filter(Boolean).join(' | '),
-      group_id: parsed.frontmatter.capture_type?.toLowerCase() || 'learning'
+      source_description: sourceDescParts.join(' | '),
+      group_id: captureType.toLowerCase()
     };
 
     if (options.verbose) {
@@ -171,7 +204,7 @@ async function syncLearning(
       markAsSynced(
         syncState,
         filepath,
-        parsed.frontmatter.capture_type || 'LEARNING',
+        captureType,
         undefined,
         contentHash
       );

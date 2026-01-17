@@ -1,8 +1,12 @@
 /**
  * Sync State Manager
  *
- * Tracks which history files have been synced to the knowledge graph.
+ * Tracks which memory files have been synced to the knowledge graph.
  * Persists state to JSON file for durability across sessions.
+ *
+ * Updated for PAI Memory System v7.0 (2026-01-12)
+ * - Changed from ~/.config/pai/history/ to ~/.claude/MEMORY/
+ * - Sync state now stored in MEMORY/STATE/knowledge-sync/
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -27,10 +31,11 @@ const SYNC_STATE_VERSION = '1.0.0';
 
 /**
  * Get the path to the sync state file
+ * Uses PAI Memory System location: ~/.claude/MEMORY/STATE/knowledge-sync/
  */
 export function getSyncStatePath(): string {
-  const paiDir = process.env.PAI_DIR || join(homedir(), '.config', 'pai');
-  return join(paiDir, 'history', '.synced', 'sync-state.json');
+  const memoryDir = join(homedir(), '.claude', 'MEMORY');
+  return join(memoryDir, 'STATE', 'knowledge-sync', 'sync-state.json');
 }
 
 /**

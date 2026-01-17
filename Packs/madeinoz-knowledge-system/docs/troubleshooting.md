@@ -19,7 +19,7 @@ PAI Knowledge System Status:
 
 Containers:
   pai-knowledge-graph-mcp: running
-  pai-knowledge-falkordb: running
+  pai-knowledge-neo4j: running
 
 MCP Server: http://localhost:8000/sse
   Status: healthy
@@ -185,12 +185,13 @@ bun run src/server/logs.ts
 **Common specific issues:**
 
 **Error: "port already in use"**
-Another service is using port 8000 or 6379.
+Another service is using port 8000 or 7687 (Neo4j) or 6379 (FalkorDB).
 
 Find what's using the port:
 ```bash
 lsof -i :8000
-lsof -i :6379
+lsof -i :7687  # Neo4j Bolt
+lsof -i :6379  # FalkorDB/Redis
 ```
 
 Kill the process or change the knowledge system ports.
@@ -302,13 +303,13 @@ bun run src/server/logs.ts
 
 Look for startup errors.
 
-### Knowledge Not Syncing from History
+### Knowledge Not Syncing from Memory
 
-**Symptom:** History captures aren't appearing in knowledge graph
+**Symptom:** Memory captures aren't appearing in knowledge graph
 
 **Check if the hook is installed:**
 ```bash
-cat ~/.claude/settings.json | grep sync-history-to-knowledge
+cat ~/.claude/settings.json | grep sync-memory-to-knowledge
 ```
 
 Should see a hook definition.
@@ -322,22 +323,22 @@ bun run src/server/install.ts
 
 **Manually trigger sync:**
 ```bash
-bun run src/hooks/sync-history-to-knowledge.ts --verbose
+bun run src/hooks/sync-memory-to-knowledge.ts --verbose
 ```
 
 This shows what's being synced (or why not).
 
 **Check sync state:**
 ```bash
-cat ~/.config/pai/history/.synced/sync-state.json
+cat ~/.claude/MEMORY/STATE/knowledge-sync/sync-state.json
 ```
 
 Shows what's already been synced.
 
 **Force re-sync everything:**
 ```bash
-rm ~/.config/pai/history/.synced/sync-state.json
-bun run src/hooks/sync-history-to-knowledge.ts --all --verbose
+rm ~/.claude/MEMORY/STATE/knowledge-sync/sync-state.json
+bun run src/hooks/sync-memory-to-knowledge.ts --all --verbose
 ```
 
 ### High API Costs
@@ -375,12 +376,16 @@ Check your API usage weekly to catch cost spikes early.
 
 Using gpt-4o-mini, not gpt-4o.
 
-### FalkorDB Web UI Not Accessible
+### Database Web UI Not Accessible
 
-**Symptom:** Can't access http://localhost:3000
+**Symptom:** Can't access database UI (Neo4j: http://localhost:7474, FalkorDB: http://localhost:3000)
 
-**Check if FalkorDB container is running:**
+**Check if database container is running:**
 ```bash
+# For Neo4j (default)
+podman ps | grep neo4j
+
+# For FalkorDB
 podman ps | grep falkordb
 ```
 
@@ -389,20 +394,22 @@ podman ps | grep falkordb
 bun run src/server/start.ts
 ```
 
-**Check port 3000 isn't blocked:**
+**Check ports aren't blocked:**
 ```bash
-lsof -i :3000
+lsof -i :7474  # Neo4j Browser
+lsof -i :3000  # FalkorDB UI
 ```
-
-**If another service uses port 3000:**
-You'll need to change the FalkorDB web UI port in the container configuration.
 
 **Try accessing the graph directly:**
 ```bash
+# For Neo4j (default)
+podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "RETURN 1"
+
+# For FalkorDB
 podman exec pai-knowledge-falkordb redis-cli PING
 ```
 
-Should respond "PONG".
+Should respond with `1` (Neo4j) or "PONG" (FalkorDB).
 
 ### Memory or Performance Issues
 
@@ -450,7 +457,9 @@ This issue is tracked at: https://github.com/getzep/graphiti/issues/840
 **Not a critical issue:**
 This warning usually doesn't break functionality, but restarting helps if you see repeated failures.
 
-### RediSearch Query Syntax Errors with Special Characters
+### Query Syntax Errors with Special Characters (FalkorDB Backend)
+
+**Note:** This issue is specific to the FalkorDB backend. Neo4j (the default) handles special characters more gracefully.
 
 **Symptom:** Search queries fail with syntax errors, especially when searching for content containing hyphens, at-signs, or other special characters. Error messages may include "QuerySyntaxError" or mention unexpected tokens.
 
@@ -550,16 +559,19 @@ curl http://localhost:8000/sse -H "Accept: text/event-stream"
 podman ps | grep pai-knowledge
 
 # Check ports
-lsof -i :8000
-lsof -i :6379
-lsof -i :3000
+lsof -i :8000    # MCP Server
+lsof -i :7687    # Neo4j Bolt (default)
+lsof -i :7474    # Neo4j Browser (default)
+lsof -i :6379    # FalkorDB/Redis
+lsof -i :3000    # FalkorDB UI
 
 # Manual sync test
-bun run src/hooks/sync-history-to-knowledge.ts --dry-run --verbose
+bun run src/hooks/sync-memory-to-knowledge.ts --dry-run --verbose
 
 # View container logs directly
 podman logs pai-knowledge-graph-mcp
-podman logs pai-knowledge-falkordb
+podman logs pai-knowledge-neo4j       # Neo4j (default)
+podman logs pai-knowledge-falkordb    # FalkorDB backend
 ```
 
 ## Getting More Help

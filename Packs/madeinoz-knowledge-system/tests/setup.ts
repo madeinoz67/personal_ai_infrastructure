@@ -297,39 +297,39 @@ export function createMockConfigLoader() {
       }
 
       return {
-        OPENAI_API_KEY: env.OPENAI_API_KEY || env.PAI_KNOWLEDGE_OPENAI_API_KEY,
+        OPENAI_API_KEY: env.OPENAI_API_KEY || env.MADEINOZ_KNOWLEDGE_OPENAI_API_KEY,
         ANTHROPIC_API_KEY: env.ANTHROPIC_API_KEY,
         GOOGLE_API_KEY: env.GOOGLE_API_KEY,
         GROQ_API_KEY: env.GROQ_API_KEY,
-        LLM_PROVIDER: env.LLM_PROVIDER || env.PAI_KNOWLEDGE_LLM_PROVIDER || "openai",
-        EMBEDDER_PROVIDER: env.EMBEDDER_PROVIDER || env.PAI_KNOWLEDGE_EMBEDDER_PROVIDER || "openai",
-        MODEL_NAME: env.MODEL_NAME || env.PAI_KNOWLEDGE_MODEL_NAME || "gpt-4o-mini",
-        SEMAPHORE_LIMIT: env.SEMAPHORE_LIMIT || env.PAI_KNOWLEDGE_SEMAPHORE_LIMIT || "10",
-        GROUP_ID: env.GROUP_ID || env.PAI_KNOWLEDGE_GROUP_ID || "main",
-        DATABASE_TYPE: env.DATABASE_TYPE || env.PAI_KNOWLEDGE_DATABASE_TYPE || "falkordb",
+        LLM_PROVIDER: env.LLM_PROVIDER || env.MADEINOZ_KNOWLEDGE_LLM_PROVIDER || "openai",
+        EMBEDDER_PROVIDER: env.EMBEDDER_PROVIDER || env.MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER || "openai",
+        MODEL_NAME: env.MODEL_NAME || env.MADEINOZ_KNOWLEDGE_MODEL_NAME || "gpt-4o-mini",
+        SEMAPHORE_LIMIT: env.SEMAPHORE_LIMIT || env.MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT || "10",
+        GROUP_ID: env.GROUP_ID || env.MADEINOZ_KNOWLEDGE_GROUP_ID || "main",
+        DATABASE_TYPE: env.DATABASE_TYPE || env.MADEINOZ_KNOWLEDGE_DATABASE_TYPE || "falkordb",
         FALKORDB_HOST: env.FALKORDB_HOST || "falkordb",
         FALKORDB_PORT: env.FALKORDB_PORT || "6379",
         FALKORDB_PASSWORD: env.FALKORDB_PASSWORD || "",
         NEO4J_URI: env.NEO4J_URI || "",
         NEO4J_USER: env.NEO4J_USER || "",
         NEO4J_PASSWORD: env.NEO4J_PASSWORD || "",
-        GRAPHITI_TELEMETRY_ENABLED: env.GRAPHITI_TELEMETRY_ENABLED || env.PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED || "false",
+        GRAPHITI_TELEMETRY_ENABLED: env.GRAPHITI_TELEMETRY_ENABLED || env.MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED || "false",
         PAI_PREFIXES: Object.keys(env)
-          .filter((k) => k.startsWith("PAI_KNOWLEDGE_"))
+          .filter((k) => k.startsWith("MADEINOZ_KNOWLEDGE_"))
           .reduce((acc, k) => ({ ...acc, [k]: env[k] }), {}),
       };
     },
 
     save: async (config: Record<string, string | undefined>) => {
       const lines = [
-        "# PAI Knowledge System Configuration",
+        "# Madeinoz Knowledge System Configuration",
         `# Generated: ${new Date().toISOString()}`,
         "",
         "# API Keys",
       ];
 
       if (config.OPENAI_API_KEY) {
-        lines.push(`PAI_KNOWLEDGE_OPENAI_API_KEY=${config.OPENAI_API_KEY}`);
+        lines.push(`MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=${config.OPENAI_API_KEY}`);
       }
       if (config.ANTHROPIC_API_KEY) {
         lines.push(`ANTHROPIC_API_KEY=${config.ANTHROPIC_API_KEY}`);
@@ -342,21 +342,21 @@ export function createMockConfigLoader() {
       }
 
       lines.push("", "# LLM Provider Configuration");
-      lines.push(`PAI_KNOWLEDGE_LLM_PROVIDER=${config.LLM_PROVIDER || "openai"}`);
-      lines.push(`PAI_KNOWLEDGE_EMBEDDER_PROVIDER=${config.EMBEDDER_PROVIDER || "openai"}`);
-      lines.push(`PAI_KNOWLEDGE_MODEL_NAME=${config.MODEL_NAME || "gpt-4o-mini"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_LLM_PROVIDER=${config.LLM_PROVIDER || "openai"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER=${config.EMBEDDER_PROVIDER || "openai"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_MODEL_NAME=${config.MODEL_NAME || "gpt-4o-mini"}`);
 
       lines.push("", "# Performance Configuration");
-      lines.push(`PAI_KNOWLEDGE_SEMAPHORE_LIMIT=${config.SEMAPHORE_LIMIT || "10"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=${config.SEMAPHORE_LIMIT || "10"}`);
 
       lines.push("", "# Knowledge Graph Configuration");
-      lines.push(`PAI_KNOWLEDGE_GROUP_ID=${config.GROUP_ID || "main"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_GROUP_ID=${config.GROUP_ID || "main"}`);
 
       lines.push("", "# Database Configuration");
-      lines.push(`PAI_KNOWLEDGE_DATABASE_TYPE=${config.DATABASE_TYPE || "falkordb"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_DATABASE_TYPE=${config.DATABASE_TYPE || "falkordb"}`);
 
       lines.push("", "# Telemetry");
-      lines.push(`PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=${config.GRAPHITI_TELEMETRY_ENABLED || "false"}`);
+      lines.push(`MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=${config.GRAPHITI_TELEMETRY_ENABLED || "false"}`);
 
       const content = lines.join("\n");
       mockFileSystem.files["config/.env"] = content;

@@ -119,7 +119,7 @@ An **episode** is the fundamental unit of knowledge in the system. Well-structur
 ```
 Bun runtime is 3x faster than Node.js for TypeScript execution.
 Discovered while benchmarking the PAI hook system.
-Source: Personal testing with sync-history-to-knowledge.ts
+Source: Personal testing with sync-memory-to-knowledge.ts
 Related: TypeScript, Node.js, performance optimization
 ```
 
@@ -345,17 +345,17 @@ For importing existing documentation or notes:
 
 ---
 
-## Integration with History System
+## Integration with Memory System
 
-If using the `pai-history-system` pack, knowledge syncs automatically from:
+Knowledge syncs automatically from the PAI Memory System (`~/.claude/MEMORY/`):
 
-| History Type | Sync Behavior |
-|--------------|---------------|
-| `learnings/` | Auto-synced as LEARNING episodes |
-| `research/` | Auto-synced as RESEARCH episodes |
-| `decisions/` | Auto-synced as DECISION episodes |
+| Memory Directory | Sync Behavior |
+|------------------|---------------|
+| `LEARNING/ALGORITHM/` | Auto-synced as LEARNING episodes (task execution insights) |
+| `LEARNING/SYSTEM/` | Auto-synced as LEARNING episodes (PAI/tooling insights) |
+| `RESEARCH/` | Auto-synced as RESEARCH episodes |
 
-### Frontmatter Standards for History Files
+### Frontmatter Standards for Memory Files
 
 Include frontmatter to improve entity extraction:
 

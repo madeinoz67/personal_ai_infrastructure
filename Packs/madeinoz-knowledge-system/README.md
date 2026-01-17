@@ -24,7 +24,7 @@ purpose-type: [productivity, automation, development]
 platform: claude-code
 
 # dependencies: (list) Required pack-ids, empty [] if none
-dependencies: [pai-history-system]
+dependencies: []
 
 # keywords: (24 tags max) Searchable tags for discovery
 keywords: [knowledge, graph, memory, semantic search, entity extraction, relationships, graphiti, falkordb, neo4j, mcp, persistent, ai, storage, retrieval, organizational, learning, documentation]
@@ -81,7 +81,7 @@ Please follow the installation instructions below to integrate this pack into yo
 | Clear Workflow | `src/skills/workflows/ClearGraph.md` | Delete all knowledge and reset graph |
 | Bulk Import Workflow | `src/skills/workflows/BulkImport.md` | Import multiple documents at once |
 | Install Tool | `src/skills/tools/Install.md` | Complete installation workflow |
-| **History Sync Hook** | `src/hooks/sync-history-to-knowledge.ts` | Auto-sync learnings/research from PAI History System |
+| **Memory Sync Hook** | `src/hooks/sync-memory-to-knowledge.ts` | Auto-sync learnings/research from PAI Memory System |
 | Hook Libraries | `src/hooks/lib/*.ts` | Frontmatter parser, sync state, knowledge client, Lucene sanitization |
 | MCP Server Launcher | `src/server/run.sh` | Graphiti server launcher with Podman |
 | Server Management | `src/server/{start,stop,status,logs}.sh` | Container management scripts |
@@ -95,9 +95,9 @@ Please follow the installation instructions below to integrate this pack into yo
 - **Files created:** 3 (README.md, INSTALL.md, VERIFY.md)
 - **Workflows included:** 7
 - **Tools included:** 1
-- **Hooks included:** 1 (History Sync)
+- **Hooks included:** 2 (Memory Sync, Realtime Learning Sync)
 - **Server scripts:** 5 (run, start, stop, status, logs)
-- **Database backends:** FalkorDB (default) or Neo4j
+- **Database backends:** Neo4j (default) or FalkorDB
 - **External dependencies:** Podman/Docker, Graph database image
 - **Dependencies:** Podman (container runtime), OpenAI API key (or compatible LLM provider)
 
@@ -185,15 +185,15 @@ User Conversation/Document
 ┌─────────────────────────────────┐
 │   Graph Database Backend        │
 │  ┌───────────────────────────┐  │
-│  │  FalkorDB (default)       │  │
-│  │   - Redis-based           │  │
-│  │   - RediSearch queries    │  │
-│  │   - Web UI :3000          │  │
-│  ├───────────────────────────┤  │
-│  │  Neo4j (alternative)      │  │
+│  │  Neo4j (default)          │  │
 │  │   - Native graph DB       │  │
 │  │   - Cypher queries        │  │
 │  │   - Browser :7474         │  │
+│  ├───────────────────────────┤  │
+│  │  FalkorDB (alternative)   │  │
+│  │   - Redis-based           │  │
+│  │   - RediSearch queries    │  │
+│  │   - Web UI :3000          │  │
 │  └───────────────────────────┘  │
 │  Nodes, Edges, Episodes, Indices│
 └─────────────────────────────────┘
@@ -514,8 +514,8 @@ bun run src/server/install.ts
 This guides you through database backend selection, LLM provider selection, API key configuration, and service startup.
 
 **Database Backends:**
-- **FalkorDB** (default) - Redis-based, simpler setup, lower resources
-- **Neo4j** - Native graph DB, better special character handling
+- **Neo4j** (default) - Native graph DB, better special character handling, richer query language
+- **FalkorDB** - Redis-based, simpler setup, lower resources
 
 **Flags:**
 - `--yes` or `-y`: Non-interactive mode with defaults
@@ -818,21 +818,21 @@ The PAI Knowledge System supports two graph database backends:
 
 | Backend | Description | Web UI | Best For |
 |---------|-------------|--------|----------|
-| **FalkorDB** (default) | Redis-based graph database with RediSearch | http://localhost:3000 | Simple setup, lower resources |
-| **Neo4j** | Native graph database with Cypher queries | http://localhost:7474 | Special character handling, richer queries |
+| **Neo4j** (default) | Native graph database with Cypher queries | http://localhost:7474 | Special character handling, richer queries |
+| **FalkorDB** | Redis-based graph database with RediSearch | http://localhost:3000 | Simple setup, lower resources |
 
 ### Choosing a Backend
 
-**Use FalkorDB (default) when:**
-- You want the simplest setup with minimal configuration
-- You have limited system resources
-- Your group_ids and data don't contain many special characters
-
-**Use Neo4j when:**
+**Use Neo4j (default) when:**
 - You're working with CTI/OSINT data containing hyphenated identifiers
 - You want native Cypher query language
 - You need the Neo4j Browser for rich graph visualization
 - You're already familiar with Neo4j ecosystem
+
+**Use FalkorDB when:**
+- You want the simplest setup with minimal configuration
+- You have limited system resources
+- Your group_ids and data don't contain many special characters
 
 ### Backend-Specific Notes
 
@@ -867,7 +867,7 @@ bun run src/server/run.ts
 
 Both backends include built-in web UIs for visualizing your knowledge graph, exploring entity relationships, and running queries directly.
 
-### FalkorDB UI (Default Backend)
+### FalkorDB UI (Alternative Backend)
 
 FalkorDB includes a built-in web UI for visualizing your knowledge graph.
 
@@ -918,9 +918,9 @@ MATCH (n) RETURN DISTINCT labels(n), count(*)
 
 For more details on querying and visualization, see the [FalkorDB Documentation](https://docs.falkordb.com/).
 
-### Neo4j Browser (Alternative Backend)
+### Neo4j Browser (Default Backend)
 
-When using Neo4j backend, you get access to the Neo4j Browser for rich graph visualization.
+Neo4j Browser provides rich graph visualization for your knowledge graph.
 
 ### Accessing Neo4j Browser
 
@@ -1090,38 +1090,38 @@ The sanitization is automatic and happens transparently. All CTI/OSINT operation
 
 ## Works Well With
 
-- **PAI History System** (Required) - Captures all AI sessions; learnings and research are auto-synced to knowledge graph
+- **PAI Memory System** (Built-in) - Core memory infrastructure; learnings and research are auto-synced to knowledge graph
 - **PAI Research Skill** - Capture research findings into knowledge graph with entity extraction
 - **Observability Dashboard** - Monitor knowledge operations in real-time via workflow notifications
 
 ---
 
-## History Sync Hook Integration
+## Memory Sync Hook Integration
 
-The PAI Knowledge System includes a **History Sync Hook** that automatically bridges the PAI History System with the knowledge graph. This creates a seamless flow where learnings and research captured during sessions are automatically enriched with semantic search and entity extraction.
+The PAI Knowledge System includes a **Memory Sync Hook** that automatically bridges the PAI Memory System with the knowledge graph. This creates a seamless flow where learnings and research captured during sessions are automatically enriched with semantic search and entity extraction.
 
 ### How It Works
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    HISTORY → KNOWLEDGE FLOW                      │
+│                    MEMORY → KNOWLEDGE FLOW                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  Session Work                                                   │
 │       │                                                         │
 │       ▼                                                         │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │ PAI History System (stop-hook)                          │   │
-│  │ • Captures AI responses                                  │   │
-│  │ • Filters with hasLearningIndicators()                  │   │
-│  │ • Writes markdown with YAML frontmatter                  │   │
+│  │ PAI Memory System (hooks)                               │   │
+│  │ • Captures learnings and insights                       │   │
+│  │ • Tracks ratings and signals                            │   │
+│  │ • Writes markdown with YAML frontmatter                 │   │
 │  └──────────────────────┬──────────────────────────────────┘   │
 │                         │                                       │
 │                         ▼                                       │
-│  ~/.config/pai/history/                                         │
-│  ├── learnings/2026-01/*.md  ◄── HIGH VALUE                   │
-│  ├── research/2026-01/*.md   ◄── HIGH VALUE                   │
-│  └── decisions/2026-01/*.md  ◄── HIGH VALUE                   │
+│  ~/.claude/MEMORY/                                              │
+│  ├── LEARNING/ALGORITHM/2026-01/*.md  ◄── HIGH VALUE          │
+│  ├── LEARNING/SYSTEM/2026-01/*.md     ◄── HIGH VALUE          │
+│  └── RESEARCH/2026-01/*.md            ◄── HIGH VALUE          │
 │                         │                                       │
 │  ═══════════════════════════════════════════════════════════   │
 │                         │                                       │
@@ -1129,7 +1129,7 @@ The PAI Knowledge System includes a **History Sync Hook** that automatically bri
 │       │                 │                                       │
 │       ▼                 ▼                                       │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │ sync-history-to-knowledge.ts (SessionStart hook)        │   │
+│  │ sync-memory-to-knowledge.ts (SessionStart hook)         │   │
 │  │ • Parses YAML frontmatter (capture_type, timestamp)     │   │
 │  │ • Maps to knowledge API (name, episode_body, group_id)  │   │
 │  │ • Calls add_memory() for each unsynced file             │   │
@@ -1150,18 +1150,19 @@ The PAI Knowledge System includes a **History Sync Hook** that automatically bri
 
 ### What Gets Synced
 
-| History Category | Synced | Rationale |
-|------------------|--------|-----------|
-| `learnings/` | ✅ Yes | Problem/solution narratives with learning indicators |
-| `research/` | ✅ Yes | Subagent research findings |
-| `decisions/` | ✅ Yes | Architectural decisions with rationale |
-| `sessions/` | ❌ No | Low entity value (mostly tool/file lists) |
+| Memory Category | Synced | Rationale |
+|-----------------|--------|-----------|
+| `LEARNING/ALGORITHM/` | ✅ Yes | Task execution learnings and insights |
+| `LEARNING/SYSTEM/` | ✅ Yes | PAI/tooling learnings |
+| `RESEARCH/` | ✅ Yes | Agent research outputs |
+| `LEARNING/SIGNALS/` | ❌ No | JSONL format, not markdown |
+| `WORK/` | ❌ No | Work tracking, different structure |
 
 ### Metadata Mapping
 
-The hook extracts YAML frontmatter from history files and maps it to the knowledge API:
+The hook extracts YAML frontmatter from memory files and maps it to the knowledge API:
 
-| History Frontmatter | Knowledge API | Purpose |
+| Memory Frontmatter | Knowledge API | Purpose |
 |---------------------|---------------|---------|
 | `capture_type` | `group_id` + `name` prefix | Organizes by type in graph |
 | `timestamp` | `reference_timestamp` | Preserves temporal context |
@@ -1175,21 +1176,21 @@ You can manually trigger a sync or check status:
 
 ```bash
 # Sync all unsynced files
-bun run ~/.config/pai/hooks/knowledge/sync-history-to-knowledge.ts
+bun run ~/.config/pai/hooks/knowledge/sync-memory-to-knowledge.ts
 
 # Dry run (see what would be synced)
-bun run ~/.config/pai/hooks/knowledge/sync-history-to-knowledge.ts --dry-run
+bun run ~/.config/pai/hooks/knowledge/sync-memory-to-knowledge.ts --dry-run
 
 # Verbose output
-bun run ~/.config/pai/hooks/knowledge/sync-history-to-knowledge.ts --verbose
+bun run ~/.config/pai/hooks/knowledge/sync-memory-to-knowledge.ts --verbose
 
 # Re-sync all files (including already synced)
-bun run ~/.config/pai/hooks/knowledge/sync-history-to-knowledge.ts --all
+bun run ~/.config/pai/hooks/knowledge/sync-memory-to-knowledge.ts --all
 ```
 
 ### Sync State
 
-The hook tracks synced files in `~/.config/pai/history/.synced/sync-state.json`:
+The hook tracks synced files in `~/.claude/MEMORY/STATE/knowledge-sync/sync-state.json`:
 
 ```json
 {
@@ -1220,7 +1221,7 @@ The hook tracks synced files in `~/.config/pai/history/.synced/sync-state.json`:
 
 The hook is designed for graceful degradation:
 
-- **MCP Offline**: If the knowledge server is unavailable, the hook exits gracefully. Files remain in history and will be synced on the next session start when MCP is available.
+- **MCP Offline**: If the knowledge server is unavailable, the hook exits gracefully. Files remain in memory and will be synced on the next session start when MCP is available.
 - **Sync Tracking**: Already-synced files are skipped, preventing duplicates.
 - **Non-Blocking**: The hook runs asynchronously and won't delay session startup.
 
@@ -1242,7 +1243,7 @@ The hook is designed for graceful degradation:
 - **Personal AI Infrastructure (PAI)** - Core framework that provides skill system, workflow routing, and tool integration
 
 ### Sibling Of
-- **PAI History System** - Complementary pack for session capture and documentation
+- **PAI Memory System** - Core memory infrastructure that captures learnings, research, and signals
 - **PAI Research Skill** - Research workflows that can feed into knowledge graph
 
 ### Part Of Collection

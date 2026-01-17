@@ -136,7 +136,7 @@ These all trigger searches:
 You: What do I know about knowledge graphs?
 ```
 
-Returns everything related to knowledge graphs - Graphiti, FalkorDB, entities, relationships, etc.
+Returns everything related to knowledge graphs - Graphiti, Neo4j, entities, relationships, etc.
 
 ### Searching for Procedures
 
@@ -209,15 +209,15 @@ You: How are Graphiti and FalkorDB related?
 ```
 
 ```
-AI: Relationships between Graphiti and FalkorDB:
+AI: Relationships between Graphiti and Neo4j:
 
 Direct Relationships:
-- Graphiti -> uses as backend -> FalkorDB
-- FalkorDB -> provides storage for -> Graphiti
+- Graphiti -> uses as backend -> Neo4j
+- Neo4j -> provides storage for -> Graphiti
 
 Context:
-"Graphiti is a knowledge graph framework that uses FalkorDB as its
-graph database backend. FalkorDB provides Redis-based graph storage
+"Graphiti is a knowledge graph framework that uses Neo4j as its
+graph database backend. Neo4j provides native graph storage
 with Cypher query support." (captured 2025-01-08)
 ```
 
@@ -328,18 +328,41 @@ Use this when you want to start completely fresh.
 
 ### Backup and Restore
 
-Your knowledge graph is stored in FalkorDB (a Redis-based graph database). Here's how to protect and migrate your data.
+Your knowledge graph is stored in Neo4j (the default) or FalkorDB. Here's how to protect and migrate your data.
+
+**Note:** The instructions below show both Neo4j (default) and FalkorDB commands. Use the section that matches your configured backend.
 
 #### Quick Backup
 
 Create a backup of your entire knowledge graph:
 
-**Podman:**
+**Neo4j (Default) - Podman:**
 ```bash
 # Navigate to pack directory
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
 # Create backup directory
+mkdir -p backups
+
+# Backup Neo4j data directory
+podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +%Y%m%d-%H%M%S).dump
+
+echo "✓ Backup created"
+```
+
+**Neo4j (Default) - Docker:**
+```bash
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
+mkdir -p backups
+
+docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +%Y%m%d-%H%M%S).dump
+
+echo "✓ Backup created"
+```
+
+**FalkorDB Backend - Podman:**
+```bash
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
 
 # Backup the FalkorDB data (RDB snapshot)
@@ -350,7 +373,7 @@ podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +%Y%m
 echo "✓ Backup created"
 ```
 
-**Docker:**
+**FalkorDB Backend - Docker:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 mkdir -p backups
@@ -366,16 +389,32 @@ echo "✓ Backup created"
 
 Create a cron job for automatic daily backups:
 
-**Podman:**
+**Neo4j (Default) - Podman:**
 ```bash
 # Edit crontab
+crontab -e
+
+# Add this line for daily backup at 2 AM
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +\%Y\%m\%d).dump
+```
+
+**Neo4j (Default) - Docker:**
+```bash
+crontab -e
+
+# Add this line for daily backup at 2 AM
+0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > ./backups/knowledge-$(date +\%Y\%m\%d).dump
+```
+
+**FalkorDB Backend - Podman:**
+```bash
 crontab -e
 
 # Add this line for daily backup at 2 AM
 0 2 * * * cd ~/.config/pai/Packs/madeinoz-knowledge-system && podman exec pai-knowledge-falkordb redis-cli BGSAVE && sleep 2 && podman cp pai-knowledge-falkordb:/data/dump.rdb ./backups/knowledge-$(date +\%Y\%m\%d).rdb
 ```
 
-**Docker:**
+**FalkorDB Backend - Docker:**
 ```bash
 crontab -e
 
@@ -387,7 +426,51 @@ crontab -e
 
 To restore your knowledge graph from a backup:
 
-**Podman:**
+**Neo4j (Default) - Podman:**
+```bash
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
+
+# 1. Stop the running containers
+bun run stop
+
+# 2. Find your backup file
+ls -la backups/
+
+# 3. Restore using neo4j-admin
+podman run --rm -v ./backups:/backups:ro -v pai-knowledge-neo4j-data:/data neo4j:2025.12.1 \
+    neo4j-admin database load neo4j --from-stdin < ./backups/knowledge-YYYYMMDD-HHMMSS.dump --overwrite-destination
+
+# 4. Restart the knowledge system
+bun run start
+
+# 5. Verify restoration
+bun run status
+```
+
+**Neo4j (Default) - Docker:**
+```bash
+cd ~/.config/pai/Packs/madeinoz-knowledge-system
+
+# 1. Stop the running containers
+bun run stop
+
+# 2. Find your backup file
+ls -la backups/
+
+# 3. Restore using neo4j-admin
+docker run --rm -v ./backups:/backups:ro -v pai-knowledge-neo4j-data:/data neo4j:2025.12.1 \
+    neo4j-admin database load neo4j --from-stdin < ./backups/knowledge-YYYYMMDD-HHMMSS.dump --overwrite-destination
+
+# 4. Restart the knowledge system
+bun run start
+
+# 5. Verify restoration
+bun run status
+```
+
+Replace `knowledge-YYYYMMDD-HHMMSS.dump` with your actual backup filename.
+
+**FalkorDB Backend - Podman:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
@@ -408,7 +491,7 @@ bun run start
 bun run status
 ```
 
-**Docker:**
+**FalkorDB Backend - Docker:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
 
@@ -435,7 +518,22 @@ Replace `knowledge-YYYYMMDD-HHMMSS.rdb` with your actual backup filename.
 
 For a human-readable backup or migration to another system:
 
-**Podman:**
+**Neo4j (Default) - Podman/Docker:**
+```bash
+# Connect to Neo4j and export graph data using cypher-shell
+podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password \
+    "MATCH (n)-[r]->(m) RETURN n, r, m" > backups/knowledge-export.txt
+
+# Export all nodes
+podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password \
+    "MATCH (n) RETURN n" > backups/nodes-export.txt
+
+# Export all relationships
+podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password \
+    "MATCH ()-[r]->() RETURN r" > backups/relationships-export.txt
+```
+
+**FalkorDB Backend - Podman:**
 ```bash
 # Connect to FalkorDB and export graph data
 podman exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
@@ -450,7 +548,7 @@ podman exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
     "MATCH ()-[r]->() RETURN r" > backups/relationships-export.txt
 ```
 
-**Docker:**
+**FalkorDB Backend - Docker:**
 ```bash
 # Connect to FalkorDB and export graph data
 docker exec pai-knowledge-falkordb redis-cli GRAPH.QUERY graphiti \
@@ -619,7 +717,33 @@ bun run status
 
 #### Quick Reference
 
-**Podman:**
+**Neo4j (Default) - Podman:**
+```bash
+# Backup commands
+podman exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backup.dump
+podman volume export pai-knowledge-neo4j-data > volume-backup.tar
+
+# Restore commands
+podman volume import pai-knowledge-neo4j-data < volume-backup.tar
+
+# Verification
+podman exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
+```
+
+**Neo4j (Default) - Docker:**
+```bash
+# Backup commands
+docker exec pai-knowledge-neo4j neo4j-admin database dump neo4j --to-stdout > backup.dump
+
+# Restore commands
+docker run --rm -v pai-knowledge-neo4j-data:/data -v $(pwd):/backup alpine \
+    sh -c "cd /data && tar xvf /backup/volume-backup.tar"
+
+# Verification
+docker exec pai-knowledge-neo4j cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
+```
+
+**FalkorDB Backend - Podman:**
 ```bash
 # Backup commands
 podman exec pai-knowledge-falkordb redis-cli BGSAVE              # Trigger save
@@ -635,7 +759,7 @@ podman exec pai-knowledge-falkordb redis-cli DBSIZE              # Check DB size
 podman exec pai-knowledge-falkordb redis-cli GRAPH.LIST          # List graphs
 ```
 
-**Docker:**
+**FalkorDB Backend - Docker:**
 ```bash
 # Backup commands
 docker exec pai-knowledge-falkordb redis-cli BGSAVE              # Trigger save
@@ -839,14 +963,14 @@ Change the GROUP_ID in your config and restart the server, or use group-specific
 
 ## Integration with Other PAI Systems
 
-### History System Integration
+### Memory System Integration
 
-If you have the PAI History System installed with the sync hook:
+The PAI Memory System (~/.claude/MEMORY/) automatically syncs with the sync hook:
 
 **What Gets Synced:**
-- Learning captures (problems you solved)
-- Research findings (subagent research)
-- Decision records (architectural choices)
+- Learning captures from LEARNING/ALGORITHM/ (task execution insights)
+- Learning captures from LEARNING/SYSTEM/ (PAI/tooling insights)
+- Research findings from RESEARCH/
 
 **Automatic Sync:**
 The hook runs at session start and syncs new captures automatically.
@@ -854,17 +978,17 @@ The hook runs at session start and syncs new captures automatically.
 **Manual Sync:**
 ```bash
 cd ~/.config/pai/Packs/madeinoz-knowledge-system
-bun run src/hooks/sync-history-to-knowledge.ts --verbose
+bun run src/hooks/sync-memory-to-knowledge.ts --verbose
 ```
 
 ### Checking Sync Status
 
 ```bash
 # Dry run - see what would be synced
-bun run src/hooks/sync-history-to-knowledge.ts --dry-run
+bun run src/hooks/sync-memory-to-knowledge.ts --dry-run
 
 # View sync history
-cat ~/.config/pai/history/.synced/sync-state.json
+cat ~/.claude/MEMORY/STATE/knowledge-sync/sync-state.json
 ```
 
 ## Search Caching

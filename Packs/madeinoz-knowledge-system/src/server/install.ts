@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * PAI Knowledge System Installation Script v2.1.0
+ * Madeinoz Knowledge System Installation Script v2.1.0
  *
  * Interactive installer that guides users through:
  * - LLM provider selection
@@ -120,14 +120,14 @@ interface DatabaseBackend {
  */
 const DATABASE_BACKENDS: DatabaseBackend[] = [
   {
-    id: "falkordb",
-    name: "FalkorDB (recommended)",
-    description: "Redis-based graph database with RediSearch. Simpler setup, lower resource usage.",
+    id: "neo4j",
+    name: "Neo4j (recommended)",
+    description: "Native graph database with Cypher queries. Better special character handling, richer query language.",
   },
   {
-    id: "neo4j",
-    name: "Neo4j",
-    description: "Native graph database with Cypher queries. Better special character handling.",
+    id: "falkordb",
+    name: "FalkorDB",
+    description: "Redis-based graph database with RediSearch. Simpler setup, lower resource usage.",
   },
 ];
 
@@ -223,7 +223,7 @@ class Installer {
     apiKeys: {},
     paiConfig: {
       GROUP_ID: "main",
-      DATABASE_TYPE: "falkordb",
+      DATABASE_TYPE: "neo4j",
       GRAPHITI_TELEMETRY_ENABLED: "false",
     },
   };
@@ -275,10 +275,10 @@ class Installer {
     // In non-interactive mode without existing key, check environment
     if (isNonInteractive) {
       // Try to get from environment variables
-      const envKey = keyName.includes("OpenAI") ? process.env.OPENAI_API_KEY || process.env.PAI_KNOWLEDGE_OPENAI_API_KEY
-        : keyName.includes("Anthropic") ? process.env.ANTHROPIC_API_KEY || process.env.PAI_KNOWLEDGE_ANTHROPIC_API_KEY
-        : keyName.includes("Google") ? process.env.GOOGLE_API_KEY || process.env.PAI_KNOWLEDGE_GOOGLE_API_KEY
-        : keyName.includes("Groq") ? process.env.GROQ_API_KEY || process.env.PAI_KNOWLEDGE_GROQ_API_KEY
+      const envKey = keyName.includes("OpenAI") ? process.env.OPENAI_API_KEY || process.env.MADEINOZ_KNOWLEDGE_OPENAI_API_KEY
+        : keyName.includes("Anthropic") ? process.env.ANTHROPIC_API_KEY || process.env.MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY
+        : keyName.includes("Google") ? process.env.GOOGLE_API_KEY || process.env.MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY
+        : keyName.includes("Groq") ? process.env.GROQ_API_KEY || process.env.MADEINOZ_KNOWLEDGE_GROQ_API_KEY
         : undefined;
 
       if (envKey) {
@@ -374,8 +374,8 @@ class Installer {
         }
       }
 
-      // Read PAI_KNOWLEDGE_* variables
-      const paiPrefix = "PAI_KNOWLEDGE_";
+      // Read MADEINOZ_KNOWLEDGE_* variables
+      const paiPrefix = "MADEINOZ_KNOWLEDGE_";
       let foundAny = false;
 
       for (const [key, value] of Object.entries(env)) {
@@ -407,7 +407,7 @@ class Installer {
       }
 
       if (foundAny) {
-        cli.success("Found PAI Knowledge System configuration in PAI .env");
+        cli.success("Found Madeinoz Knowledge System configuration in PAI .env");
         if (this.state.llmProvider) {
           cli.success(`LLM Provider from config: ${this.state.llmProvider}`);
         }
@@ -476,8 +476,8 @@ class Installer {
     let backend: string;
 
     if (isNonInteractive) {
-      // Use existing backend from state (loaded from config) or default to falkordb
-      backend = this.state.paiConfig.DATABASE_TYPE || "falkordb";
+      // Use existing backend from state (loaded from config) or default to neo4j
+      backend = this.state.paiConfig.DATABASE_TYPE || "neo4j";
       cli.dim(`  Using database backend: ${backend}`);
     } else {
       const result = await inquirer.prompt([
@@ -486,7 +486,7 @@ class Installer {
           name: "backend",
           message: "Select database backend:",
           choices: DATABASE_BACKENDS.map((b) => ({ name: b.name, value: b.id })),
-          default: this.state.paiConfig.DATABASE_TYPE || "falkordb",
+          default: this.state.paiConfig.DATABASE_TYPE || "neo4j",
         },
       ]);
       backend = result.backend;
@@ -583,7 +583,7 @@ class Installer {
     // Collect OpenAI key if needed
     if (provider.needsOpenAI) {
       this.state.apiKeys.OPENAI_API_KEY = await this.collectKey(
-        "PAI Knowledge System OpenAI",
+        "Madeinoz Knowledge System OpenAI",
         "https://platform.openai.com/api-keys",
         this.state.apiKeys.OPENAI_API_KEY
       );
@@ -891,7 +891,7 @@ class Installer {
         await this.containerManager.exec(["cp", "-r", skillSource, `${paiSkillsDir}/madeinoz-knowledge-system`], {
           quiet: false,
         });
-        cli.success("PAI Knowledge System skill installed");
+        cli.success("Madeinoz Knowledge System skill installed");
       } catch (error) {
         cli.error(`Failed to install PAI skill: ${String(error)}`);
       }
@@ -901,19 +901,20 @@ class Installer {
   }
 
   /**
-   * Step 11: Install History Sync Hook
+   * Step 11: Install Memory Sync Hook
    * Hooks install to ~/.claude/hooks/ where Claude Code reads them (PAI v2.1.0)
+   * Updated for Memory System v7.0 (2026-01-12)
    */
-  private async installHistorySyncHook(): Promise<void> {
+  private async installMemorySyncHook(): Promise<void> {
     cli.blank();
-    cli.header("Step 11: Installing History Sync Hook");
+    cli.header("Step 11: Installing Memory Sync Hook");
 
     cli.blank();
-    cli.info("The History Sync Hook automatically syncs learnings and research");
-    cli.info("from the PAI History System to your knowledge graph.");
+    cli.info("The Memory Sync Hook automatically syncs learnings and research");
+    cli.info("from the PAI Memory System to your knowledge graph.");
     cli.blank();
 
-    const installHook = await confirmWithDefault("Install the History Sync Hook?", true);
+    const installHook = await confirmWithDefault("Install the Memory Sync Hook?", true);
 
     if (!installHook) {
       cli.warning("Skipping hook installation. You can install it manually later.");
@@ -948,7 +949,8 @@ class Installer {
       const sourceHooksDir = join(packDir, "src", "hooks");
 
       const filesToCopy = [
-        { src: "sync-history-to-knowledge.ts", dest: "sync-history-to-knowledge.ts" },
+        { src: "sync-memory-to-knowledge.ts", dest: "sync-memory-to-knowledge.ts" },
+        { src: "sync-learning-realtime.ts", dest: "sync-learning-realtime.ts" },
         { src: "lib/frontmatter-parser.ts", dest: "lib/frontmatter-parser.ts" },
         { src: "lib/sync-state.ts", dest: "lib/sync-state.ts" },
         { src: "lib/knowledge-client.ts", dest: "lib/knowledge-client.ts" },
@@ -986,15 +988,18 @@ class Installer {
       }
 
       // Add SessionStart hook if not already present
-      const hookCommand = `bun run ${hooksDir}/sync-history-to-knowledge.ts`;
+      const hookCommand = `bun run ${hooksDir}/sync-memory-to-knowledge.ts`;
 
       if (!settings.hooks.SessionStart) {
         settings.hooks.SessionStart = [];
       }
 
-      // Check if hook already registered
+      // Check if hook already registered (check for both old and new names)
       const hookExists = settings.hooks.SessionStart.some((h: any) =>
-        h.hooks?.some((inner: any) => inner.command?.includes("sync-history-to-knowledge"))
+        h.hooks?.some((inner: any) =>
+          inner.command?.includes("sync-memory-to-knowledge") ||
+          inner.command?.includes("sync-history-to-knowledge")
+        )
       );
 
       if (!hookExists) {
@@ -1016,11 +1021,11 @@ class Installer {
       }
 
       cli.blank();
-      cli.success("History Sync Hook installed!");
+      cli.success("Memory Sync Hook installed!");
       cli.blank();
       cli.dim("The hook will:");
       cli.dim("  - Run on SessionStart");
-      cli.dim("  - Sync learnings/ and research/ to knowledge graph");
+      cli.dim("  - Sync LEARNING/ALGORITHM/, LEARNING/SYSTEM/, and RESEARCH/ to knowledge graph");
       cli.dim("  - Skip already-synced files");
       cli.dim("  - Gracefully handle MCP server being offline");
 
@@ -1060,7 +1065,7 @@ class Installer {
     cli.info("🎉 Next Steps:");
     cli.blank();
     cli.dim('1. Test the installation:');
-    cli.dim('   Remember that I\'m testing the PAI Knowledge System.');
+    cli.dim('   Remember that I\'m testing the Madeinoz Knowledge System.');
     cli.blank();
     cli.dim('2. Search your knowledge:');
     cli.dim('   What do I know about PAI?');
@@ -1068,8 +1073,8 @@ class Installer {
     cli.dim('3. Check system status:');
     cli.dim('   Show the knowledge graph status');
     cli.blank();
-    cli.dim('4. History sync (automatic):');
-    cli.dim('   Learnings and research from PAI History System');
+    cli.dim('4. Memory sync (automatic):');
+    cli.dim('   Learnings and research from PAI Memory System');
     cli.dim('   are automatically synced on session start.');
     cli.blank();
 
@@ -1091,7 +1096,7 @@ class Installer {
     cli.clear();
 
     const modeLabel = isUpdateMode ? "UPDATE" : isNonInteractive ? "NON-INTERACTIVE" : "v2.1.0";
-    cli.header(`PAI Knowledge System Installation (${modeLabel})`);
+    cli.header(`Madeinoz Knowledge System Installation (${modeLabel})`);
     cli.blank();
 
     // In non-interactive mode, always read existing config first
@@ -1139,7 +1144,7 @@ class Installer {
         process.exit(0);
       }
     } else if (!isNonInteractive) {
-      cli.info("This script will install and configure the PAI Knowledge System.");
+      cli.info("This script will install and configure the Madeinoz Knowledge System.");
       cli.blank();
       cli.info("Prerequisites:");
       cli.dim("  - Podman (must be installed)");
@@ -1163,7 +1168,7 @@ class Installer {
     await this.createConfiguration();
     await this.startServices();
     await this.installPAISkill();
-    await this.installHistorySyncHook();
+    await this.installMemorySyncHook();
     this.printSummary();
   }
 }

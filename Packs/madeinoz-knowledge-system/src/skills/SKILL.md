@@ -180,7 +180,7 @@ PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=false
 ## Related Documentation
 
 - `${PAI_DIR}/skills/CORE/SkillSystem.md` - Canonical skill structure guide
-- `${PAI_DIR}/skills/CORE/HistorySystem.md` - PAI's history documentation
+- `${PAI_DIR}/skills/CORE/SYSTEM/MEMORYSYSTEM.md` - PAI's memory documentation
 - [Graphiti Documentation](https://help.getzep.com/graphiti)
 - [Podman Configuration](../README.md)
 

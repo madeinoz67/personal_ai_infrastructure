@@ -23,8 +23,8 @@ This checklist ensures:
 - End-to-end functionality is operational
 
 **Supports two database backends:**
-- **FalkorDB** (default): Redis-based graph database with RediSearch
-- **Neo4j**: Native graph database with Cypher queries
+- **Neo4j** (default): Native graph database with Cypher queries
+- **FalkorDB**: Redis-based graph database with RediSearch
 
 **Run through each section in order. Mark items as PASS or FAIL.**
 
@@ -54,7 +54,7 @@ docker ps --format "{{.Names}}" | grep pai-knowledge
 **Results:**
 - If `DATABASE_TYPE=neo4j` OR container `pai-knowledge-neo4j` is running → **Neo4j Backend**
 - If `DATABASE_TYPE=falkordb` OR container `pai-knowledge-falkordb` is running → **FalkorDB Backend**
-- Default (not set) → **FalkorDB Backend**
+- Default (not set) → **Neo4j Backend**
 
 **Record your backend:** [ ] FalkorDB / [ ] Neo4j
 
@@ -232,7 +232,8 @@ grep "PAI_KNOWLEDGE_" config/.env.example | head -5
 
 ### 1.8 Hook Files
 
-- [ ] `src/hooks/sync-history-to-knowledge.ts` exists
+- [ ] `src/hooks/sync-memory-to-knowledge.ts` exists
+- [ ] `src/hooks/sync-learning-realtime.ts` exists
 - [ ] `src/hooks/lib/` directory exists with support files
 
 **Verification commands:**
@@ -241,7 +242,7 @@ ls -la src/hooks/
 ls -la src/hooks/lib/
 ```
 
-**Expected result:** Hook script and lib directory with frontmatter-parser.ts, knowledge-client.ts, lucene.ts, sync-state.ts
+**Expected result:** Hook scripts and lib directory with frontmatter-parser.ts, knowledge-client.ts, lucene.ts, sync-state.ts
 
 ---
 
@@ -1013,23 +1014,23 @@ Check that these tools are available:
 
 ---
 
-## Section 8: History Sync Hook Verification
+## Section 8: Memory Sync Hook Verification
 
-Verify the history sync hook is properly installed (if using pai-history-system).
+Verify the memory sync hook is properly installed for syncing learnings and research to the knowledge graph.
 
 ### 8.1 Hook Files Installed
 
-- [ ] **Hook script exists in PAI hooks directory**
+- [ ] **Hook scripts exist in PAI hooks directory**
 - [ ] **Hook lib files exist**
 
 **Verification commands:**
 ```bash
-PAI_HOOKS="${PAI_DIR:-$HOME/.claude}/hooks"
+PAI_HOOKS="$HOME/.claude/hooks"
 ls -la "$PAI_HOOKS/"
 ls -la "$PAI_HOOKS/lib/"
 ```
 
-**Expected result:** sync-history-to-knowledge.ts and lib/ directory with:
+**Expected result:** sync-memory-to-knowledge.ts, sync-learning-realtime.ts, and lib/ directory with:
 - frontmatter-parser.ts
 - knowledge-client.ts
 - lucene.ts (Lucene query sanitization for hyphenated group_ids)
@@ -1043,9 +1044,8 @@ ls -la "$PAI_HOOKS/lib/"
 
 **Verification commands:**
 ```bash
-PAI_SETTINGS="${PAI_DIR:-$HOME/.claude}/settings.json"
-if [ -f "$PAI_SETTINGS" ]; then
-    grep "sync-history-to-knowledge" "$PAI_SETTINGS"
+if [ -f "$HOME/.claude/settings.json" ]; then
+    grep "sync-memory-to-knowledge" "$HOME/.claude/settings.json"
 else
     echo "settings.json not found"
 fi
@@ -1061,8 +1061,8 @@ fi
 
 **Verification commands:**
 ```bash
-HISTORY_DIR="${PAI_DIR:-$HOME/.claude}/history"
-ls -la "$HISTORY_DIR/.synced/" 2>/dev/null || echo "Sync state directory not yet created (will be created on first sync)"
+MEMORY_DIR="$HOME/.claude/MEMORY"
+ls -la "$MEMORY_DIR/STATE/knowledge-sync/" 2>/dev/null || echo "Sync state directory not yet created (will be created on first sync)"
 ```
 
 **Expected result:** Directory exists or will be created on first sync
@@ -1076,7 +1076,7 @@ ls -la "$HISTORY_DIR/.synced/" 2>/dev/null || echo "Sync state directory not yet
 **Verification commands:**
 ```bash
 cd /path/to/madeinoz-knowledge-system
-bun run src/hooks/sync-history-to-knowledge.ts --dry-run --verbose
+bun run src/hooks/sync-memory-to-knowledge.ts --dry-run --verbose
 ```
 
 **Expected result:** Hook completes without errors, shows what would be synced
@@ -1191,7 +1191,7 @@ grep -i "beyond.*scope\|implement.*your.*own\|left as.*exercise" \
 - [ ] **Workflows included** (7 complete workflows in `src/skills/workflows/`)
 - [ ] **Skill tools included** (start.ts, stop.ts, status.ts, logs.ts in `src/skills/tools/`)
 - [ ] **Pack tools included** (install.ts, diagnose.ts in `src/server/`)
-- [ ] **Hooks included** (sync-history-to-knowledge.ts in `src/hooks/`)
+- [ ] **Hooks included** (sync-memory-to-knowledge.ts, sync-learning-realtime.ts in `src/hooks/`)
 - [ ] **Installation included** (`INSTALL.md` with all steps and database backend selection)
 - [ ] **Configuration included** (`config/.env.example` with all variables for both backends)
 - [ ] **Documentation included** (README, INSTALL, VERIFY)
@@ -1282,7 +1282,7 @@ For a successful installation, you must have:
 
 **Important (at least 80% pass):**
 - Integration with Claude Code (Section 7)
-- History sync hook installed (Section 8) - if using pai-history-system
+- Memory sync hook installed (Section 8) - for automatic knowledge sync
 - Documentation complete (Section 9)
 
 ### Failure Actions

@@ -26,7 +26,7 @@
 - **1GB disk space** for graph database
 
 **Pack Dependencies:**
-- **pai-history-system** (Required) - The history sync hook reads captured learnings, research, and decisions from the PAI History System and syncs them to the knowledge graph. Install this pack first.
+- None - The memory sync hook reads from the PAI Memory System (`~/.claude/MEMORY/`) which is part of the core PAI installation.
 
 **API Key Requirements:**
 - OpenAI API key (recommended): Get from https://platform.openai.com/api-keys
@@ -40,7 +40,7 @@
 
 > **FOR AI AGENTS:** Run ALL pre-installation checks before proceeding. If ANY check shows a conflict or missing dependency:
 > - **Port in use**: Stop the existing service or choose a different port
-> - **Missing dependency**: Install the dependency first (pai-history-system, Podman, Bun)
+> - **Missing dependency**: Install the dependency first (Podman, Bun)
 > - **Existing installation**: Backup existing files, then proceed with update
 > - **Missing API key**: Prompt user to provide API key before continuing
 
@@ -350,13 +350,13 @@ for line in lines:
         existing_vars[match.group(1)] = match.group(2)
 
 # Variables to add (only if not already present) - all use PAI_KNOWLEDGE_* prefix
-# Note: DATABASE_TYPE defaults to 'falkordb' but can be set to 'neo4j'
+# Note: DATABASE_TYPE defaults to 'neo4j' but can be set to 'falkordb'
 vars_to_add = {
     'PAI_KNOWLEDGE_LLM_PROVIDER': os.getenv('PAI_KNOWLEDGE_LLM_PROVIDER', os.getenv('LLM_PROVIDER', 'openai')),
     'PAI_KNOWLEDGE_EMBEDDER_PROVIDER': os.getenv('PAI_KNOWLEDGE_EMBEDDER_PROVIDER', os.getenv('EMBEDDER_PROVIDER', 'openai')),
     'PAI_KNOWLEDGE_MODEL_NAME': os.getenv('PAI_KNOWLEDGE_MODEL_NAME', os.getenv('MODEL_NAME', 'gpt-4o-mini')),
-    # Database backend: 'falkordb' (default) or 'neo4j'
-    'PAI_KNOWLEDGE_DATABASE_TYPE': os.getenv('PAI_KNOWLEDGE_DATABASE_TYPE', 'falkordb'),
+    # Database backend: 'neo4j' (default) or 'falkordb'
+    'PAI_KNOWLEDGE_DATABASE_TYPE': os.getenv('PAI_KNOWLEDGE_DATABASE_TYPE', 'neo4j'),
     # FalkorDB configuration (used when DATABASE_TYPE=falkordb)
     'PAI_KNOWLEDGE_FALKORDB_HOST': 'pai-knowledge-falkordb',
     'PAI_KNOWLEDGE_FALKORDB_PORT': '6379',
@@ -423,17 +423,17 @@ The PAI Knowledge System supports two database backends:
 
 | Backend | Description | Best For |
 |---------|-------------|----------|
-| **FalkorDB** (default) | Redis-based graph database with RediSearch | Simple setup, lower resource usage |
-| **Neo4j** | Native graph database with Cypher queries | Better special character handling, richer query language |
+| **Neo4j** (default) | Native graph database with Cypher queries | Better special character handling, richer query language |
+| **FalkorDB** | Redis-based graph database with RediSearch | Simple setup, lower resource usage |
 
-To use Neo4j instead of FalkorDB, set the environment variable before starting:
+Neo4j is the default backend. To use FalkorDB instead, set the environment variable before starting:
 ```bash
-export PAI_KNOWLEDGE_DATABASE_TYPE=neo4j
+export PAI_KNOWLEDGE_DATABASE_TYPE=falkordb
 ```
 
 Or update your PAI `.env` file:
 ```bash
-PAI_KNOWLEDGE_DATABASE_TYPE=neo4j
+PAI_KNOWLEDGE_DATABASE_TYPE=falkordb
 ```
 
 Launch the Graphiti MCP server:
@@ -486,11 +486,11 @@ fi
 If you prefer Docker Compose, use the appropriate compose file for your backend:
 
 ```bash
-# For FalkorDB backend (default)
-docker compose -f src/server/docker-compose.yml up -d
-
-# For Neo4j backend (RECOMMENDED - includes search-all-groups patch)
+# For Neo4j backend (default - includes search-all-groups patch)
 docker compose -f src/server/docker-compose-neo4j.yml up -d
+
+# For FalkorDB backend (alternative)
+docker compose -f src/server/docker-compose.yml up -d
 
 # Check status
 bun run src/skills/tools/status.ts
@@ -984,30 +984,28 @@ echo "  - Status: bun run src/skills/tools/status.ts"
 
 ---
 
-## Step 9: Install History Sync Hook (Optional but Recommended)
+## Step 9: Install Memory Sync Hook (Optional but Recommended)
 
-The history sync hook automatically syncs captured learnings, research, and decisions from the PAI History System to the knowledge graph. This provides a seamless integration where your daily captures become searchable knowledge.
+The memory sync hook automatically syncs captured learnings and research from the PAI Memory System to the knowledge graph. This provides a seamless integration where your daily captures become searchable knowledge.
 
 **Prerequisites:**
-- PAI History System (`pai-history-system`) must be installed and configured
-- History directory at `~/.config/pai/history/` should exist with content
+- PAI Memory System directory at `~/.claude/MEMORY/` should exist (created by PAI core)
 
 ```bash
 echo ""
-echo "🔗 Installing History Sync Hook"
+echo "🔗 Installing Memory Sync Hook"
 echo "================================"
 echo ""
 
-# Verify history system is installed
-HISTORY_DIR="${PAI_DIR:-$HOME/.claude}/history"
-if [ ! -d "$HISTORY_DIR" ]; then
-    echo "⚠️  History directory not found at: $HISTORY_DIR"
-    echo "   Install pai-history-system first, or skip this step."
+# Verify memory system directory exists
+MEMORY_DIR="$HOME/.claude/MEMORY"
+if [ ! -d "$MEMORY_DIR" ]; then
+    echo "⚠️  Memory directory not found at: $MEMORY_DIR"
+    echo "   The directory will be created when you start using PAI."
     echo "   The hook can be installed later with: bun run src/server/install.ts"
-    exit 0
 fi
 
-echo "✓ History directory found: $HISTORY_DIR"
+echo "✓ Memory directory: $MEMORY_DIR"
 
 # Hooks install to ~/.claude/hooks/ (where Claude Code reads them)
 PAI_HOOKS_DIR="$HOME/.claude/hooks"
@@ -1016,13 +1014,14 @@ mkdir -p "$PAI_HOOKS_DIR/lib"
 echo "Installing hook files to: $PAI_HOOKS_DIR"
 
 # Copy hook implementation files
-cp src/hooks/sync-history-to-knowledge.ts "$PAI_HOOKS_DIR/"
+cp src/hooks/sync-memory-to-knowledge.ts "$PAI_HOOKS_DIR/"
+cp src/hooks/sync-learning-realtime.ts "$PAI_HOOKS_DIR/"
 cp -r src/hooks/lib/* "$PAI_HOOKS_DIR/lib/"
 
 echo "✓ Hook files installed"
 
 # Create sync state directory
-SYNC_STATE_DIR="$HISTORY_DIR/.synced"
+SYNC_STATE_DIR="$MEMORY_DIR/STATE/knowledge-sync"
 mkdir -p "$SYNC_STATE_DIR"
 echo "✓ Created sync state directory: $SYNC_STATE_DIR"
 
@@ -1052,7 +1051,7 @@ if (!settings.hooks.SessionStart) settings.hooks.SessionStart = [];
 
 // Check if hook already registered
 const hookExists = settings.hooks.SessionStart.some(h =>
-    h.hooks?.some(hook => hook.command?.includes('sync-history-to-knowledge'))
+    h.hooks?.some(hook => hook.command?.includes('sync-memory-to-knowledge'))
 );
 
 if (!hookExists) {
@@ -1060,7 +1059,7 @@ if (!hookExists) {
         matcher: "*",
         hooks: [{
             type: "command",
-            command: `bun run ${process.env.HOME}/.claude/hooks/sync-history-to-knowledge.ts`,
+            command: `bun run ${process.env.HOME}/.claude/hooks/sync-memory-to-knowledge.ts`,
             timeout: 30000
         }]
     });
@@ -1077,23 +1076,23 @@ echo "Hook installation complete!"
 echo ""
 echo "What the hook does:"
 echo "  - Runs automatically when a Claude Code session starts"
-echo "  - Scans history directories: learnings/, research/, decisions/"
+echo "  - Scans memory directories: LEARNING/ALGORITHM/, LEARNING/SYSTEM/, RESEARCH/"
 echo "  - Syncs new captures to the knowledge graph"
 echo "  - Tracks synced files to avoid duplicates"
 echo ""
 echo "Manual sync commands:"
-echo "  - Sync all:    bun run src/hooks/sync-history-to-knowledge.ts --all"
-echo "  - Dry run:     bun run src/hooks/sync-history-to-knowledge.ts --dry-run"
-echo "  - Verbose:     bun run src/hooks/sync-history-to-knowledge.ts --verbose"
+echo "  - Sync all:    bun run src/hooks/sync-memory-to-knowledge.ts --all"
+echo "  - Dry run:     bun run src/hooks/sync-memory-to-knowledge.ts --dry-run"
+echo "  - Verbose:     bun run src/hooks/sync-memory-to-knowledge.ts --verbose"
 ```
 
 **Verifying the Hook:**
 
 ```bash
 # Check hook files are installed
-PAI_HOOKS="${PAI_DIR:-$HOME/.claude}/hooks"
+PAI_HOOKS="$HOME/.claude/hooks"
 
-if [ -f "$PAI_HOOKS/sync-history-to-knowledge.ts" ]; then
+if [ -f "$PAI_HOOKS/sync-memory-to-knowledge.ts" ]; then
     echo "✓ Hook script installed"
 else
     echo "✗ Hook script not found"
@@ -1117,7 +1116,7 @@ for file in "${REQUIRED_LIB_FILES[@]}"; do
 done
 
 # Check hook is registered
-if grep -q "sync-history-to-knowledge" "${PAI_DIR:-$HOME/.claude}/settings.json" 2>/dev/null; then
+if grep -q "sync-memory-to-knowledge" "$HOME/.claude/settings.json" 2>/dev/null; then
     echo "✓ Hook registered in settings.json"
 else
     echo "✗ Hook not registered"
@@ -1126,12 +1125,12 @@ fi
 # Test hook manually (dry run)
 echo ""
 echo "Running hook in dry-run mode..."
-bun run src/hooks/sync-history-to-knowledge.ts --dry-run --verbose
+bun run src/hooks/sync-memory-to-knowledge.ts --dry-run --verbose
 ```
 
 **Sync State:**
 
-The hook tracks which files have been synced in `~/.claude/history/.synced/sync-state.json`:
+The hook tracks which files have been synced in `~/.claude/MEMORY/STATE/knowledge-sync/sync-state.json`:
 
 ```json
 {
@@ -1156,7 +1155,7 @@ The hook tracks which files have been synced in `~/.claude/history/.synced/sync-
 | `filepath` | string | Absolute path to the synced file |
 | `synced_at` | string | ISO timestamp when file was synced |
 | `episode_uuid` | string? | UUID returned by knowledge graph (if successful) |
-| `capture_type` | string | Type of capture: LEARNING, SESSION, RESEARCH, DECISION |
+| `capture_type` | string | Type of capture: LEARNING, RESEARCH |
 | `content_hash` | string? | SHA-256 hash of episode_body for content-level deduplication |
 
 **Troubleshooting Hook Issues:**
@@ -1167,7 +1166,7 @@ The hook tracks which files have been synced in `~/.claude/history/.synced/sync-
 | Files not syncing | Run with `--verbose` to see what's being skipped |
 | Duplicate syncs | Check sync-state.json or delete it to resync all |
 | MCP server offline | Hook gracefully skips when server unavailable |
-| Permission errors | Ensure hook script is readable: `chmod 644 sync-history-to-knowledge.ts` |
+| Permission errors | Ensure hook script is readable: `chmod 644 sync-memory-to-knowledge.ts` |
 
 ---
 

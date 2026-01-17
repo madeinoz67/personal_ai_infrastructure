@@ -1,5 +1,7 @@
-# Podman Compose configuration for PAI Knowledge System
+# Podman Compose configuration for Madeinoz Knowledge System
 # Uses a shared public network for both services
+
+name: madeinoz-knowledge-system
 #
 # Services:
 #   - falkordb: Graph database backend
@@ -12,11 +14,11 @@
 #   4. Access FalkorDB web UI at: http://localhost:3000
 
 networks:
-  pai-knowledge-net:
+  madeinoz-knowledge-net:
     external: true  # Use existing public network created by install script
 
 volumes:
-  pai-knowledge-falkordb-data:
+  madeinoz-knowledge-falkordb-data:
     external: true  # Use existing volume with persisted data
 
 services:
@@ -24,14 +26,14 @@ services:
   # On public network, web UI exposed to host
   falkordb:
     image: falkordb/falkordb:latest
-    container_name: pai-knowledge-falkordb
+    container_name: madeinoz-knowledge-falkordb
     restart: unless-stopped
     networks:
-      - pai-knowledge-net
+      - madeinoz-knowledge-net
     ports:
       - "3000:3000"  # FalkorDB web UI
     volumes:
-      - pai-knowledge-falkordb-data:/data
+      - madeinoz-knowledge-falkordb-data:/data
     environment:
       - FALKORDB_PASSWORD=${FALKORDB_PASSWORD:-}
     healthcheck:
@@ -45,10 +47,10 @@ services:
   # Exposed to host on port 8000 (MCP SSE endpoint)
   graphiti-mcp:
     image: falkordb/graphiti-knowledge-graph-mcp:latest
-    container_name: pai-knowledge-graph-mcp
+    container_name: madeinoz-knowledge-graph-mcp
     restart: unless-stopped
     networks:
-      - pai-knowledge-net
+      - madeinoz-knowledge-net
     ports:
       - "8000:8000"  # MCP HTTP endpoint
     environment:

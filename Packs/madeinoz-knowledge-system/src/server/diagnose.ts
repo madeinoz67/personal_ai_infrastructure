@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * PAI Knowledge System Diagnostics Script
+ * Madeinoz Knowledge System Diagnostics Script
  *
  * Checks installation and provides troubleshooting guidance.
  * Performs comprehensive health checks on the system.
@@ -185,7 +185,7 @@ class Diagnostics {
       return;
     }
 
-    const containerName = "pai-knowledge-graph-mcp";
+    const containerName = "madeinoz-knowledge-graph-mcp";
     const isRunning = await containerManager.isContainerRunning(containerName);
 
     if (isRunning) {
@@ -353,7 +353,7 @@ class Diagnostics {
     this.printHeader("Check 7: Resource Usage");
 
     const containerManager = createContainerManager();
-    const containerName = "pai-knowledge-graph-mcp";
+    const containerName = "madeinoz-knowledge-graph-mcp";
 
     if (await containerManager.isContainerRunning(containerName)) {
       try {
@@ -395,10 +395,10 @@ class Diagnostics {
     if (this.issues === 0) {
       cli.success("✓ All checks passed! System is healthy.");
       cli.blank();
-      cli.info("Your PAI Knowledge System is ready to use.");
+      cli.info("Your Madeinoz Knowledge System is ready to use.");
       cli.blank();
       cli.info("Try these commands:");
-      cli.dim('  Remember that I\'ve successfully installed the PAI Knowledge System.');
+      cli.dim('  Remember that I\'ve successfully installed the Madeinoz Knowledge System.');
       cli.dim('  What do I know about PAI?');
       cli.dim('  Show the knowledge graph status');
     } else {
@@ -452,7 +452,7 @@ class Diagnostics {
    */
   async run(): Promise<void> {
     cli.clear();
-    cli.header("PAI Knowledge System Diagnostics");
+    cli.header("Madeinoz Knowledge System Diagnostics");
     cli.blank();
 
     await this.checkPodman();

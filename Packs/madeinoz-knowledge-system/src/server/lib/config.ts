@@ -1,8 +1,8 @@
 /**
  * Configuration Loader Library
  *
- * Handles loading and mapping environment variables for the PAI Knowledge System.
- * Supports PAI_KNOWLEDGE_* prefixed variables and maps them to standard container env vars.
+ * Handles loading and mapping environment variables for the Madeinoz Knowledge System.
+ * Supports MADEINOZ_KNOWLEDGE_* prefixed variables and maps them to standard container env vars.
  */
 
 import { join } from "path";
@@ -53,7 +53,7 @@ export interface KnowledgeConfig {
   MCP_SERVER_PORT: string;
   FALKORDB_UI_PORT: string;
 
-  // Original PAI_KNOWLEDGE_* prefixed values (for reference)
+  // Original MADEINOZ_KNOWLEDGE_* prefixed values (for reference)
   PAI_PREFIXES?: Record<string, string | undefined>;
 }
 
@@ -66,15 +66,15 @@ const DEFAULTS: Record<string, string> = {
   MODEL_NAME: "gpt-4o-mini",
   SEMAPHORE_LIMIT: "10",
   GROUP_ID: "main",
-  DATABASE_TYPE: "falkordb",
+  DATABASE_TYPE: "neo4j",
   GRAPHITI_TELEMETRY_ENABLED: "false",
-  NETWORK_NAME: "pai-knowledge-net",
-  FALKORDB_CONTAINER: "pai-knowledge-falkordb",
-  MCP_CONTAINER: "pai-knowledge-graph-mcp",
-  VOLUME_NAME: "pai-knowledge-falkordb-data",
+  NETWORK_NAME: "madeinoz-knowledge-net",
+  FALKORDB_CONTAINER: "madeinoz-knowledge-falkordb",
+  MCP_CONTAINER: "madeinoz-knowledge-graph-mcp",
+  VOLUME_NAME: "madeinoz-knowledge-falkordb-data",
   MCP_SERVER_PORT: "8000",
   FALKORDB_UI_PORT: "3000",
-  FALKORDB_HOST: "pai-knowledge-falkordb",
+  FALKORDB_HOST: "madeinoz-knowledge-falkordb",
   FALKORDB_PORT: "6379",
   NEO4J_URI: "bolt://localhost:7687",
   NEO4J_USER: "neo4j",
@@ -186,7 +186,7 @@ export class ConfigLoader {
   }
 
   /**
-   * Map PAI_KNOWLEDGE_* prefixed variables to standard names
+   * Map MADEINOZ_KNOWLEDGE_* prefixed variables to standard names
    */
   private mapPrefixes(env: Record<string, string>): {
     mapped: Record<string, string>;
@@ -195,32 +195,32 @@ export class ConfigLoader {
     const mapped: Record<string, string> = { ...env };
     const originals: Record<string, string | undefined> = {};
 
-    // Mapping of PAI_KNOWLEDGE_* -> standard variable
+    // Mapping of MADEINOZ_KNOWLEDGE_* -> standard variable
     const mappings: Record<string, string> = {
       // API Keys
-      PAI_KNOWLEDGE_OPENAI_API_KEY: "OPENAI_API_KEY",
-      PAI_KNOWLEDGE_ANTHROPIC_API_KEY: "ANTHROPIC_API_KEY",
-      PAI_KNOWLEDGE_GOOGLE_API_KEY: "GOOGLE_API_KEY",
-      PAI_KNOWLEDGE_GROQ_API_KEY: "GROQ_API_KEY",
-      PAI_KNOWLEDGE_VOYAGE_API_KEY: "VOYAGE_API_KEY",
+      MADEINOZ_KNOWLEDGE_OPENAI_API_KEY: "OPENAI_API_KEY",
+      MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY: "ANTHROPIC_API_KEY",
+      MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY: "GOOGLE_API_KEY",
+      MADEINOZ_KNOWLEDGE_GROQ_API_KEY: "GROQ_API_KEY",
+      MADEINOZ_KNOWLEDGE_VOYAGE_API_KEY: "VOYAGE_API_KEY",
       // LLM Configuration
-      PAI_KNOWLEDGE_LLM_PROVIDER: "LLM_PROVIDER",
-      PAI_KNOWLEDGE_EMBEDDER_PROVIDER: "EMBEDDER_PROVIDER",
-      PAI_KNOWLEDGE_MODEL_NAME: "MODEL_NAME",
+      MADEINOZ_KNOWLEDGE_LLM_PROVIDER: "LLM_PROVIDER",
+      MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER: "EMBEDDER_PROVIDER",
+      MADEINOZ_KNOWLEDGE_MODEL_NAME: "MODEL_NAME",
       // Performance
-      PAI_KNOWLEDGE_SEMAPHORE_LIMIT: "SEMAPHORE_LIMIT",
+      MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT: "SEMAPHORE_LIMIT",
       // Knowledge Graph
-      PAI_KNOWLEDGE_GROUP_ID: "GROUP_ID",
-      PAI_KNOWLEDGE_DATABASE_TYPE: "DATABASE_TYPE",
-      PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED: "GRAPHITI_TELEMETRY_ENABLED",
+      MADEINOZ_KNOWLEDGE_GROUP_ID: "GROUP_ID",
+      MADEINOZ_KNOWLEDGE_DATABASE_TYPE: "DATABASE_TYPE",
+      MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED: "GRAPHITI_TELEMETRY_ENABLED",
       // FalkorDB
-      PAI_KNOWLEDGE_FALKORDB_HOST: "FALKORDB_HOST",
-      PAI_KNOWLEDGE_FALKORDB_PORT: "FALKORDB_PORT",
-      PAI_KNOWLEDGE_FALKORDB_PASSWORD: "FALKORDB_PASSWORD",
+      MADEINOZ_KNOWLEDGE_FALKORDB_HOST: "FALKORDB_HOST",
+      MADEINOZ_KNOWLEDGE_FALKORDB_PORT: "FALKORDB_PORT",
+      MADEINOZ_KNOWLEDGE_FALKORDB_PASSWORD: "FALKORDB_PASSWORD",
       // Neo4j
-      PAI_KNOWLEDGE_NEO4J_URI: "NEO4J_URI",
-      PAI_KNOWLEDGE_NEO4J_USER: "NEO4J_USER",
-      PAI_KNOWLEDGE_NEO4J_PASSWORD: "NEO4J_PASSWORD",
+      MADEINOZ_KNOWLEDGE_NEO4J_URI: "NEO4J_URI",
+      MADEINOZ_KNOWLEDGE_NEO4J_USER: "NEO4J_USER",
+      MADEINOZ_KNOWLEDGE_NEO4J_PASSWORD: "NEO4J_PASSWORD",
     };
 
     // Apply mappings
@@ -266,7 +266,7 @@ export class ConfigLoader {
     // Load .env file
     const env = await this.loadEnv();
 
-    // Map PAI_KNOWLEDGE_* prefixes
+    // Map MADEINOZ_KNOWLEDGE_* prefixes
     const { mapped, originals } = this.mapPrefixes(env);
 
     // Build configuration object
@@ -317,7 +317,7 @@ export class ConfigLoader {
       MCP_SERVER_PORT: this.getEnvValue(mapped, "MCP_SERVER_PORT", DEFAULTS.MCP_SERVER_PORT),
       FALKORDB_UI_PORT: this.getEnvValue(mapped, "FALKORDB_UI_PORT", DEFAULTS.FALKORDB_UI_PORT),
 
-      // Store original PAI_KNOWLEDGE_* values
+      // Store original MADEINOZ_KNOWLEDGE_* values
       PAI_PREFIXES: originals,
     };
 
@@ -397,86 +397,86 @@ export class ConfigLoader {
    */
   async save(config: Partial<KnowledgeConfig>): Promise<void> {
     // Build new content
-    let newContent = "# PAI Knowledge System Configuration\n";
+    let newContent = "# Madeinoz Knowledge System Configuration\n";
     newContent += `# Generated: ${new Date().toISOString()}\n`;
     newContent += "\n";
 
-    // Add API Keys (all use PAI_KNOWLEDGE_* prefix)
+    // Add API Keys (all use MADEINOZ_KNOWLEDGE_* prefix)
     if (config.OPENAI_API_KEY) {
-      newContent += `PAI_KNOWLEDGE_OPENAI_API_KEY=${config.OPENAI_API_KEY}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=${config.OPENAI_API_KEY}\n`;
     }
     if (config.ANTHROPIC_API_KEY) {
-      newContent += `PAI_KNOWLEDGE_ANTHROPIC_API_KEY=${config.ANTHROPIC_API_KEY}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY=${config.ANTHROPIC_API_KEY}\n`;
     }
     if (config.GOOGLE_API_KEY) {
-      newContent += `PAI_KNOWLEDGE_GOOGLE_API_KEY=${config.GOOGLE_API_KEY}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY=${config.GOOGLE_API_KEY}\n`;
     }
     if (config.GROQ_API_KEY) {
-      newContent += `PAI_KNOWLEDGE_GROQ_API_KEY=${config.GROQ_API_KEY}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_GROQ_API_KEY=${config.GROQ_API_KEY}\n`;
     }
     if (config.VOYAGE_API_KEY) {
-      newContent += `PAI_KNOWLEDGE_VOYAGE_API_KEY=${config.VOYAGE_API_KEY}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_VOYAGE_API_KEY=${config.VOYAGE_API_KEY}\n`;
     }
 
     newContent += "\n";
 
     // Add LLM Configuration
     if (config.LLM_PROVIDER) {
-      newContent += `PAI_KNOWLEDGE_LLM_PROVIDER=${config.LLM_PROVIDER}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_LLM_PROVIDER=${config.LLM_PROVIDER}\n`;
     }
     if (config.EMBEDDER_PROVIDER) {
-      newContent += `PAI_KNOWLEDGE_EMBEDDER_PROVIDER=${config.EMBEDDER_PROVIDER}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER=${config.EMBEDDER_PROVIDER}\n`;
     }
     if (config.MODEL_NAME) {
-      newContent += `PAI_KNOWLEDGE_MODEL_NAME=${config.MODEL_NAME}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_MODEL_NAME=${config.MODEL_NAME}\n`;
     }
 
     newContent += "\n";
 
     // Add Performance Configuration
     if (config.SEMAPHORE_LIMIT) {
-      newContent += `PAI_KNOWLEDGE_SEMAPHORE_LIMIT=${config.SEMAPHORE_LIMIT}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=${config.SEMAPHORE_LIMIT}\n`;
     }
 
     newContent += "\n";
 
     // Add Knowledge Graph Configuration
     if (config.GROUP_ID) {
-      newContent += `PAI_KNOWLEDGE_GROUP_ID=${config.GROUP_ID}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_GROUP_ID=${config.GROUP_ID}\n`;
     }
 
     if (config.DATABASE_TYPE) {
-      newContent += `PAI_KNOWLEDGE_DATABASE_TYPE=${config.DATABASE_TYPE}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_DATABASE_TYPE=${config.DATABASE_TYPE}\n`;
     }
 
     if (config.GRAPHITI_TELEMETRY_ENABLED) {
-      newContent += `PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=${config.GRAPHITI_TELEMETRY_ENABLED}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=${config.GRAPHITI_TELEMETRY_ENABLED}\n`;
     }
 
     newContent += "\n";
 
     // Add Database Configuration (FalkorDB)
     if (config.FALKORDB_HOST) {
-      newContent += `PAI_KNOWLEDGE_FALKORDB_HOST=${config.FALKORDB_HOST}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_FALKORDB_HOST=${config.FALKORDB_HOST}\n`;
     }
     if (config.FALKORDB_PORT) {
-      newContent += `PAI_KNOWLEDGE_FALKORDB_PORT=${config.FALKORDB_PORT}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_FALKORDB_PORT=${config.FALKORDB_PORT}\n`;
     }
     if (config.FALKORDB_PASSWORD) {
-      newContent += `PAI_KNOWLEDGE_FALKORDB_PASSWORD=${config.FALKORDB_PASSWORD}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_FALKORDB_PASSWORD=${config.FALKORDB_PASSWORD}\n`;
     }
 
     newContent += "\n";
 
     // Add Database Configuration (Neo4j)
     if (config.NEO4J_URI) {
-      newContent += `PAI_KNOWLEDGE_NEO4J_URI=${config.NEO4J_URI}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_NEO4J_URI=${config.NEO4J_URI}\n`;
     }
     if (config.NEO4J_USER) {
-      newContent += `PAI_KNOWLEDGE_NEO4J_USER=${config.NEO4J_USER}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_NEO4J_USER=${config.NEO4J_USER}\n`;
     }
     if (config.NEO4J_PASSWORD) {
-      newContent += `PAI_KNOWLEDGE_NEO4J_PASSWORD=${config.NEO4J_PASSWORD}\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_NEO4J_PASSWORD=${config.NEO4J_PASSWORD}\n`;
     }
 
     // Write to file

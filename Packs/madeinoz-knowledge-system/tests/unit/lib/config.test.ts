@@ -95,11 +95,11 @@ GROUP_ID=my knowledge group
       expect(config.GROUP_ID).toBe("my knowledge group");
     });
 
-    it("should load PAI_KNOWLEDGE_ prefixed variables", async () => {
+    it("should load MADEINOZ_KNOWLEDGE_ prefixed variables", async () => {
       const envContent = `
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-pai-key-789
-PAI_KNOWLEDGE_LLM_PROVIDER=groq
-PAI_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-pai-key-789
+MADEINOZ_KNOWLEDGE_LLM_PROVIDER=groq
+MADEINOZ_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
 `;
 
       ctx.mockFile("config/.env", envContent);
@@ -112,9 +112,9 @@ PAI_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
       expect(config.MODEL_NAME).toBe("llama-3.3-70b-versatile");
     });
 
-    it("should map PAI_KNOWLEDGE_OPENAI_API_KEY to OPENAI_API_KEY", async () => {
+    it("should map MADEINOZ_KNOWLEDGE_OPENAI_API_KEY to OPENAI_API_KEY", async () => {
       const envContent = `
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-mapped-key
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-mapped-key
 `;
 
       ctx.mockFile("config/.env", envContent);
@@ -125,10 +125,10 @@ PAI_KNOWLEDGE_OPENAI_API_KEY=sk-mapped-key
       expect(config.OPENAI_API_KEY).toBe("sk-mapped-key");
     });
 
-    it("should prioritize standard OPENAI_API_KEY over PAI_KNOWLEDGE_OPENAI_API_KEY", async () => {
+    it("should prioritize standard OPENAI_API_KEY over MADEINOZ_KNOWLEDGE_OPENAI_API_KEY", async () => {
       const envContent = `
 OPENAI_API_KEY=sk-standard-key
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-pai-key
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-pai-key
 `;
 
       ctx.mockFile("config/.env", envContent);
@@ -217,9 +217,9 @@ NEO4J_PASSWORD=neo4j-password
 
     it("should parse PAI_PREFIXES correctly", async () => {
       const envContent = `
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-test-key
-PAI_KNOWLEDGE_LLM_PROVIDER=openai
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=20
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-test-key
+MADEINOZ_KNOWLEDGE_LLM_PROVIDER=openai
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=20
 `;
 
       ctx.mockFile("config/.env", envContent);
@@ -228,9 +228,9 @@ PAI_KNOWLEDGE_SEMAPHORE_LIMIT=20
       const config = await mockLoader.load();
 
       expect(config.PAI_PREFIXES).toBeDefined();
-      expect(config.PAI_PREFIXES?.PAI_KNOWLEDGE_OPENAI_API_KEY).toBe("sk-test-key");
-      expect(config.PAI_PREFIXES?.PAI_KNOWLEDGE_LLM_PROVIDER).toBe("openai");
-      expect(config.PAI_PREFIXES?.PAI_KNOWLEDGE_SEMAPHORE_LIMIT).toBe("20");
+      expect(config.PAI_PREFIXES?.MADEINOZ_KNOWLEDGE_OPENAI_API_KEY).toBe("sk-test-key");
+      expect(config.PAI_PREFIXES?.MADEINOZ_KNOWLEDGE_LLM_PROVIDER).toBe("openai");
+      expect(config.PAI_PREFIXES?.MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT).toBe("20");
     });
   });
 
@@ -255,7 +255,7 @@ PAI_KNOWLEDGE_SEMAPHORE_LIMIT=20
       expect(files["config/.env"]).toContain("LLM_PROVIDER=openai");
     });
 
-    it("should save config with PAI_KNOWLEDGE_ prefixes", async () => {
+    it("should save config with MADEINOZ_KNOWLEDGE_ prefixes", async () => {
       const mockLoader = createMockConfigLoader();
 
       const config = {
@@ -268,8 +268,8 @@ PAI_KNOWLEDGE_SEMAPHORE_LIMIT=20
 
       const files = ctx.getMockFiles();
       expect(files["config/.env"]).toBeDefined();
-      expect(files["config/.env"]).toContain("PAI_KNOWLEDGE_OPENAI_API_KEY=sk-pai-prefixed-key");
-      expect(files["config/.env"]).toContain("PAI_KNOWLEDGE_LLM_PROVIDER=anthropic");
+      expect(files["config/.env"]).toContain("MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-pai-prefixed-key");
+      expect(files["config/.env"]).toContain("MADEINOZ_KNOWLEDGE_LLM_PROVIDER=anthropic");
     });
 
     it("should include header and comments in saved .env", async () => {
@@ -285,7 +285,7 @@ PAI_KNOWLEDGE_SEMAPHORE_LIMIT=20
       const files = ctx.getMockFiles();
       const envContent = files["config/.env"];
 
-      expect(envContent).toContain("# PAI Knowledge System Configuration");
+      expect(envContent).toContain("# Madeinoz Knowledge System Configuration");
       expect(envContent).toContain("# Generated:");
       expect(envContent).toContain("# API Keys");
       expect(envContent).toContain("# LLM Provider Configuration");
@@ -325,7 +325,7 @@ PAI_KNOWLEDGE_SEMAPHORE_LIMIT=20
       const files = ctx.getMockFiles();
       const envContent = files["config/.env"];
 
-      expect(envContent).toContain("PAI_KNOWLEDGE_OPENAI_API_KEY=sk-openai");
+      expect(envContent).toContain("MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-openai");
       expect(envContent).toContain("ANTHROPIC_API_KEY=sk-ant");
       expect(envContent).toContain("GOOGLE_API_KEY=ai-google");
       expect(envContent).toContain("GROQ_API_KEY=gq-groq");
@@ -451,16 +451,16 @@ FALKORDB_PASSWORD=p@ssw0rd!#$%^&*()
   });
 
   describe("PAI_PREFIXES Structure", () => {
-    it("should collect all PAI_KNOWLEDGE_ prefixed variables", async () => {
+    it("should collect all MADEINOZ_KNOWLEDGE_ prefixed variables", async () => {
       const envContent = `
-PAI_KNOWLEDGE_OPENAI_API_KEY=sk-test
-PAI_KNOWLEDGE_LLM_PROVIDER=groq
-PAI_KNOWLEDGE_EMBEDDER_PROVIDER=openai
-PAI_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
-PAI_KNOWLEDGE_SEMAPHORE_LIMIT=5
-PAI_KNOWLEDGE_GROUP_ID=test-group
-PAI_KNOWLEDGE_DATABASE_TYPE=falkordb
-PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=true
+MADEINOZ_KNOWLEDGE_OPENAI_API_KEY=sk-test
+MADEINOZ_KNOWLEDGE_LLM_PROVIDER=groq
+MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER=openai
+MADEINOZ_KNOWLEDGE_MODEL_NAME=llama-3.3-70b-versatile
+MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT=5
+MADEINOZ_KNOWLEDGE_GROUP_ID=test-group
+MADEINOZ_KNOWLEDGE_DATABASE_TYPE=falkordb
+MADEINOZ_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=true
 `;
 
       ctx.mockFile("config/.env", envContent);
@@ -470,7 +470,7 @@ PAI_KNOWLEDGE_GRAPHITI_TELEMETRY_ENABLED=true
 
       expect(config.PAI_PREFIXES).toBeDefined();
       expect(Object.keys(config.PAI_PREFIXES || {}).length).toBeGreaterThanOrEqual(8);
-      expect(config.PAI_PREFIXES?.PAI_KNOWLEDGE_OPENAI_API_KEY).toBe("sk-test");
+      expect(config.PAI_PREFIXES?.MADEINOZ_KNOWLEDGE_OPENAI_API_KEY).toBe("sk-test");
     });
   });
 });
