@@ -27,6 +27,8 @@
 - Designing tag hierarchies for households/corporations
 - Improving document search and retrieval
 
+**NEW v2.0:** Also serves as **Entity Health Check** agent for quarterly document completeness verification.
+
 **Usage Example:**
 ```typescript
 Task({
@@ -62,6 +64,12 @@ Task({
 - Identifying compliance gaps in document storage
 - Warning about retention period violations
 
+**NEW v2.0:** Also serves as **Compliance Reporter** agent for generating ATO compliance reports. Includes:
+- Quarterly ATO compliance reports
+- Trust-specific compliance documentation
+- Audit trail documentation
+- Regulatory requirement mapping
+
 **Usage Example:**
 ```typescript
 Task({
@@ -96,6 +104,12 @@ Task({
 - Planning archive-to-cold-storage migrations
 - Creating retention policies and archive procedures
 - Strategic document lifecycle planning
+
+**NEW v2.0:** Also serves as **Workflow Optimizer** agent for workflow effectiveness analysis. Includes:
+- Weekly workflow effectiveness analysis
+- Pattern improvement suggestions
+- Match rate optimization
+- Workflow A/B testing recommendations
 
 **Usage Example:**
 ```typescript
@@ -145,6 +159,86 @@ Task({
 
 ---
 
+### 5. Sensitivity Scanner 🔒
+
+**Domain:** Security Expert (Data Loss Prevention & Classification)
+
+**Personality:** Cautious, Systematic
+
+**Approach:** Systematic, Thorough
+
+**Voice:** James (security-focused) - ID: ZQe5CZNOzWyzPSCn5a3c
+
+**Specializes in:**
+- Document sensitivity classification (Public, Internal, Confidential, Restricted)
+- HIPAA PHI detection and flagging
+- PCI-DSS cardholder data detection
+- GDPR PII detection and flagging
+- Legal privilege detection
+- Automatic sensitivity tagging of new documents
+- Security control recommendations
+
+**Best for:**
+- Auto-classifying new uploads by sensitivity
+- Scanning existing documents for sensitivity violations
+- Detecting regulated data (PHI, PCI, PII)
+- Applying appropriate sensitivity tags and colors
+- DLP compliance monitoring
+- Security risk assessment
+
+**Trigger:**
+- Automatic: When new documents are uploaded
+- Scheduled: Daily scan of untagged documents
+- Manual: "scan for sensitivity", "classify documents by sensitivity"
+
+**Key Activities:**
+- Analyze document content for sensitive data patterns
+- Classify documents according to four-tier model
+- Apply color-coded sensitivity tags
+- Flag documents requiring encryption or access controls
+- Generate sensitivity compliance reports
+
+---
+
+### 6. Retention Monitor ⏰
+
+**Domain:** Business Strategist (Time-Based Compliance)
+
+**Personality:** Meticulous, Cautious
+
+**Approach:** Systematic
+
+**Voice:** Joseph (authoritative, British) - ID: Zlb1dXr653N07WRdFW3
+
+**Specializes in:**
+- Document retention period tracking
+- Retention deadline monitoring
+- Safe deletion verification
+- ATO retention requirement adherence
+- Archive readiness assessment
+- Retention policy compliance
+
+**Best for:**
+- Monitoring document aging against retention requirements
+- Alerting when documents can be safely deleted
+- Tracking retention periods by document type
+- Verifying retention rules are being followed
+- Generating retention summary reports
+
+**Trigger:**
+- Scheduled: Daily retention checks
+- Automatic: When documents approach retention deadlines
+- Manual: "check retention", "what can I delete?", "retention status"
+
+**Key Activities:**
+- Calculate remaining retention time for documents
+- Alert when retention period has passed
+- Flag documents ready for archival
+- Verify retention compliance before deletion
+- Generate retention compliance summaries
+
+---
+
 ## Integration with Records Manager Skill
 
 ### Workflow Integration
@@ -153,10 +247,12 @@ Each agent integrates with specific Records Manager workflows:
 
 | Agent | Primary Workflow | Tools Used |
 |-------|-------------------|-------------|
-| Records Keeper | OrganizeWorkflow, TagWorkflow | TaxonomyExpert, RecordManager.ts |
-| Compliance Guardian | RetentionWorkflow, DeleteConfirmation | TaxonomyExpert (retention rules) |
-| Archive Architect | OrganizeWorkflow (strategic) | PaperlessClient, TaxonomyExpert |
+| Records Keeper | OrganizeWorkflow, TagWorkflow, EntityHealth | TaxonomyExpert, RecordManager.ts, EntityCreator |
+| Compliance Guardian | RetentionWorkflow, DeleteConfirmation, TrustValidation, ComplianceReport | TaxonomyExpert, TrustExpert, RetentionMonitor |
+| Archive Architect | OrganizeWorkflow (strategic), WorkflowReview | PaperlessClient, WorkflowExpert, TaxonomyExpert |
 | Deletion Auditor | **DeleteConfirmation (MANDATORY)** | Review system, audit logging |
+| Sensitivity Scanner | SensitivityScan, UploadWorkflow | SensitivityExpert, PaperlessClient |
+| Retention Monitor | RetentionWorkflow, SensitivityScan | SensitivityExpert, TaxonomyExpert |
 
 ### Agent Collaboration
 

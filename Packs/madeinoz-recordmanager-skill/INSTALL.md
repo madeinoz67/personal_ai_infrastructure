@@ -172,6 +172,19 @@ echo "Backup complete: $BACKUP_DIR"
 
 ## Installation Steps
 
+### ⚠️ CRITICAL RULE: URL Preservation
+
+**DO NOT CORRECT URL SPELLING** - URLs must be copied EXACTLY as provided by the user, even if they appear to be misspelled.
+
+- Example: `https://paperless.groove.com/` is correct (even if "groove" might look like a typo)
+- NEVER "fix" domain names or paths
+- Copy the URL exactly character-for-character
+- If in doubt, confirm with the user before changing
+
+**Why this matters:** Custom domain names, subdomains, and paths can have intentional unusual spellings that are valid DNS entries.
+
+---
+
 ### Step 1: Create Directory Structure
 
 ```bash
@@ -215,19 +228,107 @@ The installation wizard needs to collect this information. Use `AskUserQuestion`
 1. **Paperless-ngx URL**: The base URL of your paperless-ngx instance
 2. **API Token**: Your paperless-ngx API token with read/write permissions
 3. **Country**: Your country for record keeping compliance (e.g., Australia, United States, United Kingdom)
-4. **Default Domain**: Your primary use case (household, corporate, projects)
+4. **Entities**: All entities you want to manage (households, businesses, trusts, projects)
 
 **Interactive Setup Prompt:**
 
 ```bash
 cat << 'SETUP_QUESTIONS'
-Please provide the following configuration for Records Manager:
+Records Manager Multi-Entity Configuration
 
-1. Paperless-ngx URL (e.g., https://paperless.example.com):
-2. API Token (from paperless-ngx Settings → Tokens):
-3. Country (for record keeping guidelines):
-4. Default Domain (household/corporate/projects):
+The Records Manager can track multiple entities simultaneously.
+Each entity represents a separate record-keeping domain (household, business, trusts, projects).
+
+1. How many entities do you want to manage? (1-20)
+
+For each entity, I will ask:
+   - Entity type (household, corporate, unit-trust, discretionary-trust, family-trust, project)
+   - Entity name
+   - Type-specific details (ABN, TFN, trustee, FTE date for trusts, etc.)
+
+Examples of common setups:
+  - Single household: "Smith Household" (household)
+  - Small business: "Acme Corp" (corporate) + "Smith Household" (household)
+  - Trust structure: "Smith Family Trust" (family-trust) + "Jones Unit Trust" (unit-trust)
+  - Complex: Multiple trusts + business + household
+
+Let's start configuring your entities.
 SETUP_QUESTIONS
+```
+
+**Entity Configuration Loop:**
+
+For each entity, ask type-specific questions:
+
+```bash
+# Entity 1
+echo "=== Entity 1 of ${TOTAL_ENTITIES} ==="
+echo "What type of entity is this?"
+echo "  1. household      - Personal documents and records"
+echo "  2. corporate       - Business records and operations"
+echo "  3. unit-trust      - Unit trust with unitholders"
+echo "  4. discretionary-trust - Discretionary trust with beneficiary allocations"
+echo "  5. family-trust    - Family trust (requires Family Trust Election)"
+echo "  6. project        - Project-based records"
+
+# Based on selection, ask appropriate questions
+
+if [[ "$ENTITY_TYPE" == "family-trust" ]]; then
+  echo "Family Trust Configuration"
+  read -p "Trust name: " TRUST_NAME
+  read -p "Trustee name: " TRUSTEE_NAME
+  read -p "ABN (11 digits): " ABN
+  read -p "TFN (optional, 9 digits): " TFN
+  read -p "Family Trust Election date (YYYY-MM-DD): " FTE_DATE
+  echo "⚠️  FTE documents require 5+ year retention from FTE date (not EOFY)"
+elif [[ "$ENTITY_TYPE" == "unit-trust" ]]; then
+  echo "Unit Trust Configuration"
+  read -p "Trust name: " TRUST_NAME
+  read -p "Trustee name: " TRUSTEE_NAME
+  read -p "ABN (11 digits): " ABN
+  read -p "TFN (optional, 9 digits): " TFN
+  read -p "Total units (optional): " UNIT_COUNT
+elif [[ "$ENTITY_TYPE" == "discretionary-trust" ]]; then
+  echo "Discretionary Trust Configuration"
+  read -p "Trust name: " TRUST_NAME
+  read -p "Trustee name: " TRUSTEE_NAME
+  read -p "ABN (11 digits): " ABN
+  read -p "TFN (optional, 9 digits): " TFN
+  read -p "Beneficiaries (optional, comma-separated): " BENEFICIARIES
+elif [[ "$ENTITY_TYPE" == "corporate" ]]; then
+  echo "Corporate Entity Configuration"
+  read -p "Business name: " BUSINESS_NAME
+  read -p "ABN (11 digits): " ABN
+  read -p "Business type (sole-trader/company/partnership): " BUSINESS_TYPE
+elif [[ "$ENTITY_TYPE" == "household" ]]; then
+  echo "Household Entity Configuration"
+  read -p "Household name: " HOUSEHOLD_NAME
+  read -p "Starting year (for retention): " START_YEAR
+elif [[ "$ENTITY_TYPE" == "project" ]]; then
+  echo "Project Entity Configuration"
+  read -p "Project name: " PROJECT_NAME
+  read -p "Project type (software/construction/research/creative/other): " PROJECT_TYPE
+  read -p "Start date (YYYY-MM-DD): " START_DATE
+fi
+```
+
+**Trust-Specific Warnings:**
+
+```bash
+if [[ "$ENTITY_TYPE" =~ .*-trust ]]; then
+  echo ""
+  echo "⚠️  TRUST RETENTION REQUIREMENTS:"
+  echo "  - Trust deed: Keep forever (original document)"
+  echo "  - Trust variations: Keep forever"
+  echo "  - Trustee records: Keep while trustee + 5 years"
+  echo "  - Distribution minutes: Keep 5+ years"
+  echo "  - FTE documents: Keep 5+ years from FTE date (not EOFY)"
+  echo "  - Unitholder registers: Keep while trust exists + 5 years"
+  echo ""
+  echo "  For family trusts with Family Trust Election (FTE),"
+  echo "  retention periods start from the FTE date, not EOFY."
+  echo ""
+fi
 ```
 
 ---
@@ -246,12 +347,98 @@ PAPERLESS_API_TOKEN="your-api-token-here"
 
 # Records Manager settings
 RECORDS_COUNTRY="Australia"
-RECORDS_DEFAULT_DOMAIN="household"
+
+# Entity configuration (JSON array)
+# Example: Single household
+# RECORDS_ENTITIES='[{"type":"household","name":"Smith Household","startYear":"2020"}]'
+#
+# Example: Business + household
+# RECORDS_ENTITIES='[
+#   {"type":"corporate","name":"Acme Corp","abn":"12345678901","businessType":"company"},
+#   {"type":"household","name":"Smith Household","startYear":"2020"}
+# ]'
+#
+# Example: Trust structure
+# RECORDS_ENTITIES='[
+#   {"type":"family-trust","name":"Smith Family Trust","abn":"12345678901","tfn":"987654321","trustee":"Smith Pty Ltd","fteDate":"2020-01-15"},
+#   {"type":"unit-trust","name":"Jones Unit Trust","abn":"98765432101","tfn":"123456789","trustee":"Jones Pty Ltd","unitCount":"100"}
+# ]'
+
+RECORDS_ENTITIES='[{"type":"household","name":"My Household","startYear":"2020"}]'
 
 # Optional: Custom retention periods (overrides defaults)
 # RECORDS_RETENTION_TAX_YEARS="7"
 # RECORDS_RETENTION_MEDICAL_YEARS="7"
 # RECORDS_RETENTION_INSURANCE_YEARS="10"
+```
+
+**Entity Configuration Format:**
+
+The `RECORDS_ENTITIES` variable is a JSON array of entity objects. Each entity type has different fields:
+
+**Household:**
+```json
+{
+  "type": "household",
+  "name": "Smith Household",
+  "startYear": "2020"
+}
+```
+
+**Corporate:**
+```json
+{
+  "type": "corporate",
+  "name": "Acme Corporation",
+  "abn": "12345678901",
+  "businessType": "company"
+}
+```
+
+**Unit Trust:**
+```json
+{
+  "type": "unit-trust",
+  "name": "Jones Unit Trust",
+  "abn": "12345678901",
+  "tfn": "987654321",
+  "trustee": "Jones Pty Ltd",
+  "unitCount": "100"
+}
+```
+
+**Discretionary Trust:**
+```json
+{
+  "type": "discretionary-trust",
+  "name": "Smith Discretionary Trust",
+  "abn": "12345678901",
+  "tfn": "987654321",
+  "trustee": "Smith Pty Ltd",
+  "beneficiaries": ["Beneficiary 1", "Beneficiary 2"]
+}
+```
+
+**Family Trust:**
+```json
+{
+  "type": "family-trust",
+  "name": "Smith Family Trust",
+  "abn": "12345678901",
+  "tfn": "987654321",
+  "trustee": "Smith Pty Ltd",
+  "fteDate": "2020-01-15"
+}
+```
+
+**Project:**
+```json
+{
+  "type": "project",
+  "name": "Website Redesign",
+  "projectType": "software",
+  "startDate": "2024-01-01"
+}
 ```
 
 **Source the environment:**
@@ -263,12 +450,107 @@ export $(grep -v '^#' $PAI_DIR/.env | xargs)
 # Verify
 echo "Paperless URL: $PAPERLESS_URL"
 echo "Records Country: $RECORDS_COUNTRY"
-echo "Default Domain: $RECORDS_DEFAULT_DOMAIN"
+echo "Entities: $RECORDS_ENTITIES"
 ```
 
 ---
 
-### Step 4: Create Core Library Files
+## Records Manager v2.0 Features
+
+The Records Manager skill now includes powerful features for trust management, workflow automation, and dynamic entity creation.
+
+### Trust Document Management
+
+- **ATO-compliant retention rules** for unit, discretionary, and family trusts
+- **Trust document checklists** and validation
+- **Family Trust Election (FTE)** tracking with 5-year retention from FTE date
+- **Trustee management** and record keeping
+- **Unitholder registers** for unit trusts
+- **Distribution minutes** and beneficiary records
+
+**Trust-specific retention:**
+- Trust deed: Keep forever (original document)
+- Trust variations: Keep forever
+- Trustee records: Keep while trustee + 5 years
+- Distribution minutes: Keep 5+ years
+- FTE documents: Keep 5+ years from FTE date (NOT EOFY)
+- Unitholder registers: Keep while trust exists + 5 years
+
+### Workflow Automation
+
+- **WorkflowExpert agent** analyzes document patterns and recommends automated workflows
+- Create paperless-ngx workflows for auto-tagging
+- Review workflow effectiveness and match rates
+- Bulk operations for document reprocessing
+- Smart tag suggestions based on existing documents
+
+**Example workflow:**
+```
+AI: "I've analyzed your invoice documents. I can create a workflow that:
+     - Detects invoices by content analysis
+     - Auto-tags with 'invoice', 'supplier', 'financial-year'
+     - Matches 94% of your existing invoices
+     - Want me to create this workflow?"
+```
+
+### Dynamic Entity Creation
+
+- **Add new entities anytime:** "Records Manager, add a new entity"
+- Supports 6 entity types with type-specific configuration
+- Creates tags, storage paths, and custom fields automatically
+- No need to reconfigure entire system
+
+**Example:**
+```
+You: "Records Manager, add a new unit trust called 'Jones Unit Trust'"
+AI: "Creating entity 'Jones Unit Trust' (unit-trust)
+     ✓ Created tags: unit-trust, jones-unit-trust
+     ✓ Created storage path: /Jones Unit Trust/
+     ✓ Created custom fields: abn, tfn, trustee, unitCount
+     ✓ Entity registered in entities.json"
+```
+
+### Enhanced Paperless-ngx Integration
+
+- **Correspondents** - Track people and organizations
+- **Storage paths** - Hierarchical organization by entity
+- **Custom fields** - Entity-specific metadata (ABN, TFN, trustee, etc.)
+- **Bulk operations** - Edit multiple documents at once
+- **Workflow integration** - Seamless paperless-ngx workflow support
+
+### Expert Agents
+
+The Records Manager includes specialized expert agents:
+
+- **WorkflowExpert** - Analyze patterns and create automated workflows
+- **TrustExpert** - Trust-specific document management and compliance
+- **EntityCreator** - Dynamic entity creation and configuration
+- **TaxonomyExpert** - Country-specific retention and tagging rules
+
+---
+
+### Step 4: Create Entity Registry
+
+Create an entity registry file to track all configured entities:
+
+```bash
+# File: $PAI_DIR/skills/RECORDSMANAGER/entities.json
+# This file is auto-generated during installation
+# You can edit it manually to add/modify entities
+cat > "$PAI_DIR/skills/RECORDSMANAGER/entities.json" << 'EOF'
+{
+  "entities": [],
+  "created": null,
+  "lastModified": null
+}
+EOF
+```
+
+**Installation script will populate this file** with the entities configured in Step 2.
+
+---
+
+### Step 5: Create Core Library Files
 
 #### 4.1: Create PaperlessClient Library
 
@@ -1645,7 +1927,7 @@ ls -la $PAI_DIR/tools/RecordManager.ts
 # Should show the CLI tool
 
 ls -la $PAI_DIR/skills/RECORDSMANAGER/
-# Should show: SKILL.md, Workflows/, Taxonomies/, Tools/, Context/
+# Should show: SKILL.md, Workflows/, Taxonomies/, Tools/, Context/, entities.json
 
 # 2. Verify Bun can run the tool
 bun run $PAI_DIR/tools/RecordManager.ts --help
@@ -1658,7 +1940,34 @@ bun run $PAI_DIR/tools/RecordManager.ts search
 # 4. Check environment variables
 echo "PAPERLESS_URL: $PAPERLESS_URL"
 echo "RECORDS_COUNTRY: $RECORDS_COUNTRY"
-echo "RECORDS_DEFAULT_DOMAIN: $RECORDS_DEFAULT_DOMAIN"
+echo "Entities configured:"
+echo "$RECORDS_ENTITIES" | jq '.'
+```
+
+**Verify entity configuration:**
+
+```bash
+# Check entities.json was created
+cat "$PAI_DIR/skills/RECORDSMANAGER/entities.json"
+
+# Verify each entity has tags in paperless-ngx
+echo "Checking entity tags in paperless-ngx..."
+bun run $PAI_DIR/tools/RecordManager.ts search --tags "household"
+bun run $PAI_DIR/tools/RecordManager.ts search --tags "corporate"
+bun run $PAI_DIR/tools/RecordManager.ts search --tags "family-trust"
+bun run $PAI_DIR/tools/RecordManager.ts search --tags "unit-trust"
+```
+
+**Test entity-specific features:**
+
+```bash
+# Test trust-specific retention check
+echo "Testing trust retention for family trusts..."
+bun run $PAI_DIR/tools/RecordManager.ts retention --domain family-trust
+
+# Test workflow creation
+echo "Testing workflow analysis..."
+# The WorkflowExpert agent will analyze existing documents
 ```
 
 If all checks pass, installation is complete!
@@ -1667,17 +1976,59 @@ If all checks pass, installation is complete!
 
 ## Post-Installation Configuration
 
-### Configure Your Country and Domain
+### Add or Modify Entities
 
-After installation, customize for your situation:
+After installation, you can add new entities or modify existing ones:
 
+**Option 1: Edit entities.json directly**
 ```bash
-# Edit $PAI_DIR/.env
+# Edit the entity registry
+nano "$PAI_DIR/skills/RECORDSMANAGER/entities.json"
+
+# Add new entity to the entities array
+{
+  "entities": [
+    {
+      "id": "smith-family-trust",
+      "type": "family-trust",
+      "name": "Smith Family Trust",
+      "abn": "12345678901",
+      "tfn": "987654321",
+      "trustee": "Smith Pty Ltd",
+      "fteDate": "2020-01-15",
+      "created": "2024-01-17T00:00:00Z"
+    }
+  ],
+  "created": "2024-01-17T00:00:00Z",
+  "lastModified": "2024-01-17T00:00:00Z"
+}
+```
+
+**Option 2: Use the EntityCreator agent**
+```bash
+# Ask the Records Manager to add an entity
+"Records Manager, add a new unit trust called 'Jones Unit Trust' with ABN 98765432101"
+
+# The EntityCreator will:
+# 1. Create entity-specific tags
+# 2. Create storage paths
+# 3. Create custom fields
+# 4. Update entities.json
+```
+
+**Option 3: Update .env and re-run setup**
+```bash
+# Edit .env to add new entity
 nano $PAI_DIR/.env
 
-# Update these values:
-RECORDS_COUNTRY="YourCountry"  # Australia, UnitedStates, UnitedKingdom, etc.
-RECORDS_DEFAULT_DOMAIN="household"  # household, corporate, or projects
+# Update RECORDS_ENTITIES to include new entity
+RECORDS_ENTITIES='[
+  {"type":"family-trust","name":"Smith Family Trust","abn":"12345678901","tfn":"987654321","trustee":"Smith Pty Ltd","fteDate":"2020-01-15"},
+  {"type":"unit-trust","name":"Jones Unit Trust","abn":"98765432101","tfn":"123456789","trustee":"Jones Pty Ltd"}
+]'
+
+# Reload environment
+export $(grep -v '^#' $PAI_DIR/.env | xargs)
 ```
 
 ### Create Custom Taxonomies (Optional)
@@ -1696,6 +2047,125 @@ cat > $PAI_DIR/skills/RECORDSMANAGER/Taxonomies/${RECORDS_COUNTRY}/custom_tags.m
 ## Custom Retention Periods
 - [Document Type]: X years - [Specific reason]
 EOF
+```
+
+---
+
+## Usage Examples
+
+### Example 1: Upload Document to Specific Entity
+
+```bash
+# Upload a tax document to Smith Family Trust
+bun run $PAI_DIR/tools/RecordManager.ts upload \
+  tax_return_2024.pdf \
+  --title "Smith Family Trust - Tax Return 2024" \
+  --tags "family-trust,smith-family-trust,tax,2024"
+```
+
+### Example 2: Search Documents by Entity
+
+```bash
+# Search all documents for Jones Unit Trust
+bun run $PAI_DIR/tools/RecordManager.ts search \
+  --tags "unit-trust,jones-unit-trust"
+
+# Search invoices across all corporate entities
+bun run $PAI_DIR/tools/RecordManager.ts search \
+  --tags "corporate" \
+  --type "Invoice"
+```
+
+### Example 3: Trust Document Retention Check
+
+```bash
+# Check retention for family trust documents
+bun run $PAI_DIR/tools/RecordManager.ts retention --domain family-trust
+
+# Output will show:
+# Family Trust Election: Keep 5+ years from FTE date
+# Trust Deed: Keep forever
+# Distribution Minutes: Keep 5+ years
+```
+
+### Example 4: Auto-Organize Documents
+
+```bash
+# Suggest tags for untagged documents (dry run)
+bun run $PAI_DIR/tools/RecordManager.ts organize --domain corporate
+
+# Apply suggestions automatically
+bun run $PAI_DIR/tools/RecordManager.ts organize --domain corporate --apply
+```
+
+### Example 5: Create Workflow for Invoices
+
+```
+You: "Records Manager, create a workflow for supplier invoices"
+
+AI: "I'll analyze your invoice documents and create a workflow.
+
+     Analyzing 150 invoice documents...
+     ✓ Found common patterns
+     ✓ Detected suppliers
+     ✓ Identified invoice numbers
+     ✓ Extracted dates and amounts
+
+     Proposed workflow:
+     - Match documents containing 'tax invoice' or 'invoice'
+     - Auto-tag with 'invoice', 'supplier', financial-year'
+     - Extract supplier name as correspondent
+     - Match rate: 94%
+
+     Want me to create this workflow in paperless-ngx?"
+
+You: "Yes, create it"
+
+AI: "✓ Created workflow 'Supplier Invoices'
+     ✓ Auto-tagging rules configured
+     ✓ Correspondent matching enabled
+     ✓ Test run: 142/150 invoices matched (94.7%)"
+```
+
+### Example 6: Add New Trust Entity
+
+```
+You: "Records Manager, add a new discretionary trust called 'Brown Discretionary Trust'"
+
+AI: "Creating entity 'Brown Discretionary Trust' (discretionary-trust)
+
+     I need some information:
+     1. ABN (11 digits)?
+     2. TFN (optional, 9 digits)?
+     3. Trustee name?
+     4. Beneficiaries (optional, comma-separated)?
+
+     Please provide the details..."
+
+You: "ABN is 98765432101, TFN is 123456789, trustee is Brown Pty Ltd, beneficiaries are John Brown, Jane Brown"
+
+AI: "✓ Creating entity 'Brown Discretionary Trust'
+     ✓ Created tags: discretionary-trust, brown-discretionary-trust
+     ✓ Created storage path: /Brown Discretionary Trust/
+     ✓ Created custom fields: abn, tfn, trustee, beneficiaries
+     ✓ Set up retention rules for discretionary trust documents
+     ✓ Entity registered in entities.json
+
+     Trust-specific retention requirements:
+     - Trust deed: Keep forever
+     - Trust variations: Keep forever
+     - Trustee records: Keep while trustee + 5 years
+     - Distribution minutes: Keep 5+ years
+     - Beneficiary records: Keep while trust exists + 5 years"
+```
+
+### Example 7: Bulk Tag by Entity
+
+```bash
+# Tag all documents for a specific trust
+bun run $PAI_DIR/tools/RecordManager.ts tag \
+  $(bun run $PAI_DIR/tools/RecordManager.ts search --query "Smith Family Trust" --output-ids) \
+  "smith-family-trust,family-trust,trust"
 ```
 
 ---

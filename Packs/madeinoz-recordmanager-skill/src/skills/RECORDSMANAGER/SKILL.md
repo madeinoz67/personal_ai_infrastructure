@@ -1,9 +1,9 @@
 ---
 name: RECORDSMANAGER
 description: Expert record keeping system with paperless-ngx integration, country-specific taxonomies, and intelligent document management
-version: 1.0.0
+version: 2.0.0
 author: madeinoz
-capabilities: [document-management, records-organization, taxonomy-expertise, paperless-ngx-integration]
+capabilities: [document-management, records-organization, taxonomy-expertise, paperless-ngx-integration, trust-management, workflow-automation, multi-entity-support]
 triggers:
   - upload.*document
   - store.*file
@@ -14,6 +14,11 @@ triggers:
   - delete.*records
   - retention.*check
   - archive.*documents
+  - add.*entity
+  - create.*trust
+  - validate.*trust
+  - workflow.*create
+  - fte.*check
 dependencies: []
 ---
 
@@ -23,11 +28,14 @@ dependencies: []
 
 ## Overview
 
-The Records Manager Skill is a subject matter expert in record keeping and document management. It integrates with paperless-ngx to provide intelligent document organization, country-specific compliance guidance, and safe deletion practices.
+The Records Manager Skill is a subject matter expert in record keeping and document management. It integrates with paperless-ngx to provide intelligent document organization, trust-specific expertise, automated workflow management, and safe deletion practices.
 
 **Core Capabilities:**
 - Intelligent document upload with automatic tagging
-- Country-specific record keeping taxonomies
+- **NEW: Trust document management** with ATO-compliant retention rules
+- **NEW: Automated workflow creation** based on document patterns
+- **NEW: Dynamic entity creation** for households, businesses, and trusts
+- Country-specific record keeping taxonomies (AU, US, UK)
 - Retention requirement checking
 - Safe deletion with mandatory confirmation
 - Search optimization for document discovery
@@ -61,6 +69,11 @@ curl -s -X POST http://localhost:8888/notify \
 | Delete intent | `Workflows/DeleteConfirmation.md` | **MANDATORY** approval workflow |
 | Retention intent | `Workflows/RetentionWorkflow.md` | Check retention requirements |
 | Info intent | `Workflows/InfoWorkflow.md` | Get document details and metadata |
+| "Add new entity" | `Workflows/AddEntityWorkflow.md` | Create new entity interactively |
+| "Create a workflow" | `Workflows/WorkflowCreator.md` | Analyze documents and recommend workflow |
+| "Review workflow" | `Workflows/WorkflowReview.md` | Analyze workflow effectiveness |
+| "Trust documents" | `Workflows/TrustValidation.md` | Validate trust document completeness |
+| "FTE retention" | `Workflows/FTECheck.md` | Check Family Trust Election retention |
 
 ---
 
@@ -242,6 +255,172 @@ bun run $PAI_DIR/tools/RecordManager.ts info <docId>
 
 ---
 
+### Add Entity Workflow
+
+**Triggers:**
+- "Add a new entity"
+- "Create a trust"
+- "Set up a new business"
+- "Add entity: [type]"
+
+**Process:**
+1. Ask entity type (household/corporate/unit-trust/discretionary-trust/family-trust/project)
+2. Gather type-specific information (ABN, TFN, trustee, FTE date, etc.)
+3. Create entity structure in paperless-ngx:
+   - Entity tag for document identification
+   - Required tags for entity-specific classification
+   - Storage path for hierarchical organization
+   - Custom fields for trust metadata
+4. Register entity in local registry
+5. Confirm entity creation with details
+
+**Example:**
+```
+User: "Add a family trust for Smith family"
+AI: "Creating Smith Family Trust entity..."
+    "I'll need some information:"
+    "  - Trustee name?"
+    "  - ABN?"
+    "  - Family Trust Election date?"
+    "  - TFN (optional)?"
+    [Creates entity tag, storage path, custom fields]
+    "✅ Entity created: smith-family-trust-2024"
+    "   Documents can now be tagged with 'entity:smith-family-trust'"
+```
+
+---
+
+### Workflow Creator Workflow
+
+**Triggers:**
+- "Create a workflow for [documents]"
+- "Automate tagging of [pattern]"
+- "Recommend workflow for [entity]"
+
+**Process:**
+1. Get sample documents or describe pattern
+2. Analyze document patterns (filename, content, tags)
+3. Recommend workflow configuration:
+   - Matching pattern
+   - Tags to apply
+   - Document type to assign
+   - Storage path to use
+   - Correspondent to assign
+4. Show confidence and reasoning
+5. Ask for approval
+6. Create workflow in paperless-ngx
+7. Test workflow on sample documents
+8. Report effectiveness
+
+**Example:**
+```
+User: "Recommend a workflow for Smith Family Trust documents"
+AI: "Analyzing 47 documents tagged 'smith-family-trust'..."
+    "Recommendation (high confidence):"
+    "  Match: 'Smith.*Trust|Family.*Trust.*Smith'"
+    "  Assign tag: entity:smith-family-trust"
+    "  Assign storage path: /Trusts/Family/Smith Family Trust"
+    "  Assign document type: Auto-detect from content"
+    "  Reasoning: 45/47 documents match this pattern"
+    "Approve? (yes/no)"
+```
+
+---
+
+### Workflow Review Workflow
+
+**Triggers:**
+- "Review workflow performance"
+- "Check workflow effectiveness"
+- "Analyze workflow [name]"
+
+**Process:**
+1. Get workflow ID or name
+2. Fetch workflow configuration from paperless-ngx
+3. Test workflow against sample documents
+4. Analyze match rate and accuracy
+5. Identify false positives/negatives
+6. Suggest improvements to matching rules
+7. Report findings and recommendations
+
+---
+
+### Trust Validation Workflow
+
+**Triggers:**
+- "Validate trust documents"
+- "Check trust completeness"
+- "What documents am I missing for [trust]?"
+
+**Process:**
+1. Get trust type and trust name
+2. Retrieve required document checklist for trust type
+3. Search paperless-ngx for existing documents
+4. Compare against checklist
+5. Report:
+   - Complete documents
+   - Missing documents
+   - Warnings (FTE retention, expired documents)
+   - Retention compliance issues
+
+**Example:**
+```
+User: "Validate Smith Family Trust documents"
+AI: "Checking Smith Family Trust completeness..."
+    "Required documents (10):"
+    "  ✅ Trust Deed"
+    "  ✅ Family Trust Election (FTE) - Retain until 2025-02-01"
+    "  ✅ Trustee Appointment"
+    "  ⚠️  Beneficiary Declaration - MISSING"
+    "  ✅ ABN Registration"
+    "  ❌ TFN Registration - NOT FOUND"
+    "  ✅ Annual Financial Statements (2023)"
+    "  ⚠️  Trustee Resolution (2024) - NOT YET CREATED"
+    "  ⚠️  Distribution Minutes (2024) - NOT YET CREATED"
+    "  ✅ Tax Return (2023)"
+    ""
+    "Action items:"
+    "  1. Upload Beneficiary Declaration"
+    "  2. Upload TFN Registration"
+    "  3. Create pre-EOFY trustee resolution (before June 30)"
+    "  4. Document beneficiary distributions for 2024"
+```
+
+---
+
+### FTE Check Workflow
+
+**Triggers:**
+- "Check FTE retention"
+- "When can I delete FTE document?"
+- "Family Trust Election compliance"
+
+**Process:**
+1. Get FTE document ID or FTE date
+2. Calculate retention period (5 years from FTE date, not EOFY)
+3. Check if retention period has passed
+4. Warn if document is still within retention period
+5. Advise on retention requirements
+
+**Example:**
+```
+User: "When can I delete my Family Trust Election document?"
+AI: "Family Trust Election Date: 2020-02-01"
+    "Retention Period: 5 years from FTE date"
+    "Retain Until: 2025-02-01"
+    ""
+    "⚠️  DO NOT DELETE before 2025-02-01"
+    "ATO Requirement: Section 272-80 ITAA 1936"
+    "Reason: FTE must be retained for 5 years from lodgment date"
+    ""
+    "Current Date: 2025-01-17"
+    "Days Remaining: 15 days"
+    ""
+    "After 2025-02-01, you may safely delete this document"
+```
+
+---
+
 ## Taxonomy Expert System
 
 The TaxonomyExpert provides country-specific record keeping knowledge:
@@ -252,6 +431,7 @@ The TaxonomyExpert provides country-specific record keeping knowledge:
   - ATO tax record requirements
   - Australian Consumer Law retention
   - State-specific legal document retention
+  - **NEW: Trust document requirements (unit, discretionary, family trusts)**
 
 - **United States**
   - IRS tax record requirements
@@ -263,7 +443,7 @@ The TaxonomyExpert provides country-specific record keeping knowledge:
   - FCA insurance documentation
   - Companies House records
 
-### Domains
+### Entity Types
 
 **Household:**
 - Financial: Tax, bank statements, investments
@@ -279,6 +459,29 @@ The TaxonomyExpert provides country-specific record keeping knowledge:
 - HR: Employee records, payroll, leave
 - Compliance: Audit reports, certificates, permits
 - Corporate: Board resolutions, shareholder records
+
+**Trusts:**
+- **Unit Trusts** (NEW)
+  - Unit registry and ownership records
+  - Trust deed and variations
+  - Distribution statements
+  - Unitholder agreements
+  - ABN/TFN documentation
+
+- **Discretionary Trusts** (NEW)
+  - Trust deed and variations
+  - **Trustee resolutions (pre-EOFY requirement)**
+  - Distribution minutes documenting allocations
+  - Beneficiary declarations
+  - ABN/TFN documentation
+
+- **Family Trusts** (NEW)
+  - Trust deed and variations
+  - **Family Trust Election (FTE)** - 5+ year retention from FTE date
+  - Trustee resolutions (pre-EOFY)
+  - Distribution minutes
+  - Beneficiary declarations
+  - ABN/TFN documentation
 
 **Projects:**
 - Planning: Project plans, proposals
@@ -313,6 +516,29 @@ RECORDS_DEFAULT_DOMAIN="household"  # household | corporate | projects
 - **pai-research-skill**: Investigate record keeping requirements for specific situations
 - **pai-osint-skill**: Background research on document sources or parties
 
+### NEW Capabilities
+
+**Trust Document Management:**
+- Validate trust document completeness against ATO requirements
+- Track Family Trust Election retention (5 years from FTE date)
+- Generate trustee resolution templates for pre-EOFY compliance
+- Calculate trust distributions based on unit holdings
+- Suggest tags for trust documents automatically
+
+**Workflow Automation:**
+- Analyze document patterns and recommend automated workflows
+- Create paperless-ngx workflows for auto-tagging
+- Review workflow effectiveness and match rates
+- Test workflows before deployment
+- Explain workflow architecture and matching logic
+
+**Dynamic Entity Creation:**
+- Add new entities anytime (household, corporate, trusts, projects)
+- Interactive entity configuration with type-specific questions
+- Automatic creation of tags, storage paths, and custom fields
+- Entity registry for tracking all managed entities
+- Support for unlimited entities per installation
+
 ### Use Cases
 
 **Household Record Keeping:**
@@ -332,6 +558,14 @@ RECORDS_DEFAULT_DOMAIN="household"  # household | corporate | projects
 - Tag deliverables with project metadata
 - Archive completed projects systematically
 - Find related documents across projects
+
+**Trust Management (NEW):**
+- Set up family trust with entity tags and storage paths
+- Validate trust document completeness before EOFY
+- Check FTE retention compliance (5 years from FTE date)
+- Generate trustee resolution templates
+- Automate tagging of trust-related documents
+- Create workflows for trust document classification
 
 ---
 
@@ -376,6 +610,17 @@ RECORDS_DEFAULT_DOMAIN="household"  # household | corporate | projects
 ---
 
 ## Version History
+
+### 2.0.0 (2025-01-17)
+- **NEW:** TrustExpert with ATO-compliant trust management (unit, discretionary, family trusts)
+- **NEW:** WorkflowExpert for paperless-ngx workflow automation and analysis
+- **NEW:** EntityCreator for dynamic multi-entity support
+- **ENHANCED:** PaperlessClient with correspondents, storage paths, custom fields, bulk operations
+- **ENHANCED:** TaxonomyExpert with trust-specific document types and retention rules
+- Multi-entity support (manage unlimited entities per installation)
+- Interactive entity creation with type-specific configuration
+- Automated workflow recommendations based on document patterns
+- Trust document validation and compliance checking
 
 ### 1.0.0 (2026-01-17)
 - Initial release
