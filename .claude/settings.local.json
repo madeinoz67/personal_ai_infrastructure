@@ -14,7 +14,15 @@
       "mcp__madeinoz-knowledge__add_memory",
       "mcp__madeinoz-knowledge__search_memory_facts",
       "mcp__madeinoz-knowledge__get_episodes",
-      "mcp__madeinoz-knowledge__search_nodes"
+      "mcp__madeinoz-knowledge__search_nodes",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_close",
+      "mcp__brightdata__scrape_as_markdown",
+      "mcp__web-search-prime__webSearchPrime",
+      "mcp__brightdata__search_engine",
+      "mcp__web-reader__webReader"
     ]
   }
 }
