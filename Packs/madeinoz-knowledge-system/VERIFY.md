@@ -493,6 +493,11 @@ done
 
 Verify all configuration is correct.
 
+> **PAI .env is the ONLY source of truth.**
+>
+> All MADEINOZ_KNOWLEDGE_* configuration lives in `${PAI_DIR}/.env`.
+> Docker reads directly from PAI .env via the PAI_DIR environment variable.
+
 ### 4.1 Pack Environment Variables
 
 Check the pack's local configuration:
@@ -531,7 +536,96 @@ fi
 
 ---
 
-### 4.3 MCP Server Configuration
+### 4.3 PAI Configuration Verification
+
+Verify PAI .env has the required MADEINOZ_KNOWLEDGE_* variables:
+
+- [ ] **PAI .env exists**
+- [ ] **MADEINOZ_KNOWLEDGE_* variables are set**
+- [ ] **EMBEDDER_DIMENSIONS matches EMBEDDER_MODEL**
+
+**Verification commands:**
+```bash
+PAI_ENV="${PAI_DIR:-$HOME/.claude}/.env"
+
+echo "Verifying PAI .env configuration..."
+echo ""
+echo "PAI .env location: $PAI_ENV"
+echo ""
+
+# Step 1: Verify PAI .env exists
+if [ ! -f "$PAI_ENV" ]; then
+    echo "✗ PAI .env not found at: $PAI_ENV"
+    echo "  Run installation from INSTALL.md Step 2"
+    exit 1
+fi
+
+echo "✓ PAI .env exists"
+echo ""
+
+# Step 2: Check for MADEINOZ_KNOWLEDGE_* variables
+PAI_KNOWLEDGE_VARS=$(grep "^MADEINOZ_KNOWLEDGE_" "$PAI_ENV" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$PAI_KNOWLEDGE_VARS" -gt 0 ]; then
+    echo "✓ Found $PAI_KNOWLEDGE_VARS MADEINOZ_KNOWLEDGE_* variables"
+else
+    echo "✗ No MADEINOZ_KNOWLEDGE_* variables found"
+    echo "  Run installation from INSTALL.md Step 2"
+    exit 1
+fi
+
+# Step 3: Check key variables
+echo ""
+echo "Key variables:"
+for var in MADEINOZ_KNOWLEDGE_LLM_PROVIDER MADEINOZ_KNOWLEDGE_EMBEDDER_MODEL MADEINOZ_KNOWLEDGE_EMBEDDER_DIMENSIONS OPENAI_API_KEY MODEL_NAME; do
+    VAL=$(grep "^$var=" "$PAI_ENV" 2>/dev/null | cut -d= -f2-)
+    if [ -n "$VAL" ]; then
+        if [[ "$var" == *"API_KEY"* ]]; then
+            echo "  ✓ $var: <SET>"
+        else
+            echo "  ✓ $var: $VAL"
+        fi
+    else
+        echo "  ⚠️  $var: NOT SET"
+    fi
+done
+
+# Step 4: Validate embedding dimensions
+echo ""
+echo "Embedding validation:"
+EMBEDDER_MODEL=$(grep "^MADEINOZ_KNOWLEDGE_EMBEDDER_MODEL=" "$PAI_ENV" | cut -d= -f2-)
+EMBEDDER_DIMS=$(grep "^MADEINOZ_KNOWLEDGE_EMBEDDER_DIMENSIONS=" "$PAI_ENV" | cut -d= -f2-)
+
+# Fall back to non-prefixed if needed
+[ -z "$EMBEDDER_MODEL" ] && EMBEDDER_MODEL=$(grep "^EMBEDDER_MODEL=" "$PAI_ENV" | cut -d= -f2-)
+[ -z "$EMBEDDER_DIMS" ] && EMBEDDER_DIMS=$(grep "^EMBEDDER_DIMENSIONS=" "$PAI_ENV" | cut -d= -f2-)
+
+case "$EMBEDDER_MODEL" in
+    "mxbai-embed-large")
+        [ "$EMBEDDER_DIMS" = "1024" ] && echo "  ✓ $EMBEDDER_MODEL: 1024 dims (correct)" || echo "  ✗ $EMBEDDER_MODEL requires 1024, got: $EMBEDDER_DIMS"
+        ;;
+    "nomic-embed-text")
+        [ "$EMBEDDER_DIMS" = "768" ] && echo "  ✓ $EMBEDDER_MODEL: 768 dims (correct)" || echo "  ✗ $EMBEDDER_MODEL requires 768, got: $EMBEDDER_DIMS"
+        ;;
+    "text-embedding-3-small")
+        [ "$EMBEDDER_DIMS" = "1536" ] && echo "  ✓ $EMBEDDER_MODEL: 1536 dims (correct)" || echo "  ✗ $EMBEDDER_MODEL requires 1536, got: $EMBEDDER_DIMS"
+        ;;
+    *)
+        echo "  ⚠️  Unknown model: $EMBEDDER_MODEL (verify dimensions manually)"
+        ;;
+esac
+
+echo ""
+echo "Docker reads directly from: $PAI_ENV"
+echo "To update: Edit PAI .env, then restart containers"
+```
+
+**Expected result:** All MADEINOZ_KNOWLEDGE_* variables set, embedding dimensions match model
+
+**Note:** If EMBEDDER_DIMENSIONS doesn't match your EMBEDDER_MODEL, searches will fail with "vector dimension mismatch" errors. See `docs/troubleshooting.md` → "Vector Dimension Mismatch Error" for fix instructions.
+
+---
+
+### 4.4 MCP Server Configuration
 
 - [ ] **MCP server configured in ~/.claude.json**
 - [ ] **madeinoz-knowledge server entry exists**
@@ -556,7 +650,7 @@ fi
 
 ---
 
-### 4.4 Port Availability
+### 4.5 Port Availability
 
 **Common port (both backends):**
 - [ ] **Port 8000 is available** (or MCP server is listening)
@@ -1037,20 +1131,48 @@ ls -la "$PAI_HOOKS/lib/"
 
 ---
 
-### 8.2 Hook Registered
+### 8.2 Hooks Registered in settings.json
 
-- [ ] **Hook is registered in settings.json**
+- [ ] **SessionStart hook registered** (sync-memory-to-knowledge.ts)
+- [ ] **Stop hook registered** (sync-learning-realtime.ts)
+- [ ] **SubagentStop hook registered** (sync-learning-realtime.ts)
 
 **Verification commands:**
 ```bash
-if [ -f "$HOME/.claude/settings.json" ]; then
-    grep "sync-memory-to-knowledge" "$HOME/.claude/settings.json"
+SETTINGS="$HOME/.claude/settings.json"
+if [ -f "$SETTINGS" ]; then
+    echo "Checking hooks in settings.json..."
+    echo ""
+
+    # Check SessionStart hook
+    if grep -q "sync-memory-to-knowledge" "$SETTINGS"; then
+        echo "✓ SessionStart: sync-memory-to-knowledge.ts registered"
+    else
+        echo "✗ SessionStart: sync-memory-to-knowledge.ts NOT registered"
+    fi
+
+    # Check Stop hook
+    if grep -q '"Stop"' "$SETTINGS" && grep -q "sync-learning-realtime" "$SETTINGS"; then
+        echo "✓ Stop: sync-learning-realtime.ts registered"
+    else
+        echo "✗ Stop: sync-learning-realtime.ts NOT registered"
+    fi
+
+    # Check SubagentStop hook
+    if grep -q '"SubagentStop"' "$SETTINGS" && grep -q "sync-learning-realtime" "$SETTINGS"; then
+        echo "✓ SubagentStop: sync-learning-realtime.ts registered"
+    else
+        echo "✗ SubagentStop: sync-learning-realtime.ts NOT registered"
+    fi
 else
-    echo "settings.json not found"
+    echo "✗ settings.json not found at: $SETTINGS"
 fi
 ```
 
-**Expected result:** Hook command found in SessionStart hooks
+**Expected result:** All three hooks registered:
+- SessionStart: syncs memory at session start
+- Stop: syncs learnings when execution stops
+- SubagentStop: syncs when subagent completes
 
 ---
 

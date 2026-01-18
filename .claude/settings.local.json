@@ -22,7 +22,11 @@
       "mcp__brightdata__scrape_as_markdown",
       "mcp__web-search-prime__webSearchPrime",
       "mcp__brightdata__search_engine",
-      "mcp__web-reader__webReader"
+      "mcp__web-reader__webReader",
+      "mcp__zread__search_doc",
+      "mcp__zread__get_repo_structure",
+      "mcp__zread__read_file",
+      "mcp__madeinoz-knowledge__clear_graph"
     ]
   }
 }

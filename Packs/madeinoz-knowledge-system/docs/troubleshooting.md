@@ -246,6 +246,91 @@ grep MADEINOZ_KNOWLEDGE_GROUP_ID config/.env
 
 Look at a recent capture - did it show "Entities extracted: 0"? If so, see the "No entities extracted" section above.
 
+### Vector Dimension Mismatch Error
+
+**Symptom:** Search queries fail with error: `Invalid input for 'vector.similarity.cosine()': The supplied vectors do not have the same number of dimensions`
+
+**Cause:** Data was indexed with one embedding model, but searches use a different model with incompatible vector dimensions.
+
+**Common scenarios that cause this:**
+1. Changed `EMBEDDER_MODEL` in config after data was already indexed
+2. Tested multiple embedding models without clearing data between tests
+3. Migrated from one embedding provider to another
+
+**Embedding model dimensions:**
+
+| Model | Provider | Dimensions |
+|-------|----------|------------|
+| mxbai-embed-large | Ollama | 1024 |
+| nomic-embed-text | Ollama | 768 |
+| text-embedding-3-small | OpenAI | 1536 |
+| text-embedding-3-large | OpenAI | 3072 |
+| text-embedding-ada-002 | OpenAI | 1536 |
+
+**The fix: Clear mismatched data**
+
+Neo4j requires all vectors in an index to have the same dimensions. You must clear data indexed with the old model.
+
+**Option 1: Clear specific groups (preserves other data)**
+
+If you know which groups have mismatched embeddings:
+
+```bash
+# Via Claude Code / MCP
+clear_graph with group_ids: ["group1", "group2"]
+```
+
+Or identify test groups by checking episodes:
+```bash
+# Via Claude Code / MCP
+get_episodes with max_episodes: 50
+```
+
+Look for groups with different `group_id` values, then clear those specific groups.
+
+**Option 2: Clear entire graph (nuclear option)**
+
+If unsure which data is affected:
+
+```bash
+# Via Claude Code / MCP
+clear_graph
+```
+
+This deletes ALL data. You'll need to re-add any knowledge you want to keep.
+
+**Verify the fix:**
+
+After clearing, test that searches work:
+```bash
+# Via Claude Code / MCP
+search_nodes with query: "test"
+```
+
+Should return `"No relevant nodes found"` (empty but no error), not a dimension mismatch error.
+
+**Prevention:**
+
+1. **Choose an embedding model and stick with it** - Changing models requires re-indexing all data
+2. **Use separate group_ids for testing** - e.g., `test-llama`, `test-openai`, then clear test groups after
+3. **Document your embedding config** - Note which model was used to index production data
+4. **Keep `EMBEDDER_DIMENSIONS` in sync** - Must match your model:
+   ```bash
+   # Example for mxbai-embed-large
+   EMBEDDER_MODEL=mxbai-embed-large
+   EMBEDDER_DIMENSIONS=1024
+   ```
+
+**If you MUST change embedding models:**
+
+1. Export important knowledge (manually note key facts)
+2. Clear the entire graph
+3. Update `EMBEDDER_MODEL` and `EMBEDDER_DIMENSIONS` in config
+4. Restart the server
+5. Re-add your knowledge
+
+There's no way to "migrate" vectors - the embeddings are fundamentally different representations.
+
 ### "Rate limit exceeded" or API Errors
 
 **Symptom:** Errors about too many requests or rate limits

@@ -3,6 +3,12 @@
  *
  * Handles loading and mapping environment variables for the Madeinoz Knowledge System.
  * Supports MADEINOZ_KNOWLEDGE_* prefixed variables and maps them to standard container env vars.
+ *
+ * PAI .env is the ONLY source of truth for all configuration:
+ *   - Uses ${PAI_DIR}/.env if PAI_DIR environment variable is set
+ *   - Falls back to ~/.claude/.env if PAI_DIR is not set
+ *
+ * Docker containers read directly from PAI .env via the env_file directive.
  */
 
 import { join } from "path";
@@ -22,6 +28,10 @@ export interface KnowledgeConfig {
   LLM_PROVIDER: string;
   EMBEDDER_PROVIDER: string;
   MODEL_NAME: string;
+
+  // Ollama/Custom Endpoint Configuration
+  OPENAI_BASE_URL?: string;  // For Ollama: http://host.docker.internal:11434/v1
+  EMBEDDER_MODEL?: string;   // For Ollama: nomic-embed-text
 
   // Performance Configuration
   SEMAPHORE_LIMIT: string;
@@ -61,9 +71,11 @@ export interface KnowledgeConfig {
  * Default configuration values
  */
 const DEFAULTS: Record<string, string> = {
-  LLM_PROVIDER: "openai",
-  EMBEDDER_PROVIDER: "openai",
-  MODEL_NAME: "gpt-4o-mini",
+  LLM_PROVIDER: "ollama",
+  EMBEDDER_PROVIDER: "ollama",
+  MODEL_NAME: "llama3.2",
+  OPENAI_BASE_URL: "http://host.docker.internal:11434/v1",  // Ollama default (Docker)
+  EMBEDDER_MODEL: "nomic-embed-text",  // Ollama embedding model
   SEMAPHORE_LIMIT: "10",
   GROUP_ID: "main",
   DATABASE_TYPE: "neo4j",
@@ -83,17 +95,24 @@ const DEFAULTS: Record<string, string> = {
 
 /**
  * Configuration Loader class
+ *
+ * PAI .env is the ONLY source of truth for all configuration.
+ * Uses ${PAI_DIR}/.env if PAI_DIR is set, otherwise ~/.claude/.env
  */
 export class ConfigLoader {
   private packRoot: string;
-  private configDir: string;
   private envFile: string;
 
   constructor(packRoot?: string) {
     // If packRoot not provided, navigate up from src/server/lib to pack root
     this.packRoot = packRoot || join(import.meta.dir, "../../../");
-    this.configDir = join(this.packRoot, "config");
-    this.envFile = join(this.configDir, ".env");
+
+    // PAI .env is the ONLY source of truth
+    // Priority: PAI_DIR/.env > ~/.claude/.env
+    const homeDir = process.env.HOME || "";
+    this.envFile = process.env.PAI_DIR
+      ? join(process.env.PAI_DIR, ".env")
+      : join(homeDir, ".claude", ".env");
   }
 
   /**
@@ -104,14 +123,7 @@ export class ConfigLoader {
   }
 
   /**
-   * Get the config directory
-   */
-  getConfigDir(): string {
-    return this.configDir;
-  }
-
-  /**
-   * Get the .env file path
+   * Get the PAI .env file path
    */
   getEnvFile(): string {
     return this.envFile;
@@ -126,28 +138,17 @@ export class ConfigLoader {
   }
 
   /**
-   * Load environment variables from .env file using Bun
+   * Load environment variables from PAI .env file using Bun
+   * PAI .env (${PAI_DIR}/.env or ~/.claude/.env) is the ONLY source of truth
    */
   async loadEnv(): Promise<Record<string, string>> {
     const env: Record<string, string> = { ...process.env };
 
-    // Try to load from config directory
+    // Load from PAI .env (the ONLY source of truth)
     if (this.envExists()) {
       const file = Bun.file(this.envFile);
       const content = await file.text();
       this.parseEnvFile(content, env);
-    } else {
-      // Try pack root
-      const rootEnvFile = join(this.packRoot, ".env");
-      try {
-        const file = Bun.file(rootEnvFile);
-        if (file.exists()) {
-          const content = await file.text();
-          this.parseEnvFile(content, env);
-        }
-      } catch {
-        // Ignore
-      }
     }
 
     return env;
@@ -207,6 +208,9 @@ export class ConfigLoader {
       MADEINOZ_KNOWLEDGE_LLM_PROVIDER: "LLM_PROVIDER",
       MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER: "EMBEDDER_PROVIDER",
       MADEINOZ_KNOWLEDGE_MODEL_NAME: "MODEL_NAME",
+      // Ollama/Custom Endpoint Configuration
+      MADEINOZ_KNOWLEDGE_OPENAI_BASE_URL: "OPENAI_BASE_URL",
+      MADEINOZ_KNOWLEDGE_EMBEDDER_MODEL: "EMBEDDER_MODEL",
       // Performance
       MADEINOZ_KNOWLEDGE_SEMAPHORE_LIMIT: "SEMAPHORE_LIMIT",
       // Knowledge Graph
@@ -283,6 +287,10 @@ export class ConfigLoader {
       EMBEDDER_PROVIDER: this.getEnvValue(mapped, "EMBEDDER_PROVIDER", DEFAULTS.EMBEDDER_PROVIDER),
       MODEL_NAME: this.getEnvValue(mapped, "MODEL_NAME", DEFAULTS.MODEL_NAME),
 
+      // Ollama/Custom Endpoint Configuration
+      OPENAI_BASE_URL: this.getEnvValue(mapped, "OPENAI_BASE_URL", ""),
+      EMBEDDER_MODEL: this.getEnvValue(mapped, "EMBEDDER_MODEL", ""),
+
       // Performance Configuration
       SEMAPHORE_LIMIT: this.getEnvValue(mapped, "SEMAPHORE_LIMIT", DEFAULTS.SEMAPHORE_LIMIT),
 
@@ -330,21 +338,27 @@ export class ConfigLoader {
   validate(config: KnowledgeConfig): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    // Check that at least one API key is configured
+    // Check that at least one API key is configured (not required for Ollama)
+    const isOllama = config.LLM_PROVIDER === "ollama";
     const hasAnyKey =
       !!config.OPENAI_API_KEY ||
       !!config.ANTHROPIC_API_KEY ||
       !!config.GOOGLE_API_KEY ||
       !!config.GROQ_API_KEY;
 
-    if (!hasAnyKey) {
-      errors.push("No LLM API key configured (need OPENAI_API_KEY or alternative)");
+    if (!hasAnyKey && !isOllama) {
+      errors.push("No LLM API key configured (need OPENAI_API_KEY or alternative, or use Ollama)");
     }
 
     // Validate LLM provider
-    const validProviders = ["openai", "anthropic", "gemini", "groq"];
+    const validProviders = ["openai", "anthropic", "gemini", "groq", "ollama"];
     if (!validProviders.includes(config.LLM_PROVIDER)) {
       errors.push(`Invalid LLM_PROVIDER: ${config.LLM_PROVIDER}`);
+    }
+
+    // Validate Ollama configuration
+    if (isOllama && !config.OPENAI_BASE_URL) {
+      errors.push("OPENAI_BASE_URL required for Ollama (e.g., http://host.docker.internal:11434/v1)");
     }
 
     // Validate database type
@@ -370,7 +384,7 @@ export class ConfigLoader {
    * Maps config to container-friendly env var names
    */
   getContainerEnv(config: KnowledgeConfig): Record<string, string> {
-    return {
+    const env: Record<string, string> = {
       OPENAI_API_KEY: config.OPENAI_API_KEY || "",
       ANTHROPIC_API_KEY: config.ANTHROPIC_API_KEY || "",
       GOOGLE_API_KEY: config.GOOGLE_API_KEY || "",
@@ -390,14 +404,38 @@ export class ConfigLoader {
       EMBEDDER_PROVIDER: config.EMBEDDER_PROVIDER,
       GROUP_ID: config.GROUP_ID,
     };
+
+    // Ollama/Custom endpoint configuration
+    // For Ollama: Use "openai" as provider with custom base URL
+    const isOllama = config.LLM_PROVIDER === "ollama";
+    if (isOllama) {
+      // Ollama uses OpenAI-compatible API, so we tell Graphiti to use "openai" provider
+      // but with a custom base URL pointing to Ollama
+      env.LLM_PROVIDER = "openai";
+      env.EMBEDDER_PROVIDER = "openai";
+      env.OPENAI_API_KEY = "ollama";  // Ollama doesn't need a real key
+      env.OPENAI_BASE_URL = config.OPENAI_BASE_URL || DEFAULTS.OPENAI_BASE_URL;
+      env.EMBEDDER_MODEL = config.EMBEDDER_MODEL || DEFAULTS.EMBEDDER_MODEL;
+    } else if (config.OPENAI_BASE_URL) {
+      // Custom OpenAI endpoint (e.g., Azure, local proxy)
+      env.OPENAI_BASE_URL = config.OPENAI_BASE_URL;
+    }
+
+    if (config.EMBEDDER_MODEL) {
+      env.EMBEDDER_MODEL = config.EMBEDDER_MODEL;
+    }
+
+    return env;
   }
 
   /**
-   * Save configuration to .env file
+   * Save configuration to PAI .env file
+   * Writes to ${PAI_DIR}/.env or ~/.claude/.env (the ONLY source of truth)
    */
   async save(config: Partial<KnowledgeConfig>): Promise<void> {
-    // Build new content
+    // Build new content for PAI .env
     let newContent = "# Madeinoz Knowledge System Configuration\n";
+    newContent += `# Location: ${this.envFile}\n`;
     newContent += `# Generated: ${new Date().toISOString()}\n`;
     newContent += "\n";
 
@@ -429,6 +467,17 @@ export class ConfigLoader {
     }
     if (config.MODEL_NAME) {
       newContent += `MADEINOZ_KNOWLEDGE_MODEL_NAME=${config.MODEL_NAME}\n`;
+    }
+
+    newContent += "\n";
+
+    // Add Ollama/Custom Endpoint Configuration
+    if (config.OPENAI_BASE_URL) {
+      newContent += `# Ollama/Custom Endpoint (for OpenAI-compatible APIs)\n`;
+      newContent += `MADEINOZ_KNOWLEDGE_OPENAI_BASE_URL=${config.OPENAI_BASE_URL}\n`;
+    }
+    if (config.EMBEDDER_MODEL) {
+      newContent += `MADEINOZ_KNOWLEDGE_EMBEDDER_MODEL=${config.EMBEDDER_MODEL}\n`;
     }
 
     newContent += "\n";

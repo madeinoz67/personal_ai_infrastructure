@@ -9,7 +9,7 @@
  * Uses a public bridge network with database and MCP server containers.
  * This is the main setup script that creates containers, networks, and volumes.
  *
- * This script expects the .env file to be in config/.env
+ * Configuration is read from PAI .env (${PAI_DIR}/.env or ~/.claude/.env)
  */
 
 import { createContainerManager, ContainerManager, type DatabaseBackend } from "./lib/container.js";
@@ -324,13 +324,17 @@ async function main() {
   // Create config loader
   const configLoader = createConfigLoader();
 
-  // Check if .env file exists
+  // Check if PAI .env file exists
   if (!configLoader.envExists()) {
-    cli.error("Error: .env file not found in config directory!");
+    cli.error(`Error: PAI .env file not found!`);
     cli.blank();
-    cli.warning("Please copy .env.example to .env and configure your API keys:");
-    cli.dim(`  cp ${configLoader.getConfigDir()}/.env.example ${configLoader.getConfigDir()}/.env`);
-    cli.dim(`  nano ${configLoader.getEnvFile()}  # or your preferred editor`);
+    cli.warning("Expected location: " + configLoader.getEnvFile());
+    cli.blank();
+    cli.info("Run the installer to create the configuration:");
+    cli.dim(`  bun run src/server/install.ts`);
+    cli.blank();
+    cli.info("Or manually create the .env file:");
+    cli.dim(`  nano ${configLoader.getEnvFile()}`);
     process.exit(1);
   }
 

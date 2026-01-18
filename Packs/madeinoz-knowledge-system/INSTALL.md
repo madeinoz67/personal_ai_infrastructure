@@ -20,17 +20,259 @@
 **System Requirements:**
 - **Podman** 3.0+ or Docker (container runtime)
 - **Bun** runtime (for PAI skill execution)
-- **OpenAI API key** or compatible LLM provider
+- **LLM Provider** - One of the following:
+  - **Ollama** (recommended - free, local, private)
+  - OpenAI API key
+  - Anthropic, Google Gemini, or Groq (may require OpenAI for embeddings)
 - **Claude Code** or compatible PAI-enabled agent system
-- **2GB RAM** minimum for container
+- **2GB RAM** minimum for container (4GB+ recommended for Ollama)
 - **1GB disk space** for graph database
 
 **Pack Dependencies:**
 - None - The memory sync hook reads from the PAI Memory System (`~/.claude/MEMORY/`) which is part of the core PAI installation.
 
-**API Key Requirements:**
-- OpenAI API key (recommended): Get from https://platform.openai.com/api-keys
-- Alternative: Anthropic, Google Gemini, or Groq (requires OpenAI for embeddings)
+**LLM Provider Options (Tested & Recommended):**
+
+Based on comprehensive real-world testing with Graphiti MCP (15 models tested):
+
+| Provider | Model | Cost/1K | Status | Notes |
+|----------|-------|---------|--------|-------|
+| **OpenRouter** (recommended) | Gemini 2.0 Flash | $0.125 | ✅ **BEST VALUE** | Cheapest working model, extracts 8 entities |
+| **OpenRouter** | Qwen 2.5 72B | $0.126 | ✅ Works | Good quality, slower (30s) |
+| **OpenRouter** | GPT-4o Mini | $0.129 | ✅ Works | Reliable, good balance |
+| **OpenRouter** | Claude 3.5 Haiku | $0.816 | ✅ Works | 6x more expensive |
+| **OpenRouter** | GPT-4o | $2.155 | ✅ **FASTEST** | Best speed (12s) |
+| **OpenRouter** | Grok 3 | $2.163 | ✅ Works | xAI option, 22s |
+| **OpenAI Direct** | gpt-4o-mini | ~$0.15 | ✅ Works | Proven stable |
+| **Ollama** | llama3.2 | Free | ❌ Fails | Pydantic validation errors |
+
+**⚠️ Models that FAIL with Graphiti:**
+- All Llama models (3.1 8B, 3.3 70B) - Pydantic validation errors
+- Mistral 7B - Pydantic validation errors
+- DeepSeek V3 - Pydantic validation errors
+- Grok 4 Fast, 4.1 Fast, 3 Mini, Grok 4 - Validation/timeout issues
+- Claude Sonnet 4 - Processing timeout
+
+**Embedding Options:**
+
+| Provider | Model | Quality | Speed | Cost | Notes |
+|----------|-------|---------|-------|------|-------|
+| **Ollama** (recommended) | mxbai-embed-large | 73.9% | 87ms | FREE | Best value |
+| OpenRouter | text-embedding-3-small | 78.2% | 824ms | $0.02/1M | Highest quality |
+| Ollama | nomic-embed-text | 63.5% | 93ms | FREE | Alternative |
+
+**OpenAI-Compatible Providers:**
+
+These providers use the same API format as OpenAI but with different base URLs:
+
+| Provider | Description | Get API Key |
+|----------|-------------|-------------|
+| **OpenRouter** | Access to 200+ models (Claude, GPT-4, Llama, etc.) | https://openrouter.ai/keys |
+| **Together AI** | Fast inference, good for Llama models | https://api.together.xyz/settings/api-keys |
+| **Fireworks AI** | Low latency inference | https://fireworks.ai/api-keys |
+| **DeepInfra** | Serverless GPU inference | https://deepinfra.com/dash/api_keys |
+
+**Ollama Setup (if using Ollama or Hybrid mode):**
+1. Install Ollama: https://ollama.com/download
+2. Pull required models:
+   ```bash
+   ollama pull llama3.2            # LLM model (only needed for full Ollama mode)
+   ollama pull mxbai-embed-large   # Embedding model (recommended - 77% quality, 156ms)
+   ```
+3. Ensure Ollama is running: `ollama serve`
+
+**Note:** The `mxbai-embed-large` model provides the best balance of quality (77%) and speed (156ms) among tested Ollama embedders. See `docs/OLLAMA-MODEL-GUIDE.md` for detailed comparisons.
+
+**Madeinoz Patch (Ollama + OpenAI-Compatible Support):**
+
+This pack includes a patch (`src/server/patches/factories.py`) that enables support for:
+- **Ollama** (local, no API key required)
+- **OpenAI-compatible providers** (OpenRouter, Together AI, Fireworks AI, DeepInfra)
+
+The upstream Graphiti MCP server has a bug ([GitHub issue #1116](https://github.com/getzep/graphiti/issues/1116)) where it ignores custom `base_url` configuration and uses the wrong OpenAI client:
+
+| Client | Endpoint | Compatibility |
+|--------|----------|---------------|
+| `OpenAIClient` (upstream default) | `/v1/responses` | ❌ OpenAI-only |
+| `OpenAIGenericClient` (patch uses) | `/v1/chat/completions` | ✅ Works everywhere |
+
+**How the patch works:**
+1. **Local providers** (Ollama): When `OPENAI_BASE_URL` points to localhost/LAN addresses, no API key is required (uses dummy key `ollama`)
+2. **Cloud providers** (OpenRouter, Together, etc.): When `OPENAI_BASE_URL` points to a cloud service, requires the provider's API key
+3. All requests use `OpenAIGenericClient` which uses the standard `/v1/chat/completions` endpoint
+4. Embedding requests use the configured `EMBEDDER_BASE_URL` for the appropriate provider
+
+**Supported cloud providers (detected by URL):**
+- `openrouter.ai` → OpenRouter
+- `api.together.xyz` → Together AI
+- `api.fireworks.ai` → Fireworks AI
+- `api.deepinfra.com` → DeepInfra
+- `api.perplexity.ai` → Perplexity
+- `api.mistral.ai` → Mistral AI
+
+The patch is automatically mounted when using either docker-compose file:
+- `docker-compose.yml` (FalkorDB backend)
+- `docker-compose-neo4j.yml` (Neo4j backend)
+
+---
+
+## Provider Selection Guide
+
+The Madeinoz Knowledge System requires **two AI components**:
+
+| Component | Purpose | Selection |
+|-----------|---------|-----------|
+| **LLM Provider** | Entity extraction, relationship detection | Must output valid JSON |
+| **Embedder Provider** | Vector embeddings for semantic search | Generates embedding vectors |
+
+### Interactive Installation (Recommended)
+
+The easiest way to configure providers is through the interactive installer:
+
+```bash
+cd src/server
+bun run install.ts
+```
+
+The installer guides you through:
+1. **Step 4: LLM Provider Selection** - Choose your main LLM
+2. **Step 5: API Key Configuration** - Enter required keys
+3. **Step 6: Model Selection** - Pick specific models
+
+### Provider Combinations
+
+Here are the recommended configurations based on **real-world MCP testing** (15 models tested):
+
+#### Option 1: OpenRouter + Ollama (Recommended) ⭐
+**Best value LLM + free local embeddings - Tested & Proven**
+
+| Component | Provider | Model | Cost | Quality |
+|-----------|----------|-------|------|---------|
+| LLM | OpenRouter | google/gemini-2.0-flash-001 | $0.125/1K ops | ✅ Extracts 8 entities |
+| Embedder | Ollama | mxbai-embed-large | Free | 73.9% quality, 87ms |
+
+```env
+LLM_PROVIDER=openai
+MODEL_NAME=google/gemini-2.0-flash-001
+OPENAI_API_KEY=sk-or-v1-your-openrouter-key
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+
+EMBEDDER_PROVIDER=openai
+EMBEDDER_BASE_URL=http://host.docker.internal:11434/v1
+EMBEDDER_MODEL=mxbai-embed-large
+EMBEDDER_DIMENSIONS=1024
+```
+
+#### Option 2: GPT-4o Mini + Ollama (Reliable)
+**Proven stable, good balance of cost and quality**
+
+| Component | Provider | Model | Cost | Quality |
+|-----------|----------|-------|------|---------|
+| LLM | OpenRouter | openai/gpt-4o-mini | $0.129/1K ops | ✅ Extracts 7 entities |
+| Embedder | Ollama | mxbai-embed-large | Free | 73.9% quality, 87ms |
+
+```env
+LLM_PROVIDER=openai
+MODEL_NAME=openai/gpt-4o-mini
+OPENAI_API_KEY=sk-or-v1-your-openrouter-key
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+
+EMBEDDER_PROVIDER=openai
+EMBEDDER_BASE_URL=http://host.docker.internal:11434/v1
+EMBEDDER_MODEL=mxbai-embed-large
+EMBEDDER_DIMENSIONS=1024
+```
+
+#### Option 3: Full Cloud (Same Provider)
+**Use Together AI for both LLM and embeddings**
+
+| Component | Provider | Model | Cost |
+|-----------|----------|-------|------|
+| LLM | Together AI | meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo | ~$0.88/1M tokens |
+| Embedder | Together AI | BAAI/bge-large-en-v1.5 | ~$0.016/1M tokens |
+
+```env
+LLM_PROVIDER=openai
+MODEL_NAME=meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+OPENAI_API_KEY=your-together-key
+OPENAI_BASE_URL=https://api.together.xyz/v1
+
+EMBEDDER_PROVIDER=openai
+EMBEDDER_BASE_URL=https://api.together.xyz/v1
+EMBEDDER_MODEL=BAAI/bge-large-en-v1.5
+EMBEDDER_DIMENSIONS=1024
+```
+
+#### Option 4: Full Ollama (Free but NOT RECOMMENDED)
+**⚠️ Completely free, but Llama/Mistral models FAIL Graphiti validation**
+
+| Component | Provider | Model | Cost | Status |
+|-----------|----------|-------|------|--------|
+| LLM | Ollama | llama3.2 | Free | ❌ **FAILS** Pydantic validation |
+| Embedder | Ollama | mxbai-embed-large | Free | ✅ Works great |
+
+```env
+LLM_PROVIDER=openai
+MODEL_NAME=llama3.2
+OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+
+EMBEDDER_PROVIDER=openai
+EMBEDDER_BASE_URL=http://host.docker.internal:11434/v1
+EMBEDDER_MODEL=mxbai-embed-large
+EMBEDDER_DIMENSIONS=1024
+```
+
+**⚠️ WARNING:** Full Ollama mode **DOES NOT WORK** with current Graphiti. All open-source models tested (Llama 3.1 8B, Llama 3.3 70B, Mistral 7B, DeepSeek V3) fail with Pydantic validation errors. Use **Option 1 (OpenRouter + Ollama)** instead - you get Gemini 2.0 Flash for $0.125/1K ops while still using free Ollama embeddings.
+
+#### Option 5: Direct OpenAI (Full Cloud)
+**Simplest setup, all OpenAI**
+
+| Component | Provider | Model | Cost |
+|-----------|----------|-------|------|
+| LLM | OpenAI | gpt-4o-mini | ~$0.15/1M tokens |
+| Embedder | OpenAI | text-embedding-3-small | ~$0.02/1M tokens |
+
+```env
+LLM_PROVIDER=openai
+MODEL_NAME=gpt-4o-mini
+OPENAI_API_KEY=sk-your-openai-key
+
+EMBEDDER_PROVIDER=openai
+EMBEDDER_MODEL=text-embedding-3-small
+EMBEDDER_DIMENSIONS=1536
+```
+
+### Embedder Comparison
+
+| Embedder | Provider | Quality | Speed | Dimensions | Cost |
+|----------|----------|---------|-------|------------|------|
+| **mxbai-embed-large** | Ollama | 77% | 156ms | 1024 | Free |
+| text-embedding-3-small | OpenAI | 75% | 610ms | 1536 | $0.02/1M |
+| BAAI/bge-large-en-v1.5 | Together | ~75% | ~200ms | 1024 | $0.016/1M |
+
+**Recommendation:** Use Ollama's `mxbai-embed-large` for embeddings - it's free, fast, and high quality.
+
+### Changing Providers After Installation
+
+To change providers after initial setup:
+
+1. **Stop the server:**
+   ```bash
+   bun run stop
+   ```
+
+2. **Edit the configuration:**
+   ```bash
+   # Edit src/server/.env (or wherever your config is)
+   nano src/server/.env
+   ```
+
+3. **Update the relevant variables** (see examples above)
+
+4. **Restart the server:**
+   ```bash
+   bun run start
+   ```
 
 ---
 
@@ -151,14 +393,22 @@ else
     echo "   Install with: curl -fsSL https://bun.sh/install | bash"
 fi
 
-# Check for API key (prefer MADEINOZ_KNOWLEDGE_* prefix)
-if [ -n "$MADEINOZ_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY" ]; then
+# Check for LLM provider configuration
+if [ -n "$MADEINOZ_KNOWLEDGE_LLM_PROVIDER" ] && [ "$MADEINOZ_KNOWLEDGE_LLM_PROVIDER" = "ollama" ]; then
+    echo "✓ Ollama is configured as LLM provider (no API key needed)"
+    # Check if Ollama is running
+    if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
+        echo "✓ Ollama is running"
+    else
+        echo "⚠️  Ollama is configured but not running - start with: ollama serve"
+    fi
+elif [ -n "$MADEINOZ_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY" ]; then
     echo "✓ LLM API key is configured (MADEINOZ_KNOWLEDGE_* prefix)"
 elif [ -n "$OPENAI_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ]; then
     echo "✓ LLM API key is configured (legacy - consider using MADEINOZ_KNOWLEDGE_* prefix)"
 else
-    echo "⚠️  No LLM API key found in environment"
-    echo "   You will need to configure this during installation"
+    echo "ℹ️  No LLM API key found - Ollama will be used by default (free, local)"
+    echo "   To use cloud providers, configure API keys during installation"
 fi
 
 # Check for .env.example file
@@ -274,6 +524,11 @@ fi
 
 ## Step 2: Add Configuration to PAI
 
+> **PAI .env is the ONLY source of truth.**
+>
+> All MADEINOZ_KNOWLEDGE_* configuration lives in PAI .env (`~/.claude/.env`).
+> The pack's config/.env is auto-generated at runtime when starting containers.
+
 **Add Madeinoz Knowledge System settings to your PAI configuration:**
 
 ```bash
@@ -302,17 +557,25 @@ elif [ -n "$OPENAI_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$GOOGLE_AP
 fi
 
 # Determine provider settings (check MADEINOZ_KNOWLEDGE_* first)
+# Default to Ollama (free, local, private)
 if [ -z "$MADEINOZ_KNOWLEDGE_LLM_PROVIDER" ] && [ -z "$LLM_PROVIDER" ]; then
-    LLM_PROVIDER="openai"
-    EMBEDDER_PROVIDER="openai"
-
-    if [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
+    # Default to Ollama unless a cloud API key is configured
+    if [ -n "$MADEINOZ_KNOWLEDGE_OPENAI_API_KEY" ] || [ -n "$OPENAI_API_KEY" ]; then
+        LLM_PROVIDER="openai"
+        EMBEDDER_PROVIDER="openai"
+    elif [ -n "$MADEINOZ_KNOWLEDGE_ANTHROPIC_API_KEY" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
         LLM_PROVIDER="anthropic"
+        EMBEDDER_PROVIDER="openai"  # Anthropic needs OpenAI for embeddings
     elif [ -n "$MADEINOZ_KNOWLEDGE_GOOGLE_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ]; then
         LLM_PROVIDER="gemini"
         EMBEDDER_PROVIDER="gemini"
     elif [ -n "$MADEINOZ_KNOWLEDGE_GROQ_API_KEY" ] || [ -n "$GROQ_API_KEY" ]; then
         LLM_PROVIDER="groq"
+        EMBEDDER_PROVIDER="openai"  # Groq needs OpenAI for embeddings
+    else
+        # No API keys - default to Ollama
+        LLM_PROVIDER="ollama"
+        EMBEDDER_PROVIDER="ollama"
     fi
 else
     LLM_PROVIDER="${MADEINOZ_KNOWLEDGE_LLM_PROVIDER:-$LLM_PROVIDER}"
@@ -351,10 +614,14 @@ for line in lines:
 
 # Variables to add (only if not already present) - all use MADEINOZ_KNOWLEDGE_* prefix
 # Note: DATABASE_TYPE defaults to 'neo4j' but can be set to 'falkordb'
+# Note: Defaults to Ollama (free, local, private)
 vars_to_add = {
-    'MADEINOZ_KNOWLEDGE_LLM_PROVIDER': os.getenv('MADEINOZ_KNOWLEDGE_LLM_PROVIDER', os.getenv('LLM_PROVIDER', 'openai')),
-    'MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER': os.getenv('MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER', os.getenv('EMBEDDER_PROVIDER', 'openai')),
-    'MADEINOZ_KNOWLEDGE_MODEL_NAME': os.getenv('MADEINOZ_KNOWLEDGE_MODEL_NAME', os.getenv('MODEL_NAME', 'gpt-4o-mini')),
+    'MADEINOZ_KNOWLEDGE_LLM_PROVIDER': os.getenv('MADEINOZ_KNOWLEDGE_LLM_PROVIDER', os.getenv('LLM_PROVIDER', 'ollama')),
+    'MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER': os.getenv('MADEINOZ_KNOWLEDGE_EMBEDDER_PROVIDER', os.getenv('EMBEDDER_PROVIDER', 'ollama')),
+    'MADEINOZ_KNOWLEDGE_MODEL_NAME': os.getenv('MADEINOZ_KNOWLEDGE_MODEL_NAME', os.getenv('MODEL_NAME', 'llama3.2')),
+    # Ollama configuration
+    'MADEINOZ_KNOWLEDGE_OPENAI_BASE_URL': os.getenv('MADEINOZ_KNOWLEDGE_OPENAI_BASE_URL', 'http://host.docker.internal:11434/v1'),
+    'MADEINOZ_KNOWLEDGE_EMBEDDER_MODEL': os.getenv('MADEINOZ_KNOWLEDGE_EMBEDDER_MODEL', 'mxbai-embed-large'),
     # Database backend: 'neo4j' (default) or 'falkordb'
     'MADEINOZ_KNOWLEDGE_DATABASE_TYPE': os.getenv('MADEINOZ_KNOWLEDGE_DATABASE_TYPE', 'neo4j'),
     # FalkorDB configuration (used when DATABASE_TYPE=falkordb)
@@ -407,8 +674,6 @@ echo "PAI .env is now the source of truth for:"
 echo "  - API keys (existing)"
 echo "  - Madeinoz Knowledge System settings (newly added)"
 ```
-
----
 
 ## Step 3: Start MCP Server
 
@@ -576,6 +841,7 @@ ls -la "$PAI_SKILLS_DIR/Knowledge/"
 
 > **FOR AI AGENTS:** This step configures Claude Code to connect to the Knowledge MCP server.
 > - The MCP server configuration MUST be added to `~/.claude.json`
+> - If existing configuration is identical, ask user whether to keep or replace
 > - After configuration, Claude Code must be restarted for changes to take effect
 > - Verify the MCP server appears in Claude Code's server list after restart
 
@@ -592,19 +858,132 @@ echo ""
 # Configure MCP servers in global Claude config
 CLAUDE_CONFIG="$HOME/.claude.json"
 
-echo "Creating global MCP configuration..."
+# New configuration values
+NEW_TYPE="http"
+NEW_URL="http://localhost:8000/mcp"
+
+echo "Target configuration:"
+echo "  File: $CLAUDE_CONFIG"
+echo "  Server: madeinoz-knowledge"
+echo "  Type: $NEW_TYPE"
+echo "  URL: $NEW_URL"
+echo ""
 
 # Check if ~/.claude.json exists
 if [ -f "$CLAUDE_CONFIG" ]; then
     echo "Found existing ~/.claude.json"
-    # Read existing config or create new structure
-    if ! grep -q "mcpServers" "$CLAUDE_CONFIG" 2>/dev/null; then
+
+    # Check if madeinoz-knowledge already configured
+    if grep -q "madeinoz-knowledge" "$CLAUDE_CONFIG" 2>/dev/null; then
+        echo ""
+        echo "⚠️  madeinoz-knowledge MCP server already configured"
+
+        # Extract and compare existing values
+        python3 << 'PYTHON_EOF'
+import json
+import os
+import sys
+
+config_path = os.path.expanduser("~/.claude.json")
+new_type = "http"
+new_url = "http://localhost:8000/mcp"
+
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+existing = config.get('mcpServers', {}).get('madeinoz-knowledge', {})
+existing_type = existing.get('type', '')
+existing_url = existing.get('url', '')
+
+print(f"\nExisting configuration:")
+print(f"  Type: {existing_type}")
+print(f"  URL:  {existing_url}")
+print(f"\nNew configuration:")
+print(f"  Type: {new_type}")
+print(f"  URL:  {new_url}")
+
+# Check if values are identical
+if existing_type == new_type and existing_url == new_url:
+    print("\n✓ Existing configuration is IDENTICAL to new values")
+    # Signal identical values to shell
+    with open('/tmp/mcp_config_status', 'w') as f:
+        f.write("IDENTICAL")
+else:
+    print("\n⚠️  Existing configuration DIFFERS from new values")
+    with open('/tmp/mcp_config_status', 'w') as f:
+        f.write("DIFFERENT")
+PYTHON_EOF
+
+        # Read status from temp file
+        MCP_STATUS=$(cat /tmp/mcp_config_status 2>/dev/null)
+        rm -f /tmp/mcp_config_status
+
+        echo ""
+        if [ "$MCP_STATUS" = "IDENTICAL" ]; then
+            echo "Configuration values are identical."
+            read -p "Keep existing configuration? (Y/n): " KEEP_EXISTING
+            if [[ "$KEEP_EXISTING" =~ ^[Nn]$ ]]; then
+                echo "Replacing with new configuration..."
+                python3 << 'PYTHON_EOF'
+import json
+import os
+
+config_path = os.path.expanduser("~/.claude.json")
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+config['mcpServers']['madeinoz-knowledge'] = {
+    'type': 'http',
+    'url': 'http://localhost:8000/mcp'
+}
+
+with open(config_path, 'w') as f:
+    json.dump(config, f, indent=2)
+
+print("✓ Replaced madeinoz-knowledge configuration")
+PYTHON_EOF
+            else
+                echo "✓ Keeping existing configuration"
+            fi
+        else
+            # Values differ - ask which to use
+            echo "Which configuration would you like to use?"
+            echo "  1) Keep existing"
+            echo "  2) Use new values"
+            read -p "Choice (1/2): " CONFIG_CHOICE
+
+            if [ "$CONFIG_CHOICE" = "2" ]; then
+                echo "Updating to new configuration..."
+                python3 << 'PYTHON_EOF'
+import json
+import os
+
+config_path = os.path.expanduser("~/.claude.json")
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+config['mcpServers']['madeinoz-knowledge'] = {
+    'type': 'http',
+    'url': 'http://localhost:8000/mcp'
+}
+
+with open(config_path, 'w') as f:
+    json.dump(config, f, indent=2)
+
+print("✓ Updated madeinoz-knowledge configuration")
+PYTHON_EOF
+            else
+                echo "✓ Keeping existing configuration"
+            fi
+        fi
+    elif ! grep -q "mcpServers" "$CLAUDE_CONFIG" 2>/dev/null; then
         # File exists but no mcpServers section
         echo "Adding mcpServers section to ~/.claude.json"
         python3 << 'PYTHON_EOF'
 import json
+import os
 
-config_path = "$CLAUDE_CONFIG"
+config_path = os.path.expanduser("~/.claude.json")
 try:
     with open(config_path, 'r') as f:
         config = json.load(f)
@@ -625,13 +1004,13 @@ with open(config_path, 'w') as f:
 print("✓ Added madeinoz-knowledge MCP server to ~/.claude.json")
 PYTHON_EOF
     else
-        # Check if madeinoz-knowledge already configured
-        if ! grep -q "madeinoz-knowledge" "$CLAUDE_CONFIG" 2>/dev/null; then
-            echo "Adding madeinoz-knowledge to existing mcpServers"
-            python3 << 'PYTHON_EOF'
+        # mcpServers exists but madeinoz-knowledge not configured
+        echo "Adding madeinoz-knowledge to existing mcpServers"
+        python3 << 'PYTHON_EOF'
 import json
+import os
 
-config_path = "$CLAUDE_CONFIG"
+config_path = os.path.expanduser("~/.claude.json")
 with open(config_path, 'r') as f:
     config = json.load(f)
 
@@ -645,9 +1024,6 @@ with open(config_path, 'w') as f:
 
 print("✓ Added madeinoz-knowledge MCP server to ~/.claude.json")
 PYTHON_EOF
-        else
-            echo "✓ madeinoz-knowledge MCP server already configured"
-        fi
     fi
 else
     echo "Creating new ~/.claude.json"
@@ -665,10 +1041,10 @@ EOF
 fi
 
 echo ""
-echo "Configuration:"
+echo "Final configuration:"
 echo "  File: ~/.claude.json"
 echo "  Server: madeinoz-knowledge"
-echo "  Transport: SSE (Server-Sent Events)"
+echo "  Transport: HTTP"
 echo "  URL: http://localhost:8000/mcp"
 echo ""
 
@@ -1025,10 +1401,10 @@ SYNC_STATE_DIR="$MEMORY_DIR/STATE/knowledge-sync"
 mkdir -p "$SYNC_STATE_DIR"
 echo "✓ Created sync state directory: $SYNC_STATE_DIR"
 
-# Register hook in Claude Code settings.json (NOT PAI_DIR settings)
+# Register hooks in Claude Code settings.json (NOT PAI_DIR settings)
 SETTINGS_FILE="$HOME/.claude/settings.json"
 echo ""
-echo "Registering hook in: $SETTINGS_FILE"
+echo "Registering hooks in: $SETTINGS_FILE"
 
 # Use bun/node to merge hook configuration
 bun << 'SCRIPT_EOF'
@@ -1048,37 +1424,86 @@ try {
 // Ensure hooks structure exists
 if (!settings.hooks) settings.hooks = {};
 if (!settings.hooks.SessionStart) settings.hooks.SessionStart = [];
+if (!settings.hooks.Stop) settings.hooks.Stop = [];
+if (!settings.hooks.SubagentStop) settings.hooks.SubagentStop = [];
 
-// Check if hook already registered
-const hookExists = settings.hooks.SessionStart.some(h =>
+const homeDir = process.env.HOME;
+let changed = false;
+
+// 1. SessionStart: sync-memory-to-knowledge.ts (syncs memory at session start)
+const sessionStartExists = settings.hooks.SessionStart.some(h =>
     h.hooks?.some(hook => hook.command?.includes('sync-memory-to-knowledge'))
 );
-
-if (!hookExists) {
+if (!sessionStartExists) {
     settings.hooks.SessionStart.push({
         matcher: "*",
         hooks: [{
             type: "command",
-            command: `bun run ${process.env.HOME}/.claude/hooks/sync-memory-to-knowledge.ts`,
+            command: `bun run ${homeDir}/.claude/hooks/sync-memory-to-knowledge.ts`,
             timeout: 30000
         }]
     });
-
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    console.log("✓ Hook registered in settings.json");
+    console.log("✓ SessionStart hook registered (sync-memory-to-knowledge.ts)");
+    changed = true;
 } else {
-    console.log("✓ Hook already registered (skipping)");
+    console.log("✓ SessionStart hook already registered (skipping)");
+}
+
+// 2. Stop: sync-learning-realtime.ts (syncs learning when execution stops)
+const stopExists = settings.hooks.Stop.some(h =>
+    h.hooks?.some(hook => hook.command?.includes('sync-learning-realtime'))
+);
+if (!stopExists) {
+    settings.hooks.Stop.push({
+        hooks: [{
+            type: "command",
+            command: `bun run ${homeDir}/.claude/hooks/sync-learning-realtime.ts`,
+            timeout: 15000
+        }]
+    });
+    console.log("✓ Stop hook registered (sync-learning-realtime.ts)");
+    changed = true;
+} else {
+    console.log("✓ Stop hook already registered (skipping)");
+}
+
+// 3. SubagentStop: sync-learning-realtime.ts (syncs when subagent completes)
+const subagentStopExists = settings.hooks.SubagentStop.some(h =>
+    h.hooks?.some(hook => hook.command?.includes('sync-learning-realtime'))
+);
+if (!subagentStopExists) {
+    settings.hooks.SubagentStop.push({
+        hooks: [{
+            type: "command",
+            command: `bun run ${homeDir}/.claude/hooks/sync-learning-realtime.ts`,
+            timeout: 15000
+        }]
+    });
+    console.log("✓ SubagentStop hook registered (sync-learning-realtime.ts)");
+    changed = true;
+} else {
+    console.log("✓ SubagentStop hook already registered (skipping)");
+}
+
+if (changed) {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    console.log("\n✓ settings.json updated with knowledge hooks");
 }
 SCRIPT_EOF
 
 echo ""
 echo "Hook installation complete!"
 echo ""
-echo "What the hook does:"
-echo "  - Runs automatically when a Claude Code session starts"
-echo "  - Scans memory directories: LEARNING/ALGORITHM/, LEARNING/SYSTEM/, RESEARCH/"
-echo "  - Syncs new captures to the knowledge graph"
-echo "  - Tracks synced files to avoid duplicates"
+echo "Hooks installed:"
+echo "  📍 SessionStart: sync-memory-to-knowledge.ts"
+echo "     - Syncs memory to knowledge graph at session start"
+echo "     - Scans: LEARNING/ALGORITHM/, LEARNING/SYSTEM/, RESEARCH/"
+echo ""
+echo "  📍 Stop: sync-learning-realtime.ts"
+echo "     - Syncs new learnings when execution stops"
+echo ""
+echo "  📍 SubagentStop: sync-learning-realtime.ts"
+echo "     - Syncs learnings when subagent completes"
 echo ""
 echo "Manual sync commands:"
 echo "  - Sync all:    bun run src/hooks/sync-memory-to-knowledge.ts --all"

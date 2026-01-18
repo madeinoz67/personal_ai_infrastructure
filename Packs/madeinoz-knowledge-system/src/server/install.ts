@@ -58,18 +58,135 @@ interface APITier {
 }
 
 /**
+ * OpenAI-compatible provider configuration
+ */
+interface OpenAICompatibleProvider {
+  id: string;
+  name: string;
+  baseUrl: string;
+  keyName: string;
+  keyUrl: string;
+  models: ModelChoice[];
+  embedderModels?: ModelChoice[];
+  defaultEmbedderDimensions?: number;
+}
+
+/**
+ * OpenAI-compatible cloud providers (use OpenAI API format)
+ */
+const OPENAI_COMPATIBLE_PROVIDERS: OpenAICompatibleProvider[] = [
+  {
+    id: "openrouter",
+    name: "OpenRouter (access to 200+ models) - RECOMMENDED",
+    baseUrl: "https://openrouter.ai/api/v1",
+    keyName: "OpenRouter",
+    keyUrl: "https://openrouter.ai/keys",
+    models: [
+      // ✅ BENCHMARK TESTED - These models WORK with Graphiti MCP
+      { name: "google/gemini-2.0-flash-001 (BEST VALUE - $0.125/1K)", value: "google/gemini-2.0-flash-001" },
+      { name: "openai/gpt-4o-mini (reliable - $0.129/1K)", value: "openai/gpt-4o-mini" },
+      { name: "qwen/qwen-2.5-72b-instruct ($0.126/1K, slow)", value: "qwen/qwen-2.5-72b-instruct" },
+      { name: "anthropic/claude-3.5-haiku ($0.816/1K)", value: "anthropic/claude-3.5-haiku" },
+      { name: "openai/gpt-4o (FASTEST - $2.155/1K)", value: "openai/gpt-4o" },
+      { name: "x-ai/grok-3 (xAI option - $2.163/1K)", value: "x-ai/grok-3" },
+      // ❌ BENCHMARK TESTED - These models FAIL Graphiti validation (kept for reference)
+      // { name: "meta-llama/llama-3.1-70b-instruct (FAILS)", value: "meta-llama/llama-3.1-70b-instruct" },
+      // { name: "deepseek/deepseek-chat (FAILS)", value: "deepseek/deepseek-chat" },
+    ],
+  },
+  {
+    id: "together",
+    name: "Together AI (fast inference)",
+    baseUrl: "https://api.together.xyz/v1",
+    keyName: "Together AI",
+    keyUrl: "https://api.together.xyz/settings/api-keys",
+    models: [
+      { name: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo (recommended)", value: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" },
+      { name: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
+      { name: "mistralai/Mixtral-8x22B-Instruct-v0.1", value: "mistralai/Mixtral-8x22B-Instruct-v0.1" },
+      { name: "Qwen/Qwen2.5-72B-Instruct-Turbo", value: "Qwen/Qwen2.5-72B-Instruct-Turbo" },
+    ],
+    embedderModels: [
+      { name: "BAAI/bge-large-en-v1.5 (recommended)", value: "BAAI/bge-large-en-v1.5" },
+      { name: "togethercomputer/m2-bert-80M-8k-retrieval", value: "togethercomputer/m2-bert-80M-8k-retrieval" },
+    ],
+    defaultEmbedderDimensions: 1024,
+  },
+  {
+    id: "fireworks",
+    name: "Fireworks AI (low latency)",
+    baseUrl: "https://api.fireworks.ai/inference/v1",
+    keyName: "Fireworks AI",
+    keyUrl: "https://fireworks.ai/api-keys",
+    models: [
+      { name: "accounts/fireworks/models/llama-v3p1-70b-instruct (recommended)", value: "accounts/fireworks/models/llama-v3p1-70b-instruct" },
+      { name: "accounts/fireworks/models/mixtral-8x22b-instruct", value: "accounts/fireworks/models/mixtral-8x22b-instruct" },
+      { name: "accounts/fireworks/models/qwen2p5-72b-instruct", value: "accounts/fireworks/models/qwen2p5-72b-instruct" },
+    ],
+  },
+  {
+    id: "deepinfra",
+    name: "DeepInfra (serverless GPUs)",
+    baseUrl: "https://api.deepinfra.com/v1/openai",
+    keyName: "DeepInfra",
+    keyUrl: "https://deepinfra.com/dash/api_keys",
+    models: [
+      { name: "meta-llama/Meta-Llama-3.1-70B-Instruct (recommended)", value: "meta-llama/Meta-Llama-3.1-70B-Instruct" },
+      { name: "mistralai/Mixtral-8x22B-Instruct-v0.1", value: "mistralai/Mixtral-8x22B-Instruct-v0.1" },
+      { name: "Qwen/Qwen2.5-72B-Instruct", value: "Qwen/Qwen2.5-72B-Instruct" },
+    ],
+    embedderModels: [
+      { name: "BAAI/bge-large-en-v1.5 (recommended)", value: "BAAI/bge-large-en-v1.5" },
+      { name: "sentence-transformers/all-MiniLM-L6-v2", value: "sentence-transformers/all-MiniLM-L6-v2" },
+    ],
+    defaultEmbedderDimensions: 1024,
+  },
+];
+
+/**
  * Provider configurations
  */
 const PROVIDERS: LLMProvider[] = [
   {
     id: "openai",
-    name: "OpenAI (recommended)",
+    name: "OpenAI (direct)",
     embedder: "openai",
     needsOpenAI: true,
     models: [
       { name: "gpt-4o-mini (recommended - fast & cost-effective)", value: "gpt-4o-mini" },
       { name: "gpt-4o (best quality)", value: "gpt-4o" },
       { name: "gpt-3.5-turbo (economy)", value: "gpt-3.5-turbo" },
+    ],
+  },
+  {
+    id: "openai-compatible",
+    name: "OpenAI-compatible (OpenRouter, Together, etc.)",
+    embedder: "openai-compatible",
+    needsOpenAI: false,
+  },
+  {
+    id: "ollama",
+    name: "Ollama (local, free) - ⚠️ LLM FAILS, embeddings OK",
+    embedder: "ollama",
+    needsOpenAI: false,
+    models: [
+      // ⚠️ WARNING: All Ollama LLM models FAIL Graphiti Pydantic validation
+      // Use OpenRouter + Ollama (embeddings only) instead!
+      { name: "⚠️ llama3.2 (FAILS Graphiti validation)", value: "llama3.2" },
+      { name: "⚠️ llama3.1:70b (FAILS Graphiti validation)", value: "llama3.1:70b" },
+      { name: "⚠️ mistral (FAILS Graphiti validation)", value: "mistral" },
+      { name: "⚠️ deepseek-r1:7b (FAILS Graphiti validation)", value: "deepseek-r1:7b" },
+      { name: "⚠️ qwen2.5:7b (FAILS Graphiti validation)", value: "qwen2.5:7b" },
+    ],
+  },
+  {
+    id: "hybrid",
+    name: "Hybrid (OpenAI LLM + Ollama embeddings - recommended)",
+    embedder: "ollama",
+    needsOpenAI: true,
+    models: [
+      { name: "gpt-4o-mini (recommended - fast & cost-effective)", value: "gpt-4o-mini" },
+      { name: "gpt-4o (best quality)", value: "gpt-4o" },
     ],
   },
   {
@@ -86,7 +203,7 @@ const PROVIDERS: LLMProvider[] = [
   },
   {
     id: "groq",
-    name: "Groq",
+    name: "Groq (fast inference)",
     embedder: "openai",
     needsOpenAI: true,
     models: [
@@ -203,11 +320,20 @@ interface InstallState {
     ANTHROPIC_API_KEY?: string;
     GOOGLE_API_KEY?: string;
     GROQ_API_KEY?: string;
+    OPENAI_COMPATIBLE_KEY?: string;
   };
   paiConfig: {
     GROUP_ID?: string;
     DATABASE_TYPE?: string;
     GRAPHITI_TELEMETRY_ENABLED?: string;
+  };
+  // OpenAI-compatible provider configuration
+  openaiCompatible?: {
+    providerId: string;
+    baseUrl: string;
+    embedderBaseUrl?: string;
+    embedderModel?: string;
+    embedderDimensions?: number;
   };
 }
 
@@ -216,9 +342,9 @@ interface InstallState {
  */
 class Installer {
   private state: InstallState = {
-    llmProvider: "openai",
-    embedderProvider: "openai",
-    modelName: "gpt-4o-mini",
+    llmProvider: "ollama",
+    embedderProvider: "ollama",
+    modelName: "llama3.2",
     semaphoreLimit: "10",
     apiKeys: {},
     paiConfig: {
@@ -227,6 +353,10 @@ class Installer {
       GRAPHITI_TELEMETRY_ENABLED: "false",
     },
   };
+
+  // Ollama configuration
+  private ollamaBaseUrl: string = "http://host.docker.internal:11434/v1";
+  private embedderModel: string = "mxbai-embed-large";  // Best Ollama embedder (77% quality, 156ms)
 
   private containerManager = createContainerManager();
   private configLoader = createConfigLoader();
@@ -551,6 +681,12 @@ class Installer {
       process.exit(1);
     }
 
+    // Handle OpenAI-compatible provider sub-selection
+    if (provider === "openai-compatible") {
+      await this.selectOpenAICompatibleProvider();
+      return;
+    }
+
     this.state.llmProvider = selected.id;
     this.state.embedderProvider = selected.embedder;
 
@@ -560,6 +696,86 @@ class Installer {
       );
     } else {
       cli.success(`Selected: ${selected.name}`);
+    }
+  }
+
+  /**
+   * Sub-selection for OpenAI-compatible providers (OpenRouter, Together, etc.)
+   */
+  private async selectOpenAICompatibleProvider(): Promise<void> {
+    cli.blank();
+    cli.info("OpenAI-compatible providers use the same API format as OpenAI");
+    cli.info("but with different base URLs and API keys.");
+    cli.blank();
+
+    let selectedProviderId: string;
+
+    if (isNonInteractive) {
+      // Use existing or default to openrouter
+      selectedProviderId = this.state.openaiCompatible?.providerId || "openrouter";
+      cli.dim(`  Using OpenAI-compatible provider: ${selectedProviderId}`);
+    } else {
+      const result = await inquirer.prompt([
+        {
+          type: "list",
+          name: "provider",
+          message: "Select OpenAI-compatible provider:",
+          choices: OPENAI_COMPATIBLE_PROVIDERS.map((p) => ({ name: p.name, value: p.id })),
+          default: this.state.openaiCompatible?.providerId || "openrouter",
+        },
+      ]);
+      selectedProviderId = result.provider;
+    }
+
+    const compatibleProvider = OPENAI_COMPATIBLE_PROVIDERS.find((p) => p.id === selectedProviderId);
+    if (!compatibleProvider) {
+      cli.error("Invalid OpenAI-compatible provider selection");
+      process.exit(1);
+    }
+
+    // Store the OpenAI-compatible provider configuration
+    this.state.llmProvider = "openai";  // Use openai provider type (works with OpenAI-compatible API)
+    this.state.openaiCompatible = {
+      providerId: compatibleProvider.id,
+      baseUrl: compatibleProvider.baseUrl,
+    };
+
+    // Handle embeddings - if provider has embeddings, use them; otherwise default to Ollama
+    if (compatibleProvider.embedderModels && compatibleProvider.embedderModels.length > 0) {
+      this.state.embedderProvider = "openai";  // OpenAI-compatible for embeddings too
+      this.state.openaiCompatible.embedderBaseUrl = compatibleProvider.baseUrl;
+      this.state.openaiCompatible.embedderModel = compatibleProvider.embedderModels[0].value;
+      this.state.openaiCompatible.embedderDimensions = compatibleProvider.defaultEmbedderDimensions;
+      cli.success(`Selected: ${compatibleProvider.name} (LLM + embeddings)`);
+    } else {
+      // Provider doesn't have embeddings, offer Ollama or OpenAI
+      cli.blank();
+      cli.warning(`${compatibleProvider.name} doesn't provide embeddings.`);
+      cli.info("You need a separate embedder. Options:");
+      cli.dim("  1. Ollama (free, local) - recommended");
+      cli.dim("  2. OpenAI (paid, cloud)");
+      cli.blank();
+
+      if (isNonInteractive) {
+        this.state.embedderProvider = "ollama";
+        cli.dim("  Using Ollama for embeddings (free, local)");
+      } else {
+        const { embedder } = await inquirer.prompt([
+          {
+            type: "list",
+            name: "embedder",
+            message: "Select embedder:",
+            choices: [
+              { name: "Ollama (free, local) - recommended", value: "ollama" },
+              { name: "OpenAI (paid, cloud)", value: "openai" },
+            ],
+            default: "ollama",
+          },
+        ]);
+        this.state.embedderProvider = embedder;
+      }
+
+      cli.success(`Selected: ${compatibleProvider.name} (LLM) + ${this.state.embedderProvider === "ollama" ? "Ollama" : "OpenAI"} (embeddings)`);
     }
   }
 
@@ -578,6 +794,88 @@ class Installer {
     if (!provider) {
       cli.error("Invalid provider");
       process.exit(1);
+    }
+
+    // Ollama doesn't need API keys
+    if (this.state.llmProvider === "ollama") {
+      cli.blank();
+      cli.success("Ollama selected - no API key required!");
+      cli.blank();
+      cli.info("Ollama Prerequisites:");
+      cli.dim("  1. Install Ollama: https://ollama.com/download");
+      cli.dim("  2. Pull required models:");
+      cli.dim(`     ollama pull ${this.state.modelName}`);
+      cli.dim(`     ollama pull ${this.embedderModel}`);
+      cli.dim("  3. Ensure Ollama is running: ollama serve");
+      cli.blank();
+
+      // Configure Ollama base URL
+      if (!isNonInteractive) {
+        const { baseUrl } = await inquirer.prompt([
+          {
+            type: "input",
+            name: "baseUrl",
+            message: "Ollama API URL (for Docker containers):",
+            default: this.ollamaBaseUrl,
+          },
+        ]);
+        this.ollamaBaseUrl = baseUrl;
+      }
+
+      cli.success(`Ollama endpoint: ${this.ollamaBaseUrl}`);
+      return;
+    }
+
+    // Handle OpenAI-compatible provider (OpenRouter, Together, etc.)
+    if (this.state.openaiCompatible) {
+      const compatibleProvider = OPENAI_COMPATIBLE_PROVIDERS.find(
+        (p) => p.id === this.state.openaiCompatible?.providerId
+      );
+
+      if (compatibleProvider) {
+        this.state.apiKeys.OPENAI_COMPATIBLE_KEY = await this.collectKey(
+          compatibleProvider.keyName,
+          compatibleProvider.keyUrl,
+          this.state.apiKeys.OPENAI_COMPATIBLE_KEY
+        );
+
+        // If embedder is Ollama, configure its base URL
+        if (this.state.embedderProvider === "ollama") {
+          cli.blank();
+          cli.info("Configuring Ollama for embeddings...");
+          cli.dim("  Ollama Prerequisites:");
+          cli.dim("  1. Install Ollama: https://ollama.com/download");
+          cli.dim(`  2. Pull embedding model: ollama pull ${this.embedderModel}`);
+          cli.dim("  3. Ensure Ollama is running: ollama serve");
+          cli.blank();
+
+          if (!isNonInteractive) {
+            const { baseUrl } = await inquirer.prompt([
+              {
+                type: "input",
+                name: "baseUrl",
+                message: "Ollama API URL (for Docker containers):",
+                default: this.ollamaBaseUrl,
+              },
+            ]);
+            this.ollamaBaseUrl = baseUrl;
+          }
+          cli.success(`Ollama endpoint for embeddings: ${this.ollamaBaseUrl}`);
+        }
+
+        // If embedder is OpenAI (not Ollama), need OpenAI key for embeddings
+        if (this.state.embedderProvider === "openai" && !this.state.openaiCompatible.embedderBaseUrl) {
+          cli.blank();
+          cli.info("You need an OpenAI API key for embeddings.");
+          this.state.apiKeys.OPENAI_API_KEY = await this.collectKey(
+            "OpenAI (for embeddings)",
+            "https://platform.openai.com/api-keys",
+            this.state.apiKeys.OPENAI_API_KEY
+          );
+        }
+
+        return;
+      }
     }
 
     // Collect OpenAI key if needed
@@ -623,6 +921,63 @@ class Installer {
   private async selectModel(): Promise<void> {
     cli.blank();
     cli.header("Step 6: Model Configuration");
+
+    // Handle OpenAI-compatible provider models
+    if (this.state.openaiCompatible) {
+      const compatibleProvider = OPENAI_COMPATIBLE_PROVIDERS.find(
+        (p) => p.id === this.state.openaiCompatible?.providerId
+      );
+
+      if (compatibleProvider && compatibleProvider.models.length > 0) {
+        if (isNonInteractive) {
+          // Use existing model or first available
+          const existingModel = compatibleProvider.models.find(m => m.value === this.state.modelName);
+          this.state.modelName = existingModel?.value || compatibleProvider.models[0].value;
+          cli.dim(`  Using model: ${this.state.modelName}`);
+        } else {
+          const { model } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "model",
+              message: `Select ${compatibleProvider.name} model:`,
+              choices: compatibleProvider.models,
+              default: this.state.modelName || compatibleProvider.models[0].value,
+            },
+          ]);
+          this.state.modelName = model;
+        }
+
+        cli.success(`Selected model: ${this.state.modelName}`);
+
+        // If provider has embedder models and we're using them, select embedder model too
+        if (this.state.openaiCompatible.embedderBaseUrl &&
+            compatibleProvider.embedderModels &&
+            compatibleProvider.embedderModels.length > 0) {
+          cli.blank();
+          cli.info("Configuring embeddings model...");
+
+          if (isNonInteractive) {
+            this.state.openaiCompatible.embedderModel = compatibleProvider.embedderModels[0].value;
+            cli.dim(`  Using embedder: ${this.state.openaiCompatible.embedderModel}`);
+          } else {
+            const { embedderModel } = await inquirer.prompt([
+              {
+                type: "list",
+                name: "embedderModel",
+                message: `Select ${compatibleProvider.name} embeddings model:`,
+                choices: compatibleProvider.embedderModels,
+                default: compatibleProvider.embedderModels[0].value,
+              },
+            ]);
+            this.state.openaiCompatible.embedderModel = embedderModel;
+          }
+
+          cli.success(`Selected embedder: ${this.state.openaiCompatible.embedderModel}`);
+        }
+
+        return;
+      }
+    }
 
     const provider = PROVIDERS.find((p) => p.id === this.state.llmProvider);
 
@@ -709,11 +1064,16 @@ class Installer {
    */
   private async createConfiguration(): Promise<void> {
     cli.blank();
-    cli.header("Step 8: Creating Configuration");
+    cli.header("Step 8: Saving to PAI .env");
 
-    // Backup existing .env
+    // PAI .env is the ONLY source of truth
+    // Location: ${PAI_DIR}/.env or ~/.claude/.env
+    cli.info(`Target: ${this.configLoader.getEnvFile()}`);
+    cli.blank();
+
+    // Backup existing PAI .env
     if (this.configLoader.envExists()) {
-      cli.warning("Found existing .env file");
+      cli.warning(`Found existing PAI .env: ${this.configLoader.getEnvFile()}`);
 
       const shouldBackup = await confirmWithDefault("Backup and replace?", true);
 
@@ -731,7 +1091,7 @@ class Installer {
     }
 
     // Build configuration object
-    const config = {
+    const config: Record<string, string | undefined> = {
       OPENAI_API_KEY: this.state.apiKeys.OPENAI_API_KEY,
       ANTHROPIC_API_KEY: this.state.apiKeys.ANTHROPIC_API_KEY,
       GOOGLE_API_KEY: this.state.apiKeys.GOOGLE_API_KEY,
@@ -741,14 +1101,55 @@ class Installer {
       MODEL_NAME: this.state.modelName,
       SEMAPHORE_LIMIT: this.state.semaphoreLimit,
       GROUP_ID: this.state.paiConfig.GROUP_ID || "main",
-      DATABASE_TYPE: this.state.paiConfig.DATABASE_TYPE || "falkordb",
+      DATABASE_TYPE: this.state.paiConfig.DATABASE_TYPE || "neo4j",
       GRAPHITI_TELEMETRY_ENABLED: this.state.paiConfig.GRAPHITI_TELEMETRY_ENABLED || "false",
     };
+
+    // Add Ollama-specific configuration
+    if (this.state.llmProvider === "ollama") {
+      config.OPENAI_BASE_URL = this.ollamaBaseUrl;
+      config.EMBEDDER_MODEL = this.embedderModel;
+    }
+
+    // Add OpenAI-compatible provider configuration
+    if (this.state.openaiCompatible) {
+      // Use the provider's API key as OPENAI_API_KEY (works with OpenAI-compatible clients)
+      config.OPENAI_API_KEY = this.state.apiKeys.OPENAI_COMPATIBLE_KEY;
+      config.OPENAI_BASE_URL = this.state.openaiCompatible.baseUrl;
+
+      // Note which provider we're using (for reference)
+      config.OPENAI_COMPATIBLE_PROVIDER = this.state.openaiCompatible.providerId;
+
+      // Configure embedder based on what's selected
+      if (this.state.openaiCompatible.embedderBaseUrl) {
+        // Using the same OpenAI-compatible provider for embeddings
+        config.EMBEDDER_BASE_URL = this.state.openaiCompatible.embedderBaseUrl;
+        config.EMBEDDER_MODEL = this.state.openaiCompatible.embedderModel;
+        if (this.state.openaiCompatible.embedderDimensions) {
+          config.EMBEDDER_DIMENSIONS = String(this.state.openaiCompatible.embedderDimensions);
+        }
+      } else if (this.state.embedderProvider === "ollama") {
+        // Using Ollama for embeddings
+        config.EMBEDDER_BASE_URL = this.ollamaBaseUrl;
+        config.EMBEDDER_MODEL = this.embedderModel;
+        config.EMBEDDER_DIMENSIONS = "1024";  // mxbai-embed-large dimensions
+      }
+      // If embedderProvider is "openai" without embedderBaseUrl, we use standard OpenAI embeddings
+      // In that case, OPENAI_API_KEY should be set separately for embeddings
+    }
+
+    // Add Hybrid configuration (OpenAI LLM + Ollama embeddings)
+    if (this.state.llmProvider === "hybrid" ||
+        (this.state.llmProvider === "openai" && this.state.embedderProvider === "ollama" && !this.state.openaiCompatible)) {
+      config.EMBEDDER_BASE_URL = this.ollamaBaseUrl;
+      config.EMBEDDER_MODEL = this.embedderModel;
+      config.EMBEDDER_DIMENSIONS = "1024";  // mxbai-embed-large dimensions
+    }
 
     // Save configuration
     await this.configLoader.save(config);
 
-    cli.success("Configuration file created: .env");
+    cli.success(`Configuration saved to PAI .env: ${this.configLoader.getEnvFile()}`);
   }
 
   /**
